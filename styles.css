@@ -471,6 +471,334 @@
   text-align: left;
 }
 
+.status-view {
+  height: 100%;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse at top, #FFE7B8 0%, transparent 48%),
+    radial-gradient(ellipse at bottom right, #C8F0DC 0%, transparent 60%),
+    var(--bg-warm);
+  padding: 76px 16px 32px;
+}
+
+.status-frame {
+  width: min(840px, 100%);
+  margin: 0 auto;
+}
+
+.status-identity {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.status-header h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 7vw, 44px);
+  line-height: 1;
+}
+
+.status-header p {
+  margin: 6px 0 0;
+  color: var(--ink-mute);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.status-pill {
+  flex-shrink: 0;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: var(--gold);
+  box-shadow: 0 3px 0 var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.status-score-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.status-team-card {
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  padding: 14px;
+  background: white;
+  box-shadow: 0 5px 0 var(--ink);
+  min-width: 0;
+}
+
+.status-team-card.dragons {
+  background: linear-gradient(155deg, #FFF1DE 0%, #FFDCBE 100%);
+}
+
+.status-team-card.lions {
+  background: linear-gradient(155deg, #DEF6F3 0%, #B5E5DE 100%);
+}
+
+.status-team-top {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.status-team-icon {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.status-team-top h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 23px;
+}
+
+.status-team-top p {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-weight: 800;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-main-score {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(42px, 10vw, 70px);
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.status-main-score span {
+  font-size: 16px;
+  margin-left: 5px;
+  opacity: 0.55;
+}
+
+.status-mini-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.status-mini-metrics div {
+  border: 2px solid rgba(20,18,40,0.12);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.62);
+  padding: 8px;
+}
+
+.status-mini-metrics small {
+  display: block;
+  color: var(--ink-mute);
+  font-weight: 800;
+  font-size: 10px;
+}
+
+.status-mini-metrics strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.lead-summary {
+  margin: 14px 0;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: var(--ink);
+  color: white;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 4px 0 rgba(20,18,40,0.2);
+}
+
+.lead-summary strong {
+  color: var(--gold);
+}
+
+.status-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 6px;
+  margin: 0 0 14px;
+  border: 2px solid rgba(20,18,40,0.1);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(8px);
+}
+
+.status-tabs button {
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  padding: 10px 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.status-tabs button.active {
+  background: var(--ink);
+  color: white;
+}
+
+.status-tabs button.active.danger {
+  background: #C8341A;
+}
+
+.status-panel {
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: white;
+  box-shadow: 0 5px 0 var(--ink);
+  padding: 14px;
+}
+
+.status-panel h2 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.status-list,
+.red-list {
+  display: grid;
+  gap: 10px;
+}
+
+.status-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 2px solid rgba(20,18,40,0.1);
+  border-radius: 14px;
+  background: var(--bg-cream);
+  padding: 12px;
+}
+
+.status-rank {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--gold);
+  border: 2px solid var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.status-row strong,
+.status-row b {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.status-row small {
+  display: block;
+  color: var(--ink-mute);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.red-panel {
+  border-color: #C8341A;
+  box-shadow: 0 5px 0 #C8341A;
+}
+
+.red-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 2px solid #E5755B;
+  border-radius: 14px;
+  background: #FFE1D9;
+  padding: 12px;
+}
+
+.red-row strong,
+.red-row b {
+  display: block;
+  color: #8A210D;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.red-row span,
+.red-row small {
+  display: block;
+  margin-top: 2px;
+  color: #8A210D;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.red-row b {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.red-empty {
+  border: 2px dashed #E5755B;
+  border-radius: 14px;
+  padding: 22px;
+  text-align: center;
+  color: #8A210D;
+  font-weight: 800;
+  background: #FFF1ED;
+}
+
+@media (max-width: 640px) {
+  .status-header {
+    display: block;
+  }
+  .status-pill {
+    display: inline-flex;
+    margin-top: 10px;
+  }
+  .status-score-grid {
+    grid-template-columns: 1fr;
+  }
+  .status-row,
+  .red-row {
+    grid-template-columns: auto 1fr;
+  }
+  .status-row b,
+  .red-row b {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
+
 .session-screen .bs-header h1 {
   font-size: clamp(32px, 4vw, 58px);
 }

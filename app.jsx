@@ -11,6 +11,10 @@ const ADMIN_ID = "JBC9008";
 const ADMIN_PW = "JBC9008";
 const AUTH_KEY = "eco_warrior_authed_v1";
 
+function normalizeMode(mode) {
+  return mode === "bigscreen" ? "status" : mode;
+}
+
 function LoginGate({ onAuth }) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
@@ -85,7 +89,7 @@ function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === "1");
   const [state, setState] = useState(() => EcoData.load());
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [mode, setMode] = useState(tweaks.startMode || "mobile");
+  const [mode, setMode] = useState(() => normalizeMode(tweaks.startMode || "mobile"));
   const [syncMode, setSyncMode] = useState("local");
   const [syncErr, setSyncErr] = useState(null);
 
@@ -113,7 +117,7 @@ function App() {
 
   if (!authed) return <LoginGate onAuth={() => setAuthed(true)} />;
 
-  const isDark = mode === "bigscreen" && tweaks.bigScreenTheme !== "map";
+  const isDark = false;
 
   return (
     <>
@@ -131,11 +135,11 @@ function App() {
       <button className={`logout-btn ${isDark ? "on-dark" : ""}`} onClick={logout}>登出 · Log Keluar</button>
 
       {mode === "mobile" && <MobileView state={state} setState={setState} />}
-      {mode === "bigscreen" && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
+      {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
       {mode === "admin" && <AdminView state={state} setState={setState} />}
 
       <TweaksPanel title="Tweaks">
-        <TweakSection label="大屏风格 · Tema Skrin">
+        <TweakSection label="战况风格 · Tema Status">
           <TweakSelect
             label="主题"
             value={tweaks.bigScreenTheme}
@@ -153,7 +157,7 @@ function App() {
             value={tweaks.startMode}
             options={[
               { value: "mobile", label: "录入" },
-              { value: "bigscreen", label: "大屏" },
+              { value: "status", label: "战况" },
               { value: "admin", label: "管理" },
             ]}
             onChange={v => setTweak("startMode", v)}

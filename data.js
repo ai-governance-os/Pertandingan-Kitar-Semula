@@ -3,15 +3,16 @@
 
 const STORAGE_KEY = "eco_warrior_v2";
 const LEGACY_STORAGE_KEY = "eco_warrior_v1";
+const SCORING_VERSION = 3;
 
 const DEFAULT_CATEGORIES = [
-  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", points: 25, color: "#6F7D3C" },
-  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  points: 20, color: "#8A9AA8" },
-  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   points: 8,  color: "#D8B35D" },
+  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  points: 45, color: "#8A9AA8" },
+  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", points: 34, color: "#6F7D3C" },
+  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           points: 30, color: "#737C86" },
+  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   points: 14, color: "#D8B35D" },
   { id: "plastic",   icon: "🧴", zh: "塑料",   ms: "Plastik",        points: 10, color: "#45A8C7" },
-  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           points: 15, color: "#737C86" },
+  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         points: 8,  color: "#8DB580" },
   { id: "cardboard", icon: "📦", zh: "纸皮",   ms: "Kotak kadbod",   points: 6,  color: "#B07A42" },
-  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         points: 5,  color: "#8DB580" },
 ];
 
 const DEFAULT_TEAMS = [
@@ -63,6 +64,7 @@ const DEFAULT_SESSION_ID = "session_1";
 function defaultState() {
   return {
     version: 2,
+    scoringVersion: SCORING_VERSION,
     categories: clone(DEFAULT_CATEGORIES),
     teams: clone(DEFAULT_TEAMS),
     sessions: [
@@ -98,7 +100,8 @@ function normalizeState(input) {
   const base = defaultState();
   const state = { ...base, ...input, version: 2 };
 
-  state.categories = normalizeCategories(input.categories || base.categories);
+  state.categories = normalizeCategories(input.categories || base.categories, input.scoringVersion === SCORING_VERSION);
+  state.scoringVersion = SCORING_VERSION;
   state.teams = normalizeTeams(input.teams || base.teams);
   state.sessions = Array.isArray(input.sessions) && input.sessions.length ? input.sessions : base.sessions;
   state.activeSessionId = input.activeSessionId || state.sessions[0].id;
@@ -125,7 +128,7 @@ function normalizeState(input) {
   return state;
 }
 
-function normalizeCategories(categories) {
+function normalizeCategories(categories, keepExistingPoints = false) {
   const byId = new Map();
   categories.forEach(c => {
     const id = mapLegacyCategory(c.id);
@@ -133,7 +136,7 @@ function normalizeCategories(categories) {
   });
   return DEFAULT_CATEGORIES.map(def => {
     const existing = byId.get(def.id);
-    return existing ? { ...def, points: Number(existing.points) || def.points } : { ...def };
+    return existing && keepExistingPoints ? { ...def, points: Number(existing.points) || def.points } : { ...def };
   });
 }
 
@@ -214,6 +217,7 @@ function removeSession(state, sessionId) {
 function updateCategories(state, categories) {
   const next = {
     ...state,
+    scoringVersion: SCORING_VERSION,
     categories,
     weighIns: state.weighIns.map(w => recalcWeighIn(categories, w)),
   };
@@ -315,6 +319,7 @@ function resetSeason(state) {
   const fresh = defaultState();
   fresh.categories = state.categories;
   fresh.teams = state.teams;
+  fresh.scoringVersion = SCORING_VERSION;
   save(fresh);
   return fresh;
 }

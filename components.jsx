@@ -34,7 +34,7 @@ function SchoolStamp({ size = 60, light = false }) {
 function ModeSwitcher({ mode, setMode }) {
   const modes = [
     { id: "mobile",    icon: "📝", zh: "录入", ms: "Input" },
-    { id: "bigscreen", icon: "🖥️", zh: "大屏", ms: "Skrin" },
+    { id: "status",    icon: "📊", zh: "战况", ms: "Status" },
     { id: "admin",     icon: "⚙️", zh: "管理", ms: "Admin" },
   ];
   return (
