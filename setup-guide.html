@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Supabase 设置指南 · 环保小兵</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  body { overflow: auto; }
+  #root { height: auto; min-height: 100vh; }
+  .guide {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 50px 28px 80px;
+    background:
+      radial-gradient(ellipse at top, #C8F0DC 0%, transparent 50%),
+      var(--bg-warm);
+    min-height: 100vh;
+  }
+  .guide .hero { text-align: center; margin-bottom: 40px; }
+  .guide .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 42px;
+    margin: 12px 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .guide .hero h1 .zh { font-family: "ZCOOL KuaiLe", var(--font-display);}
+  .guide .hero .sub { color: var(--ink-soft); font-size: 15px; font-weight: 600;}
+  .guide .hero .time-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--eco-green); color: white;
+    border: 2px solid var(--ink); border-radius: 99px;
+    padding: 5px 14px; font-family: var(--font-display); font-weight: 700;
+    font-size: 12px; margin-top: 12px; box-shadow: 0 3px 0 var(--ink);
+  }
+  .step-card {
+    background: white; border: 3px solid var(--ink); border-radius: 22px;
+    padding: 26px 28px; margin-bottom: 22px;
+    box-shadow: 0 5px 0 var(--ink); position: relative;
+  }
+  .step-card .num {
+    position: absolute; top: -18px; left: 24px;
+    background: var(--eco-green); color: white;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 22px;
+  }
+  .step-card h2 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 22px; margin: 6px 0 4px; color: var(--ink);
+  }
+  .step-card .ms-h2 {
+    font-family: var(--font-display); font-size: 14px;
+    color: var(--ink-mute); font-weight: 600;
+    margin: 0 0 14px; letter-spacing: 0.04em;
+  }
+  .step-card p {
+    color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin: 8px 0;
+  }
+  .step-card p .ms { display: block; font-size: 13px; opacity: 0.7; margin-top: 2px;}
+  .url-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--bg-cream); border: 2px solid var(--ink);
+    padding: 8px 14px; border-radius: 99px;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-weight: 700; font-size: 14px;
+    margin: 8px 0; color: var(--ink); text-decoration: none;
+    box-shadow: 0 3px 0 var(--ink); transition: all 100ms;
+  }
+  .url-pill:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--ink);}
+  .tip {
+    background: rgba(255,180,0,0.18); border: 2px solid var(--gold);
+    border-radius: 12px; padding: 10px 14px; margin: 12px 0;
+    font-size: 13px; color: var(--ink-soft); font-weight: 600;
+    display: flex; gap: 8px; line-height: 1.5;
+  }
+  .tip .icon { font-size: 18px; flex-shrink: 0;}
+  .tip.warn { background: rgba(255,107,53,0.12); border-color: var(--dragon);}
+  .tip.success { background: rgba(111,207,126,0.2); border-color: var(--eco-deep);}
+  .code-block {
+    background: var(--ink); color: #B8E0FF;
+    border-radius: 14px; padding: 18px 20px; margin: 14px 0;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 12.5px; line-height: 1.6; overflow-x: auto;
+    border: 3px solid var(--ink); box-shadow: 0 4px 0 rgba(20,18,40,0.4);
+    position: relative;
+  }
+  .code-block .key { color: #FFC93C; }
+  .code-block .str { color: #6FCF7E; }
+  .code-block .comment { color: #8884A1; font-style: italic; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,0.1); color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 4px 10px; font-size: 11px;
+    font-family: var(--font-display); cursor: pointer;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.25);}
+  .checklist { list-style: none; padding: 0; margin: 12px 0;}
+  .checklist li {
+    padding: 8px 0 8px 32px; position: relative;
+    color: var(--ink-soft); font-size: 14px; line-height: 1.55;
+  }
+  .checklist li::before {
+    content: "✓"; position: absolute;
+    left: 0; top: 7px; width: 22px; height: 22px;
+    background: var(--eco-green); color: white;
+    border-radius: 50%; border: 2px solid var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .field-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    margin: 12px 0; border-radius: 12px; overflow: hidden;
+    border: 2px solid var(--ink);
+  }
+  .field-table th, .field-table td {
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid rgba(20,18,40,0.1);
+    font-size: 14px;
+  }
+  .field-table th {
+    background: var(--ink); color: var(--bg-warm);
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .field-table tr:last-child td { border-bottom: none;}
+  .field-table td:first-child { font-family: var(--font-display); font-weight: 700; width: 40%; }
+  .field-table code {
+    background: var(--bg-cream); padding: 2px 8px;
+    border-radius: 6px; font-size: 13px;
+    border: 1px solid rgba(20,18,40,0.15);
+  }
+  .final-card {
+    background: linear-gradient(135deg, var(--eco-green), var(--lion));
+    color: white; text-align: center; border-color: var(--ink);
+  }
+  .final-card h2, .final-card .ms-h2 { color: white; }
+  .final-card p { color: rgba(255,255,255,0.95);}
+  .final-card .big-emoji { font-size: 64px; line-height: 1; margin: 4px 0;}
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--ink-soft); text-decoration: none;
+    font-family: var(--font-display); font-weight: 600;
+    font-size: 13px; margin-bottom: 20px;
+  }
+  .back-link:hover { color: var(--ink);}
+  .send-card {
+    background: var(--ink); color: var(--bg-warm); border-color: var(--gold);
+    box-shadow: 0 5px 0 var(--gold);
+  }
+  .send-card .num { background: var(--gold); color: var(--ink); border-color: var(--ink);}
+  .send-card h2 { color: white;}
+  .send-card p { color: rgba(255,255,255,0.85);}
+  .send-card .example {
+    background: rgba(255,255,255,0.08);
+    border: 2px dashed rgba(255,255,255,0.3);
+    border-radius: 12px; padding: 14px 18px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px; color: #B8E0FF;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="guide">
+  <a href="index.html" class="back-link">← 返回 app · Kembali</a>
+
+  <div class="hero">
+    <img src="assets/school-logo.jpg" alt="logo" style="width:60px; height:60px; border-radius:50%; border:3px solid var(--ink); box-shadow:0 3px 0 var(--ink);" />
+    <h1><span class="zh">云同步设置指南</span></h1>
+    <div class="sub">Panduan Sediakan Supabase · Cloud Sync Setup</div>
+    <div class="time-pill">⏱ 大约 5 分钟 · ~5 minit</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step-card">
+    <div class="num">1</div>
+    <h2>建立 Supabase 项目</h2>
+    <div class="ms-h2">Buat projek Supabase</div>
+    <a class="url-pill" href="https://supabase.com/dashboard/organizations" target="_blank">🔗 supabase.com/dashboard</a>
+    <ul class="checklist">
+      <li>登入你的 Supabase 账号</li>
+      <li>点选你的 organization（比如 "Keane Teow"）</li>
+      <li>右上角点 <strong>"New Project"</strong>（绿色按钮）</li>
+    </ul>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-card">
+    <div class="num">2</div>
+    <h2>填项目资料</h2>
+    <div class="ms-h2">Isi maklumat projek</div>
+    <table class="field-table">
+      <thead><tr><th>字段 · Field</th><th>填什么 · Nilai</th></tr></thead>
+      <tbody>
+        <tr><td>Project Name</td><td><code>eco-warrior-belemang</code></td></tr>
+        <tr><td>Database Password</td><td>点 <strong>Generate</strong> 自动生成 → 复制保存</td></tr>
+        <tr><td>Region</td><td><strong>Southeast Asia (Singapore)</strong> ← 最快</td></tr>
+        <tr><td>Pricing Plan</td><td><strong>Free</strong></td></tr>
+      </tbody>
+    </table>
+    <p>→ 点 <strong>"Create new project"</strong> → 等约 2 分钟</p>
+    <div class="tip"><span class="icon">💾</span><span>密码保存好就行 —— app 用不到，是 Supabase 自己保管。</span></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-card">
+    <div class="num">3</div>
+    <h2>建立数据表</h2>
+    <div class="ms-h2">Cipta jadual pangkalan data</div>
+    <p>项目跑好后：左边栏 <strong>"SQL Editor"</strong> → <strong>"New query"</strong></p>
+    <p>把下面整段 SQL 贴进去 → 点右下 <strong>"Run"</strong>：</p>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">复制 · Salin</button><span class="comment">-- 建一张表来存所有数据</span>
+<span class="key">create table</span> app_state (
+  id <span class="key">text primary key</span>,
+  data <span class="key">jsonb</span>,
+  updated_at <span class="key">timestamptz default</span> now()
+);
+
+<span class="key">insert into</span> app_state (id, data)
+  <span class="key">values</span> (<span class="str">'main'</span>, <span class="str">'{}'</span>::jsonb);
+
+<span class="comment">-- 开放读写（app 自己管理登入）</span>
+<span class="key">alter table</span> app_state <span class="key">enable row level security</span>;
+<span class="key">create policy</span> <span class="str">"allow_all"</span> <span class="key">on</span> app_state
+  <span class="key">for all using</span> (<span class="key">true</span>) <span class="key">with check</span> (<span class="key">true</span>);
+
+<span class="comment">-- 开启实时推送</span>
+<span class="key">alter publication</span> supabase_realtime <span class="key">add table</span> app_state;</div>
+    <div class="tip success"><span class="icon">✅</span><span>跑成功会看到 <strong>"Success. No rows returned"</strong> · Berjaya</span></div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step-card">
+    <div class="num">4</div>
+    <h2>拿 API 配置</h2>
+    <div class="ms-h2">Dapatkan API config</div>
+    <ul class="checklist">
+      <li>左下角齿轮 ⚙️ <strong>"Project Settings"</strong></li>
+      <li>左边二级菜单 → <strong>"API"</strong></li>
+      <li>复制两个值：
+        <table class="field-table" style="margin-top:8px;">
+          <tbody>
+            <tr><td>Project URL</td><td><code>https://xxxxx.supabase.co</code></td></tr>
+            <tr><td>anon public key</td><td>一长串 <code>eyJhbGciOi...</code></td></tr>
+          </tbody>
+        </table>
+      </li>
+    </ul>
+    <div class="tip warn"><span class="icon">⚠️</span><span>只要 <strong>anon public</strong>！不要拿 <strong>service_role</strong>（那是管理员密钥，不能放前端）· Hanya anon public, JANGAN service_role</span></div>
+  </div>
+
+  <!-- STEP 5 — SEND TO CLAUDE -->
+  <div class="step-card send-card">
+    <div class="num">5</div>
+    <h2>发给我</h2>
+    <div class="ms-h2" style="color:rgba(255,255,255,0.8);">Hantar kepada saya</div>
+    <p>把那两个值贴到聊天框里，发给我，像这样：</p>
+    <div class="example">URL: https://xxxxxxxx.supabase.co
+Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+（一长串）</div>
+    <p style="margin-top:14px;">我装上后云同步立即启动 ✨</p>
+  </div>
+
+  <!-- FINAL -->
+  <div class="step-card final-card">
+    <div class="big-emoji">🎉</div>
+    <h2>装好后会怎样？</h2>
+    <div class="ms-h2">Apa selepas pasang?</div>
+    <ul class="checklist" style="text-align:left; display:inline-block;">
+      <li>老师 A 手机录入分数 → 大屏 <strong>1-2 秒内</strong>自动更新</li>
+      <li>多个老师同时录入，互不冲突</li>
+      <li>校长在家里打开 link 也能看实时分数</li>
+      <li>数据自动备份到 Supabase 云端</li>
+      <li>app 右上角显示 <strong>"☁ 云同步中"</strong> 绿点</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center; margin-top:30px;">
+    <a class="chunky-btn primary" href="index.html" style="text-decoration:none; display:inline-flex;">← 返回 app · Kembali</a>
+  </div>
+
+  <div style="text-align:center; margin-top:40px; color:var(--ink-mute); font-size:12px; font-weight:600;">
+    文林望中华学校 · SJK(C) Chung Hwa Belemang<br/>
+    环保小兵 · Eco Warrior League · 2026
+  </div>
+</div>
+
+<script>
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.innerText.replace(/^复制 · Salin\n?/, "").trim();
+  navigator.clipboard.writeText(text);
+  const orig = btn.innerText;
+  btn.innerText = "✓ 已复制";
+  setTimeout(() => btn.innerText = orig, 1500);
+}
+</script>
+</body>
+</html>
