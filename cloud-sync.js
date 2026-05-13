@@ -11,6 +11,9 @@ const CloudSync = {
   listeners: new Set(),
   pendingWrite: null,
   writeTimer: null,
+  applyingRemote: false,
+  lastAppliedRemoteAt: 0,
+  lastLocalChangeAt: 0,
   STATE_KEY: "main",
 
   // ── Observer pattern for state changes ───────────────────
@@ -52,7 +55,7 @@ const CloudSync = {
       // Initial fetch
       const { data, error } = await this.client
         .from("app_state")
-        .select("data")
+        .select("data, updated_at")
         .eq("id", this.STATE_KEY)
         .single();
 
@@ -61,8 +64,7 @@ const CloudSync = {
         throw error;
       }
       if (data && data.data && Object.keys(data.data).length > 0) {
-        EcoData.save(data.data);  // mirror to localStorage
-        this.emit(data.data);
+        this.applyRemote(data.data, data.updated_at, true);
       } else {
         // Cloud is empty — seed from local
         const local = EcoData.load();
@@ -77,8 +79,7 @@ const CloudSync = {
           (payload) => {
             const newState = payload.new?.data;
             if (newState && Object.keys(newState).length > 0) {
-              EcoData.save(newState);
-              this.emit(newState);
+              this.applyRemote(newState, payload.new?.updated_at);
             }
           }
         )
@@ -100,6 +101,31 @@ const CloudSync = {
     }
   },
 
+  remoteTime(updatedAt) {
+    const ms = Date.parse(updatedAt || "");
+    return Number.isFinite(ms) ? ms : Date.now();
+  },
+
+  shouldApplyRemote(remoteMs) {
+    if (remoteMs <= this.lastAppliedRemoteAt) return false;
+    if (this.lastLocalChangeAt && remoteMs < this.lastLocalChangeAt - 100) return false;
+    return true;
+  },
+
+  applyRemote(state, updatedAt, force = false) {
+    const remoteMs = this.remoteTime(updatedAt);
+    if (!force && !this.shouldApplyRemote(remoteMs)) return;
+
+    this.lastAppliedRemoteAt = Math.max(this.lastAppliedRemoteAt, remoteMs);
+    this.applyingRemote = true;
+    try {
+      EcoData.save(state);  // mirror to localStorage without echoing back to Supabase
+      this.emit(state);
+    } finally {
+      this.applyingRemote = false;
+    }
+  },
+
   loadScript(src) {
     return new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[src="${src}"]`);
@@ -115,23 +141,28 @@ const CloudSync = {
   // Debounced write
   push(state) {
     if (this.mode !== "cloud") return;
+    this.lastLocalChangeAt = Date.now();
     this.pendingWrite = state;
     clearTimeout(this.writeTimer);
     this.writeTimer = setTimeout(() => {
-      if (this.pendingWrite) this.writeNow(this.pendingWrite);
-      this.pendingWrite = null;
+      if (this.pendingWrite) {
+        const stateToWrite = this.pendingWrite;
+        this.pendingWrite = null;
+        this.writeNow(stateToWrite);
+      }
     }, 350);
   },
 
   async writeNow(state) {
     if (!this.client) return;
+    const updatedAt = new Date().toISOString();
     try {
       const { error } = await this.client
         .from("app_state")
         .upsert({
           id: this.STATE_KEY,
           data: state,
-          updated_at: new Date().toISOString(),
+          updated_at: updatedAt,
         });
       if (error) throw error;
     } catch (e) {

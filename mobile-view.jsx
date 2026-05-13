@@ -1,13 +1,44 @@
 // 老师录入 view — session, team weights, member brought/not brought
 
-const { useState: useStateM, useMemo: useMemoM } = React;
+const { useState: useStateM, useMemo: useMemoM, useEffect: useEffectM } = React;
+
+function weightDraftKey(sessionId, teamId, categoryId) {
+  return `${sessionId}:${teamId}:${categoryId}`;
+}
+
+function parseWeightDraft(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === "." || text.endsWith(".")) return null;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : null;
+}
+
+function parseWeightCommit(value) {
+  const text = String(value ?? "").trim();
+  if (!text || text === ".") return 0;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function normalizeWeightInput(value) {
+  return String(value ?? "").replace(",", ".");
+}
+
+function isWeightInputAllowed(value) {
+  return /^(\d+(\.\d*)?|\.\d*)?$/.test(value);
+}
 
 function MobileView({ state, setState }) {
   const session = EcoData.activeSession(state);
   const [teamId, setTeamId] = useStateM(state.teams[0]?.id);
+  const [draftWeights, setDraftWeights] = useStateM({});
   const team = state.teams.find(t => t.id === teamId) || state.teams[0];
   const sessionScores = useMemoM(() => EcoData.sessionStats(state, session.id), [state, session.id]);
   const selectedStats = EcoData.sessionTeamStats(state, session.id, team.id);
+
+  useEffectM(() => {
+    setDraftWeights({});
+  }, [session.id, team.id]);
 
   function setSession(id) {
     setState(EcoData.setActiveSession(state, id));
@@ -20,7 +51,27 @@ function MobileView({ state, setState }) {
   }
 
   function changeWeight(categoryId, value) {
-    setState(EcoData.updateWeighIn(state, session.id, team.id, categoryId, value));
+    const normalized = normalizeWeightInput(value);
+    if (!isWeightInputAllowed(normalized)) return;
+
+    const key = weightDraftKey(session.id, team.id, categoryId);
+    setDraftWeights(drafts => ({ ...drafts, [key]: normalized }));
+
+    const parsed = parseWeightDraft(normalized);
+    if (parsed !== null) {
+      setState(current => EcoData.updateWeighIn(current, session.id, team.id, categoryId, parsed));
+    }
+  }
+
+  function commitWeight(categoryId, value) {
+    const key = weightDraftKey(session.id, team.id, categoryId);
+    const parsed = parseWeightCommit(normalizeWeightInput(value));
+    setState(current => EcoData.updateWeighIn(current, session.id, team.id, categoryId, parsed));
+    setDraftWeights(drafts => {
+      const next = { ...drafts };
+      delete next[key];
+      return next;
+    });
   }
 
   function markMember(memberId, brought) {
@@ -79,6 +130,8 @@ function MobileView({ state, setState }) {
             {state.categories.map(cat => {
               const kg = EcoData.getWeight(state, session.id, team.id, cat.id);
               const value = Math.round(kg * cat.points);
+              const draftKey = weightDraftKey(session.id, team.id, cat.id);
+              const hasDraft = Object.prototype.hasOwnProperty.call(draftWeights, draftKey);
               return (
                 <div className="weight-row" key={cat.id}>
                   <div className="cat-label">
@@ -87,13 +140,13 @@ function MobileView({ state, setState }) {
                     <small>RM {fmt(cat.price, 2)}/kg</small>
                   </div>
                   <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
                     inputMode="decimal"
-                    value={kg || ""}
+                    pattern="[0-9]*[.]?[0-9]*"
+                    value={hasDraft ? draftWeights[draftKey] : (kg || "")}
                     placeholder="0.00"
                     onChange={e => changeWeight(cat.id, e.target.value)}
+                    onBlur={e => commitWeight(cat.id, e.target.value)}
                   />
                   <div className="row-points">{fmtRM(value)}</div>
                 </div>
