@@ -2,8 +2,7 @@
 
 const { useState, useEffect, useRef, useMemo } = React;
 
-// Bilingual text rendering
-function BL({ zh, ms, sep = " · " }) {
+function BL({ zh, ms }) {
   return (
     <span className="lang-stack">
       <span className="zh">{zh}</span>
@@ -16,23 +15,25 @@ function BLinline({ zh, ms }) {
   return <span>{zh}<span style={{opacity:0.55, fontWeight:500, marginLeft:6, fontSize:'0.78em'}}>{ms}</span></span>;
 }
 
-// School identity stamp (logo + name)
-function SchoolStamp({ size = 36, light = false }) {
+function SchoolStamp({ size = 60, light = false }) {
   return (
-    <div className="school-stamp" style={{display:'inline-flex', alignItems:'center', gap:10, color: light ? 'rgba(255,255,255,0.85)' : 'var(--ink-soft)'}}>
-      <img src="assets/school-logo.jpg" alt="SJK(C) Chung Hwa Belemang" style={{width:size, height:size, borderRadius:'50%', objectFit:'cover', boxShadow: light ? '0 0 0 2px rgba(255,255,255,0.3)' : '0 2px 6px rgba(20,18,40,0.15)'}} />
+    <div className="school-stamp" style={{display:'inline-flex', alignItems:'center', gap:12, color: light ? 'rgba(255,255,255,0.9)' : 'var(--ink-soft)'}}>
+      <img
+        src="logo LATEST.jpg"
+        alt="SJK(C) Chung Hwa Belemang"
+        style={{width:size, height:size, borderRadius:'50%', objectFit:'contain', background:'white'}}
+      />
       <div style={{display:'flex', flexDirection:'column', lineHeight:1.1, fontFamily:'var(--font-display)'}}>
-        <span style={{fontWeight:700, fontSize: size > 40 ? 15 : 12, fontFamily:'"ZCOOL KuaiLe", var(--font-display)', letterSpacing:'0.04em'}}>文林望中华学校</span>
-        <span style={{fontSize: size > 40 ? 9 : 8, opacity:0.7, letterSpacing:'0.12em', fontWeight:600, marginTop:1}}>SJK(C) CHUNG HWA BELEMANG</span>
+        <span style={{fontWeight:700, fontSize: size > 56 ? 18 : 14, fontFamily:'"ZCOOL KuaiLe", var(--font-display)', letterSpacing:'0.04em'}}>文林望中华学校</span>
+        <span style={{fontSize: size > 56 ? 11 : 9, opacity:0.72, letterSpacing:'0.12em', fontWeight:600, marginTop:2}}>SJK(C) CHUNG HWA BELEMANG</span>
       </div>
     </div>
   );
 }
 
-// Mode switcher (top-left)
 function ModeSwitcher({ mode, setMode }) {
   const modes = [
-    { id: "mobile",    icon: "📱", zh: "录入", ms: "Input" },
+    { id: "mobile",    icon: "📝", zh: "录入", ms: "Input" },
     { id: "bigscreen", icon: "🖥️", zh: "大屏", ms: "Skrin" },
     { id: "admin",     icon: "⚙️", zh: "管理", ms: "Admin" },
   ];
@@ -48,7 +49,6 @@ function ModeSwitcher({ mode, setMode }) {
   );
 }
 
-// Confetti burst
 function Confetti({ active, colors = ["#FF6B35","#FFC93C","#2EC4B6","#88E5FF","#6FCF7E","#FFB400"] }) {
   if (!active) return null;
   const pieces = Array.from({length: 60}, (_, i) => ({
@@ -73,10 +73,10 @@ function Confetti({ active, colors = ["#FF6B35","#FFC93C","#2EC4B6","#88E5FF","#
   );
 }
 
-// Format helpers
 function fmt(n, digits = 0) {
-  return Number(n).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
+
 function relTime(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
   if (s < 60) return s + "s";

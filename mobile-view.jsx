@@ -1,201 +1,133 @@
-// 手机录入 view — pick team, pick category, enter weight, submit
+// 老师录入 view — session, team weights, member brought/not brought
 
-const { useState: useStateM, useRef: useRefM, useEffect: useEffectM } = React;
+const { useState: useStateM, useMemo: useMemoM } = React;
 
 function MobileView({ state, setState }) {
-  const [teamId, setTeamId] = useStateM(null);
-  const [catId, setCatId] = useStateM(null);
-  const [kg, setKg] = useStateM(0);
-  const [celebrate, setCelebrate] = useStateM(null);
+  const session = EcoData.activeSession(state);
+  const [teamId, setTeamId] = useStateM(state.teams[0]?.id);
+  const team = state.teams.find(t => t.id === teamId) || state.teams[0];
+  const sessionScores = useMemoM(() => EcoData.sessionStats(state, session.id), [state, session.id]);
+  const selectedStats = EcoData.sessionTeamStats(state, session.id, team.id);
 
-  const team = state.teams.find(t => t.id === teamId);
-  const cat = state.categories.find(c => c.id === catId);
-  const score = cat ? Math.round(kg * cat.points) : 0;
-  const ready = team && cat && kg > 0;
-
-  function addKg(d) {
-    setKg(prev => Math.max(0, +(prev + d).toFixed(2)));
+  function setSession(id) {
+    setState(EcoData.setActiveSession(state, id));
   }
 
-  function submit() {
-    if (!ready) return;
-    const { state: next, entry } = EcoData.addEntry(state, teamId, catId, kg);
-    setState(next);
-    setCelebrate({ entry, team, cat });
-    // auto dismiss after 2.6s
-    setTimeout(() => {
-      setCelebrate(null);
-      setKg(0);
-      setCatId(null);
-      // keep team selected for fast re-entry
-    }, 2600);
+  function addSession() {
+    const name = window.prompt("新 Session 名称，例如：第二次", `第${state.sessions.length + 1}次`);
+    if (!name) return;
+    setState(EcoData.addSession(state, name.trim()));
   }
 
-  function reset() {
-    setTeamId(null);
-    setCatId(null);
-    setKg(0);
+  function changeWeight(categoryId, value) {
+    setState(EcoData.updateWeighIn(state, session.id, team.id, categoryId, value));
+  }
+
+  function markMember(memberId, brought) {
+    setState(EcoData.setAttendance(state, session.id, memberId, brought));
   }
 
   return (
-    <div className="mobile-view">
-      <div className="mobile-frame">
-
-        <div style={{display:'flex', justifyContent:'center', marginBottom:-6}}>
-          <SchoolStamp size={32} />
+    <div className="mobile-view teacher-entry">
+      <div className="mobile-frame teacher-frame">
+        <div style={{display:'flex', justifyContent:'center', marginBottom:10}}>
+          <SchoolStamp size={72} />
         </div>
 
-        <div className="mobile-header">
-          <h1><span className="zh">环保小兵</span></h1>
-          <p>Eco Warrior · Pejuang Hijau</p>
+        <div className="mobile-header compact">
+          <h1><span className="zh">老师录入</span></h1>
+          <p>重量、分数、组员有带/没带</p>
         </div>
 
-        {/* STEP 1 — TEAM */}
-        <div className="step-pill">
-          <span>{teamId ? "✓" : "1"}</span>
-          <BLinline zh="选队伍" ms="Pilih pasukan" />
+        <div className="session-bar">
+          <label>
+            <span>Session</span>
+            <select value={session.id} onChange={e => setSession(e.target.value)}>
+              {state.sessions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </label>
+          <button className="chunky-btn" onClick={addSession}>+ 新增</button>
         </div>
-        <div className="team-pick">
-          {state.teams.map(t => (
-            <div key={t.id}
-                 className={`team-card ${t.id === "dragons" ? "dragon" : "lion"} ${teamId===t.id?"selected":""}`}
-                 onClick={() => setTeamId(t.id)}>
-              <div className="icon-bg">{t.icon}</div>
-              <div className="icon">{t.icon}</div>
-              <div className="name">
+
+        <div className="session-score-row">
+          {state.teams.map(t => {
+            const stats = sessionScores.stats[t.id];
+            return (
+              <button
+                key={t.id}
+                className={`session-team-card ${t.id} ${team.id === t.id ? "active" : ""}`}
+                onClick={() => setTeamId(t.id)}
+              >
+                <span className="team-mini">{t.icon}</span>
                 <span>{t.zh}</span>
-                <span className="ms">{t.ms}</span>
-              </div>
-            </div>
-          ))}
+                <b>{fmt(stats.points)} pts</b>
+              </button>
+            );
+          })}
         </div>
 
-        {/* STEP 2 — CATEGORY (only after team) */}
-        {teamId && (
-          <>
-            <div className="step-pill">
-              <span>{catId ? "✓" : "2"}</span>
-              <BLinline zh="选废品" ms="Pilih bahan" />
+        <div className="entry-panel">
+          <div className="panel-title">
+            <div>
+              <strong>{team.icon} {team.zh}</strong>
+              <span>组长：{team.leader}</span>
             </div>
-            <div className="category-grid">
-              {state.categories.map(c => (
-                <div key={c.id}
-                     className={`cat-tile ${catId===c.id?"selected":""}`}
-                     onClick={() => setCatId(c.id)}>
-                  <div className="cat-icon">{c.icon}</div>
-                  <div className="cat-name">
-                    <span>{c.zh}</span>
-                    <span className="ms">{c.ms}</span>
-                  </div>
-                  <div className="cat-pts">{c.points} pts/kg</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* STEP 3 — WEIGHT (only after cat) */}
-        {teamId && catId && (
-          <>
-            <div className="step-pill">
-              <span>{kg > 0 ? "✓" : "3"}</span>
-              <BLinline zh="输入重量" ms="Masukkan berat" />
-            </div>
-            <div className="weight-panel">
-              <div className="weight-display">
-                <div className="num">{kg.toFixed(2)}</div>
-                <div className="unit">kg</div>
-              </div>
-
-              <div className="weight-controls">
-                <button className="weight-btn minus" onClick={() => addKg(-1)}>−1</button>
-                <button className="weight-btn minus" onClick={() => addKg(-0.1)}>−0.1</button>
-                <button className="weight-btn plus"  onClick={() => addKg(0.1)}>+0.1</button>
-                <button className="weight-btn plus"  onClick={() => addKg(1)}>+1</button>
-              </div>
-              <div className="weight-controls" style={{gridTemplateColumns:'1fr 1fr 1fr', marginTop:8}}>
-                <button className="weight-btn" onClick={() => setKg(0.5)}>0.5</button>
-                <button className="weight-btn" onClick={() => setKg(1)}>1.0</button>
-                <button className="weight-btn zero" onClick={() => setKg(0)}>RESET</button>
-              </div>
-
-              <div className="score-preview">
-                <div className="label"><BLinline zh="可得分" ms="Markah" /></div>
-                <div className="value">{fmt(score)}<sup>pts</sup></div>
-              </div>
-            </div>
-          </>
-        )}
-
-        <div style={{display:'flex', gap:10, marginTop:6}}>
-          <button className="chunky-btn" onClick={reset} style={{flex:'0 0 auto', fontSize:14, padding:'12px 16px'}}>
-            ↺
-          </button>
-          <button className={`chunky-btn primary`}
-                  disabled={!ready}
-                  style={{flex:1, justifyContent:'center', fontSize:20}}
-                  onClick={submit}>
-            <BLinline zh="提交" ms="Hantar" />
-            <span>🚀</span>
-          </button>
-        </div>
-
-        {/* recent entries by this team — small list at bottom */}
-        {teamId && (
-          <RecentForTeam state={state} teamId={teamId} />
-        )}
-      </div>
-
-      {celebrate && <CelebrationPopup info={celebrate} onClose={() => { setCelebrate(null); setKg(0); setCatId(null); }} />}
-      {celebrate && <Confetti active={true} />}
-    </div>
-  );
-}
-
-function RecentForTeam({ state, teamId }) {
-  const rows = state.entries
-    .filter(e => e.teamId === teamId)
-    .slice(-3).reverse();
-  if (rows.length === 0) return null;
-  return (
-    <div style={{marginTop:14, padding:'12px 14px', background:'rgba(255,255,255,0.5)', borderRadius:14, border:'2px solid rgba(20,18,40,0.08)'}}>
-      <div style={{fontFamily:'var(--font-display)', fontSize:11, letterSpacing:'0.16em', textTransform:'uppercase', color:'var(--ink-mute)', fontWeight:700, marginBottom:8}}>
-        最近记录 · Terkini
-      </div>
-      {rows.map(e => {
-        const c = state.categories.find(x => x.id === e.categoryId);
-        return (
-          <div key={e.id} style={{display:'flex', alignItems:'center', gap:8, padding:'4px 0', fontSize:13, fontWeight:600}}>
-            <span style={{fontSize:18}}>{c?.icon}</span>
-            <span>{c?.zh}</span>
-            <span style={{color:'var(--ink-mute)'}}>{e.kg}kg</span>
-            <span style={{marginLeft:'auto', fontFamily:'var(--font-display)', fontWeight:700, color:'var(--eco-deep)'}}>+{e.points}</span>
+            <div className="total-badge">{fmt(selectedStats.kg, 2)} kg · {fmt(selectedStats.points)} pts</div>
           </div>
-        );
-      })}
-    </div>
-  );
-}
 
-function CelebrationPopup({ info, onClose }) {
-  const { entry, team, cat } = info;
-  return (
-    <div className="celebration" onClick={onClose}>
-      <div className="card">
-        <div className="big-icon">{team.icon}</div>
-        <div style={{fontFamily:'var(--font-display)', fontWeight:700, fontSize:22, marginTop:4, color: team.id==='dragons'?'var(--dragon-deep)':'var(--lion-deep)'}}>
-          {team.zh} <span style={{fontSize:13, opacity:0.6}}>{team.ms}</span>
+          <div className="weight-grid">
+            {state.categories.map(cat => {
+              const kg = EcoData.getWeight(state, session.id, team.id, cat.id);
+              const pts = Math.round(kg * cat.points);
+              return (
+                <div className="weight-row" key={cat.id}>
+                  <div className="cat-label">
+                    <span className="cat-icon">{cat.icon}</span>
+                    <span>{cat.zh}</span>
+                    <small>{cat.points} pts/kg</small>
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    value={kg || ""}
+                    placeholder="0.00"
+                    onChange={e => changeWeight(cat.id, e.target.value)}
+                  />
+                  <div className="row-points">{fmt(pts)} pts</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <div style={{margin:'12px 0 4px', fontSize:14, color:'var(--ink-mute)', fontWeight:600}}>
-          {cat.icon} {cat.zh} · {entry.kg}kg
-        </div>
-        <div className="pts-burst">+{fmt(entry.points)}</div>
-        <div className="msg">
-          <span>积分！</span>
-          <span className="ms">Markah!</span>
-        </div>
-        <div style={{marginTop:14, fontSize:12, color:'var(--eco-deep)', fontWeight:700}}>
-          🌱 减少 {entry.co2} kg CO₂ · CO₂ dikurangkan
+
+        <div className="entry-panel">
+          <div className="panel-title">
+            <div>
+              <strong>组员记录</strong>
+              <span>累计两次没带，年终奖品取消</span>
+            </div>
+          </div>
+
+          <div className="member-list">
+            {team.members.map(member => {
+              const brought = EcoData.attendanceFor(state, session.id, member.id);
+              const report = EcoData.absenceReport(state).find(r => r.id === member.id);
+              return (
+                <div className={`member-row ${brought ? "brought" : "missing"}`} key={member.id}>
+                  <div className="member-name">
+                    <strong>{member.name}</strong>
+                    <small>累计没带 {report?.missedCount || 0} 次</small>
+                  </div>
+                  <div className="attendance-toggle">
+                    <button className={brought ? "active" : ""} onClick={() => markMember(member.id, true)}>有带</button>
+                    <button className={!brought ? "active danger" : ""} onClick={() => markMember(member.id, false)}>没带</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

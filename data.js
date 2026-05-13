@@ -1,142 +1,318 @@
-// 环保小兵 · Eco Warrior League — data layer
-// All persistence in localStorage. Single source of truth.
+// 环保小兵 · Eco Warrior League — competition data layer
+// Single source of truth: localStorage, optionally mirrored by CloudSync.
 
-const STORAGE_KEY = "eco_warrior_v1";
+const STORAGE_KEY = "eco_warrior_v2";
+const LEGACY_STORAGE_KEY = "eco_warrior_v1";
 
-// Default waste categories (point per kg, CO2 saved per kg)
-// Aluminum highest, glass lowest — typical school recycling values
 const DEFAULT_CATEGORIES = [
-  { id: "newspaper", icon: "📰", zh: "报纸",     ms: "Surat khabar", points: 10, co2: 3.5, color: "#F5C45E" },
-  { id: "cardboard", icon: "📦", zh: "纸皮",     ms: "Kotak kadbod",  points: 6,  co2: 3.3, color: "#C68B59" },
-  { id: "book",      icon: "📚", zh: "书本",     ms: "Buku lama",     points: 8,  co2: 2.9, color: "#8B6F47" },
-  { id: "plastic",   icon: "🧴", zh: "塑料瓶",   ms: "Botol plastik", points: 15, co2: 2.5, color: "#5BC0EB" },
-  { id: "aluminum",  icon: "🥫", zh: "铝罐",     ms: "Tin aluminium", points: 25, co2: 9.0, color: "#B8B8B8" },
-  { id: "steel",     icon: "🥡", zh: "铁罐",     ms: "Tin besi",      points: 12, co2: 1.8, color: "#7A8B99" },
-  { id: "glass",     icon: "🍾", zh: "玻璃瓶",   ms: "Botol kaca",    points: 4,  co2: 0.5, color: "#88D498" },
-  { id: "ewaste",    icon: "🔌", zh: "电子垃圾", ms: "E-sisa",        points: 20, co2: 2.0, color: "#A06CD5" },
+  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", points: 25, color: "#6F7D3C" },
+  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  points: 20, color: "#8A9AA8" },
+  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   points: 8,  color: "#D8B35D" },
+  { id: "plastic",   icon: "🧴", zh: "塑料",   ms: "Plastik",        points: 10, color: "#45A8C7" },
+  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           points: 15, color: "#737C86" },
+  { id: "cardboard", icon: "📦", zh: "纸皮",   ms: "Kotak kadbod",   points: 6,  color: "#B07A42" },
+  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         points: 5,  color: "#8DB580" },
 ];
 
 const DEFAULT_TEAMS = [
-  { id: "dragons", zh: "飞龙队", ms: "Pasukan Naga",  icon: "🐲", primary: "#FF6B35", glow: "#FFC93C" },
-  { id: "lions",   zh: "云狮队", ms: "Pasukan Singa", icon: "🦁", primary: "#2EC4B6", glow: "#88E5FF" },
+  {
+    id: "lions",
+    zh: "云狮组",
+    ms: "Kumpulan Singa Awan",
+    icon: "🦁",
+    primary: "#2EC4B6",
+    glow: "#88E5FF",
+    leader: "Queenie Lee Li Ying 李栎颖",
+    members: [
+      { id: "lions_low_li_en", name: "Low Li En 刘丽恩" },
+      { id: "lions_low_li_qing", name: "Low Li Qing 刘丽情" },
+      { id: "lions_low_jun_hao", name: "Low Jun Hao 刘均昊" },
+      { id: "lions_tan_jin_xian", name: "Tan Jin Xian 陈晋贤" },
+      { id: "lions_chan_yu_xun", name: "Chan Yu Xun 曾昱勋" },
+      { id: "lions_tan_yue_ying", name: "Tan Yue Ying 陈月營" },
+      { id: "lions_hugo_lee_jun_hong", name: "Hugo Lee Jun Hong 李唆竑" },
+      { id: "lions_queenie_lee_li_ying", name: "Queenie Lee Li Ying 李栎颖" },
+      { id: "lions_tee_ling_xian", name: "Tee Ling Xian 郑琳仙" },
+    ],
+  },
+  {
+    id: "dragons",
+    zh: "飞龙组",
+    ms: "Kumpulan Naga Terbang",
+    icon: "🐲",
+    primary: "#FF6B35",
+    glow: "#FFC93C",
+    leader: "Ong Xing Mei 王欣美",
+    members: [
+      { id: "dragons_lau_yan_tong", name: "Lau Yan Tong 刘妍彤" },
+      { id: "dragons_ong_xing_yi", name: "Ong Xing Yi 王欣依" },
+      { id: "dragons_lau_xin_yu", name: "Lau Xin Yu 刘欣瑜" },
+      { id: "dragons_lucas_lee_guan_teck", name: "Lucas Lee Guan Teck 李冠德" },
+      { id: "dragons_tee_joe_jian", name: "Tee Joe Jian 郑祖建" },
+      { id: "dragons_lau_yu_ze", name: "Lau Yu Ze 刘宇哲" },
+      { id: "dragons_lai_xuan_ning", name: "Lai Xuan Ning 赖萱宁" },
+      { id: "dragons_tee_jing_er", name: "Tee Jing Er 郑静娥" },
+      { id: "dragons_ong_xing_mei", name: "Ong Xing Mei 王欣美" },
+      { id: "dragons_tea_kai_ze", name: "Tea Kai Ze 赵凱泽" },
+    ],
+  },
 ];
 
-// Level milestones (each team levels up as they score)
-const LEVEL_STEP = 500;  // pts per level
-const LEVELS = [
-  { lv: 1, zh: "新手", ms: "Pemula" },
-  { lv: 2, zh: "巡逻员", ms: "Peronda" },
-  { lv: 3, zh: "护林员", ms: "Penjaga Hutan" },
-  { lv: 4, zh: "环保英雄", ms: "Wira Hijau" },
-  { lv: 5, zh: "地球守护者", ms: "Pelindung Bumi" },
-  { lv: 6, zh: "传奇大师", ms: "Sifu Legenda" },
-];
+const DEFAULT_SESSION_ID = "session_1";
 
 function defaultState() {
   return {
-    categories: DEFAULT_CATEGORIES,
-    teams: DEFAULT_TEAMS,
-    entries: [],  // { id, ts, teamId, categoryId, kg, points, co2 }
-    season: { startedAt: Date.now(), name: { zh: "2026 春季赛", ms: "Musim 2026" } },
+    version: 2,
+    categories: clone(DEFAULT_CATEGORIES),
+    teams: clone(DEFAULT_TEAMS),
+    sessions: [
+      { id: DEFAULT_SESSION_ID, name: "第一次", date: new Date().toISOString().slice(0, 10), locked: false },
+    ],
+    activeSessionId: DEFAULT_SESSION_ID,
+    weighIns: [],
+    attendance: [],
+    season: { startedAt: Date.now(), name: { zh: "2026 环保回收赛", ms: "Musim Kitar Semula 2026" } },
   };
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 function load() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seedDemo(defaultState());
-    const s = JSON.parse(raw);
-    // backfill missing fields
-    if (!s.categories) s.categories = DEFAULT_CATEGORIES;
-    if (!s.teams) s.teams = DEFAULT_TEAMS;
-    if (!s.entries) s.entries = [];
-    if (!s.season) s.season = defaultState().season;
-    return s;
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return saveAndReturn(defaultState());
+    return normalizeState(JSON.parse(raw));
   } catch (e) {
-    return seedDemo(defaultState());
+    return saveAndReturn(defaultState());
   }
 }
 
-function save(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  // Push to cloud if connected (data.js doesn't depend on CloudSync; soft check)
-  if (window.CloudSync && window.CloudSync.mode === "cloud") {
-    window.CloudSync.push(state);
-  }
-}
-
-// Seed plausible demo data on first load so big screen looks alive
-function seedDemo(state) {
-  const now = Date.now();
-  const days = 14;
-  const ents = [];
-  for (let i = 0; i < 38; i++) {
-    const cat = state.categories[Math.floor(Math.random() * state.categories.length)];
-    const team = Math.random() < 0.52 ? state.teams[0] : state.teams[1];
-    const kg = +(Math.random() * 4 + 0.2).toFixed(2);
-    ents.push({
-      id: "seed_" + i,
-      ts: now - Math.floor(Math.random() * days * 24 * 3600 * 1000),
-      teamId: team.id,
-      categoryId: cat.id,
-      kg,
-      points: Math.round(kg * cat.points),
-      co2: +(kg * cat.co2).toFixed(2),
-    });
-  }
-  ents.sort((a, b) => a.ts - b.ts);
-  state.entries = ents;
+function saveAndReturn(state) {
   save(state);
   return state;
 }
 
-// Score aggregation helpers
-function teamStats(state, teamId) {
-  const ents = state.entries.filter(e => e.teamId === teamId);
-  const points = ents.reduce((a, e) => a + e.points, 0);
-  const kg = ents.reduce((a, e) => a + e.kg, 0);
-  const co2 = ents.reduce((a, e) => a + e.co2, 0);
-  const level = Math.min(LEVELS.length, Math.max(1, Math.floor(points / LEVEL_STEP) + 1));
-  const progressInLevel = (points % LEVEL_STEP) / LEVEL_STEP;
-  return { points, kg, co2, count: ents.length, level, progressInLevel };
+function normalizeState(input) {
+  const base = defaultState();
+  const state = { ...base, ...input, version: 2 };
+
+  state.categories = normalizeCategories(input.categories || base.categories);
+  state.teams = normalizeTeams(input.teams || base.teams);
+  state.sessions = Array.isArray(input.sessions) && input.sessions.length ? input.sessions : base.sessions;
+  state.activeSessionId = input.activeSessionId || state.sessions[0].id;
+  if (!state.sessions.some(s => s.id === state.activeSessionId)) state.activeSessionId = state.sessions[0].id;
+
+  state.weighIns = Array.isArray(input.weighIns) ? input.weighIns : [];
+  if (!state.weighIns.length && Array.isArray(input.entries) && input.entries.length) {
+    state.weighIns = input.entries.map(e => ({
+      id: e.id || makeId("w"),
+      ts: e.ts || Date.now(),
+      sessionId: state.activeSessionId,
+      teamId: e.teamId,
+      categoryId: mapLegacyCategory(e.categoryId),
+      kg: Number(e.kg) || 0,
+      points: Number(e.points) || 0,
+    }));
+  }
+  state.weighIns = state.weighIns.map(w => recalcWeighIn(state.categories, w)).filter(w => w.kg > 0);
+  state.entries = state.weighIns;
+  state.attendance = Array.isArray(input.attendance) ? input.attendance : [];
+  state.season = input.season || base.season;
+
+  save(state);
+  return state;
 }
 
-function totalStats(state) {
-  const kg = state.entries.reduce((a, e) => a + e.kg, 0);
-  const co2 = state.entries.reduce((a, e) => a + e.co2, 0);
-  return { kg, co2, count: state.entries.length };
+function normalizeCategories(categories) {
+  const byId = new Map();
+  categories.forEach(c => {
+    const id = mapLegacyCategory(c.id);
+    if (!byId.has(id)) byId.set(id, c);
+  });
+  return DEFAULT_CATEGORIES.map(def => {
+    const existing = byId.get(def.id);
+    return existing ? { ...def, points: Number(existing.points) || def.points } : { ...def };
+  });
 }
 
-function addEntry(state, teamId, categoryId, kg) {
-  const cat = state.categories.find(c => c.id === categoryId);
-  if (!cat) return state;
-  const entry = {
-    id: "e_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
-    ts: Date.now(),
-    teamId, categoryId, kg,
-    points: Math.round(kg * cat.points),
-    co2: +(kg * cat.co2).toFixed(2),
-  };
-  const next = { ...state, entries: [...state.entries, entry] };
+function normalizeTeams(teams) {
+  const byId = new Map(teams.map(t => [t.id, t]));
+  return DEFAULT_TEAMS.map(def => {
+    const existing = byId.get(def.id);
+    if (!existing) return clone(def);
+    return {
+      ...def,
+      members: Array.isArray(existing.members) && existing.members.length ? existing.members : clone(def.members),
+    };
+  });
+}
+
+function mapLegacyCategory(id) {
+  const map = { steel: "metal", book: "paper", glass: "paper", ewaste: "metal" };
+  return map[id] || id;
+}
+
+function save(state) {
+  const next = { ...state, entries: state.weighIns || [] };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  if (window.CloudSync && window.CloudSync.mode === "cloud") {
+    window.CloudSync.push(next);
+  }
+}
+
+function makeId(prefix) {
+  return prefix + "_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+}
+
+function activeSession(state) {
+  return state.sessions.find(s => s.id === state.activeSessionId) || state.sessions[0];
+}
+
+function setActiveSession(state, sessionId) {
+  const next = { ...state, activeSessionId: sessionId };
   save(next);
-  return { state: next, entry };
+  return next;
 }
 
-function removeEntry(state, entryId) {
-  const next = { ...state, entries: state.entries.filter(e => e.id !== entryId) };
+function addSession(state, name) {
+  const index = state.sessions.length + 1;
+  const session = {
+    id: makeId("session"),
+    name: name || `第${index}次`,
+    date: new Date().toISOString().slice(0, 10),
+    locked: false,
+  };
+  const next = { ...state, sessions: [...state.sessions, session], activeSessionId: session.id };
+  save(next);
+  return next;
+}
+
+function updateSession(state, sessionId, patch) {
+  const sessions = state.sessions.map(s => s.id === sessionId ? { ...s, ...patch } : s);
+  const next = { ...state, sessions };
+  save(next);
+  return next;
+}
+
+function removeSession(state, sessionId) {
+  if (state.sessions.length <= 1) return state;
+  const sessions = state.sessions.filter(s => s.id !== sessionId);
+  const next = {
+    ...state,
+    sessions,
+    activeSessionId: state.activeSessionId === sessionId ? sessions[0].id : state.activeSessionId,
+    weighIns: state.weighIns.filter(w => w.sessionId !== sessionId),
+    attendance: state.attendance.filter(a => a.sessionId !== sessionId),
+  };
+  next.entries = next.weighIns;
   save(next);
   return next;
 }
 
 function updateCategories(state, categories) {
-  const next = { ...state, categories };
+  const next = {
+    ...state,
+    categories,
+    weighIns: state.weighIns.map(w => recalcWeighIn(categories, w)),
+  };
+  next.entries = next.weighIns;
   save(next);
   return next;
 }
 
+function recalcWeighIn(categories, weighIn) {
+  const cat = categories.find(c => c.id === weighIn.categoryId);
+  const kg = Math.max(0, Number(weighIn.kg) || 0);
+  return {
+    ...weighIn,
+    kg,
+    points: Math.round(kg * (Number(cat?.points) || 0)),
+  };
+}
+
+function updateWeighIn(state, sessionId, teamId, categoryId, kg) {
+  const value = Math.max(0, Number(kg) || 0);
+  const existing = state.weighIns.find(w => w.sessionId === sessionId && w.teamId === teamId && w.categoryId === categoryId);
+  let weighIns;
+  if (value <= 0) {
+    weighIns = state.weighIns.filter(w => w !== existing);
+  } else if (existing) {
+    weighIns = state.weighIns.map(w =>
+      w === existing ? recalcWeighIn(state.categories, { ...w, kg: value, ts: Date.now() }) : w
+    );
+  } else {
+    weighIns = [
+      ...state.weighIns,
+      recalcWeighIn(state.categories, { id: makeId("w"), ts: Date.now(), sessionId, teamId, categoryId, kg: value }),
+    ];
+  }
+  const next = { ...state, weighIns };
+  next.entries = weighIns;
+  save(next);
+  return next;
+}
+
+function getWeight(state, sessionId, teamId, categoryId) {
+  return state.weighIns.find(w => w.sessionId === sessionId && w.teamId === teamId && w.categoryId === categoryId)?.kg || 0;
+}
+
+function setAttendance(state, sessionId, memberId, brought) {
+  const attendance = state.attendance.filter(a => !(a.sessionId === sessionId && a.memberId === memberId));
+  attendance.push({ sessionId, memberId, brought: !!brought, ts: Date.now() });
+  const next = { ...state, attendance };
+  save(next);
+  return next;
+}
+
+function attendanceFor(state, sessionId, memberId) {
+  const row = state.attendance.find(a => a.sessionId === sessionId && a.memberId === memberId);
+  return row ? row.brought : true;
+}
+
+function teamMembers(state, teamId) {
+  return state.teams.find(t => t.id === teamId)?.members || [];
+}
+
+function sessionTeamStats(state, sessionId, teamId) {
+  const rows = state.weighIns.filter(w => w.sessionId === sessionId && w.teamId === teamId);
+  const points = rows.reduce((sum, w) => sum + w.points, 0);
+  const kg = rows.reduce((sum, w) => sum + w.kg, 0);
+  return { points, kg, count: rows.length };
+}
+
+function teamStats(state, teamId) {
+  const rows = state.weighIns.filter(w => w.teamId === teamId);
+  const points = rows.reduce((sum, w) => sum + w.points, 0);
+  const kg = rows.reduce((sum, w) => sum + w.kg, 0);
+  return { points, kg, count: rows.length, level: Math.floor(points / 500) + 1, progressInLevel: (points % 500) / 500 };
+}
+
+function sessionStats(state, sessionId) {
+  const stats = {};
+  state.teams.forEach(t => { stats[t.id] = sessionTeamStats(state, sessionId, t.id); });
+  const leaders = [...state.teams].sort((a, b) => stats[b.id].points - stats[a.id].points);
+  const winner = stats[leaders[0].id].points === stats[leaders[1]?.id]?.points ? null : leaders[0];
+  return { stats, winner };
+}
+
+function totalStats(state) {
+  const kg = state.weighIns.reduce((sum, w) => sum + w.kg, 0);
+  const points = state.weighIns.reduce((sum, w) => sum + w.points, 0);
+  return { kg, points, count: state.weighIns.length };
+}
+
+function absenceReport(state) {
+  const allMembers = state.teams.flatMap(team => team.members.map(m => ({ ...m, teamId: team.id, teamName: team.zh })));
+  return allMembers.map(member => {
+    const missed = state.sessions.filter(s => attendanceFor(state, s.id, member.id) === false);
+    return { ...member, missedCount: missed.length, missedSessions: missed, eligible: missed.length < 2 };
+  }).sort((a, b) => b.missedCount - a.missedCount || a.name.localeCompare(b.name));
+}
+
 function resetSeason(state) {
   const fresh = defaultState();
-  // keep customized categories, reset entries
   fresh.categories = state.categories;
   fresh.teams = state.teams;
   save(fresh);
@@ -144,25 +320,41 @@ function resetSeason(state) {
 }
 
 function exportCSV(state) {
-  const header = ["timestamp", "datetime", "team_zh", "team_ms", "category_zh", "category_ms", "kg", "points", "co2_kg"];
-  const rows = state.entries.map(e => {
-    const team = state.teams.find(t => t.id === e.teamId) || {};
-    const cat = state.categories.find(c => c.id === e.categoryId) || {};
-    const dt = new Date(e.ts).toISOString();
-    return [e.ts, dt, team.zh || "", team.ms || "", cat.zh || "", cat.ms || "", e.kg, e.points, e.co2];
+  const rows = [];
+  rows.push(["type", "session", "date", "team", "category_or_member", "kg", "points", "brought", "missed_count"]);
+  state.weighIns.forEach(w => {
+    const session = state.sessions.find(s => s.id === w.sessionId) || {};
+    const team = state.teams.find(t => t.id === w.teamId) || {};
+    const cat = state.categories.find(c => c.id === w.categoryId) || {};
+    rows.push(["weigh_in", session.name || "", session.date || "", team.zh || "", cat.zh || "", w.kg, w.points, "", ""]);
   });
-  const csv = [header, ...rows].map(r => r.map(v => {
+  absenceReport(state).forEach(m => {
+    state.sessions.forEach(s => {
+      rows.push(["attendance", s.name, s.date || "", m.teamName, m.name, "", "", attendanceFor(state, s.id, m.id) ? "有带" : "没带", m.missedCount]);
+    });
+  });
+  return "\uFEFF" + rows.map(r => r.map(v => {
     const s = String(v ?? "");
     return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   }).join(",")).join("\n");
-  return "\uFEFF" + csv;  // BOM for Excel
 }
 
-// Export to global scope for other Babel scripts
 Object.assign(window, {
   EcoData: {
-    load, save, addEntry, removeEntry, updateCategories, resetSeason,
-    teamStats, totalStats, exportCSV, defaultState, seedDemo,
-    LEVELS, LEVEL_STEP, DEFAULT_CATEGORIES, DEFAULT_TEAMS,
+    load, save, defaultState, resetSeason,
+    activeSession, setActiveSession, addSession, updateSession, removeSession,
+    updateCategories, updateWeighIn, getWeight,
+    setAttendance, attendanceFor, teamMembers,
+    sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
+    exportCSV,
+    DEFAULT_CATEGORIES, DEFAULT_TEAMS,
+    LEVELS: [
+      { lv: 1, zh: "起步", ms: "Mula" },
+      { lv: 2, zh: "稳定", ms: "Mantap" },
+      { lv: 3, zh: "领先", ms: "Mendahului" },
+      { lv: 4, zh: "冠军候选", ms: "Calon juara" },
+      { lv: 5, zh: "总冠军", ms: "Juara" },
+    ],
+    LEVEL_STEP: 500,
   },
 });
