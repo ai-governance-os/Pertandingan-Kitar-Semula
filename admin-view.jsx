@@ -73,8 +73,8 @@ function AdminView({ state, setState }) {
                 key={team.id}
                 label={`${index === 0 ? "领先" : "追赶"} · ${team.zh}`}
                 sub={team.leader}
-                value={fmt(stats.points)}
-                unit="pts"
+                value={fmtRM(stats.points)}
+                unit=""
                 color={team.primary}
               />
             ))}
@@ -107,7 +107,7 @@ function AdminView({ state, setState }) {
 
         <div className="admin-section">
           <h2>分类权重</h2>
-          <div className="section-sub">每公斤多少分可随时改；改了以后旧记录会按新权重重新计算。</div>
+          <div className="section-sub">这里按真实回收价 RM/kg 计算；改价后旧记录会按新价格重新计算价值。</div>
           <div className="cat-list">
             {state.categories.map(c => (
               <div className="cat-row compact-cat-row" key={c.id}>
@@ -117,8 +117,8 @@ function AdminView({ state, setState }) {
                   <input value={c.ms} onChange={e => patchCat(c.id, {ms: e.target.value})} />
                 </div>
                 <div className="pts-input">
-                  <input type="number" min="0" step="1" value={c.points} onChange={e => patchCat(c.id, {points: +e.target.value || 0})} />
-                  <span className="unit">pts/kg</span>
+                  <input type="number" min="0" step="0.01" value={c.price} onChange={e => patchCat(c.id, {price: +e.target.value || 0})} />
+                  <span className="unit">RM/kg</span>
                 </div>
               </div>
             ))}
@@ -138,7 +138,7 @@ function AdminView({ state, setState }) {
                     {state.teams.map(t => (
                       <div key={t.id}>
                         <span>{t.icon} {t.zh}</span>
-                        <b>{fmt(res.stats[t.id].points)} pts</b>
+                        <b>{fmtRM(res.stats[t.id].points)}</b>
                       </div>
                     ))}
                   </div>

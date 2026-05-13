@@ -52,7 +52,7 @@ function BigScreenView({ state }) {
 
         <div className="lead-summary">
           {leader ? (
-            <span>本次领先：<strong>{leader.zh}</strong> +{fmt(lead)} pts</span>
+            <span>本次领先：<strong>{leader.zh}</strong> +{fmtRM(lead)}</span>
           ) : (
             <span>本次比赛暂时平手</span>
           )}
@@ -74,7 +74,7 @@ function BigScreenView({ state }) {
               rank: index + 1,
               main: `${row.team.icon} ${row.team.zh}`,
               sub: `${fmt(row.stats.kg, 2)} kg`,
-              value: `${fmt(row.stats.points)} pts`,
+              value: fmtRM(row.stats.points),
             }))}
           />
         )}
@@ -87,7 +87,7 @@ function BigScreenView({ state }) {
               rank: index + 1,
               main: `${row.team.icon} ${row.team.zh}`,
               sub: `组长：${row.team.leader}`,
-              value: `${fmt(row.stats.points)} pts`,
+              value: fmtRM(row.stats.points),
             }))}
           />
         )}
@@ -108,7 +108,7 @@ function TeamStatusCard({ team, sessionStats, seasonStats }) {
           <p>{team.leader}</p>
         </div>
       </div>
-      <div className="status-main-score">{fmt(sessionStats.points)}<span>pts</span></div>
+      <div className="status-main-score">{fmtRM(sessionStats.points)}<span> 总值</span></div>
       <div className="status-mini-metrics">
         <div>
           <small>本次重量</small>
@@ -116,7 +116,7 @@ function TeamStatusCard({ team, sessionStats, seasonStats }) {
         </div>
         <div>
           <small>全年累计</small>
-          <strong>{fmt(seasonStats.points)} pts</strong>
+          <strong>{fmtRM(seasonStats.points)}</strong>
         </div>
       </div>
     </article>

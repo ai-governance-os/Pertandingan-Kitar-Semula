@@ -60,7 +60,7 @@ function MobileView({ state, setState }) {
               >
                 <span className="team-mini">{t.icon}</span>
                 <span>{t.zh}</span>
-                <b>{fmt(stats.points)} pts</b>
+                <b>{fmtRM(stats.points)}</b>
               </button>
             );
           })}
@@ -72,19 +72,19 @@ function MobileView({ state, setState }) {
               <strong>{team.icon} {team.zh}</strong>
               <span>组长：{team.leader}</span>
             </div>
-            <div className="total-badge">{fmt(selectedStats.kg, 2)} kg · {fmt(selectedStats.points)} pts</div>
+            <div className="total-badge">{fmt(selectedStats.kg, 2)} kg · {fmtRM(selectedStats.points)}</div>
           </div>
 
           <div className="weight-grid">
             {state.categories.map(cat => {
               const kg = EcoData.getWeight(state, session.id, team.id, cat.id);
-              const pts = Math.round(kg * cat.points);
+              const value = Math.round(kg * cat.points);
               return (
                 <div className="weight-row" key={cat.id}>
                   <div className="cat-label">
                     <span className="cat-icon">{cat.icon}</span>
                     <span>{cat.zh}</span>
-                    <small>{cat.points} pts/kg</small>
+                    <small>RM {fmt(cat.price, 2)}/kg</small>
                   </div>
                   <input
                     type="number"
@@ -95,7 +95,7 @@ function MobileView({ state, setState }) {
                     placeholder="0.00"
                     onChange={e => changeWeight(cat.id, e.target.value)}
                   />
-                  <div className="row-points">{fmt(pts)} pts</div>
+                  <div className="row-points">{fmtRM(value)}</div>
                 </div>
               );
             })}

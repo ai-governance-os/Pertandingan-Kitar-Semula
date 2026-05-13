@@ -3,16 +3,16 @@
 
 const STORAGE_KEY = "eco_warrior_v2";
 const LEGACY_STORAGE_KEY = "eco_warrior_v1";
-const SCORING_VERSION = 3;
+const SCORING_VERSION = 4;
 
 const DEFAULT_CATEGORIES = [
-  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  points: 45, color: "#8A9AA8" },
-  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", points: 34, color: "#6F7D3C" },
-  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           points: 30, color: "#737C86" },
-  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   points: 14, color: "#D8B35D" },
-  { id: "plastic",   icon: "🧴", zh: "塑料",   ms: "Plastik",        points: 10, color: "#45A8C7" },
-  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         points: 8,  color: "#8DB580" },
-  { id: "cardboard", icon: "📦", zh: "纸皮",   ms: "Kotak kadbod",   points: 6,  color: "#B07A42" },
+  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  price: 5.50, points: 550, color: "#8A9AA8" },
+  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", price: 3.40, points: 340, color: "#6F7D3C" },
+  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   price: 1.00, points: 100, color: "#D8B35D" },
+  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           price: 0.40, points: 40,  color: "#737C86" },
+  { id: "cardboard", icon: "📦", zh: "纸皮",   ms: "Kotak kadbod",   price: 0.25, points: 25,  color: "#B07A42" },
+  { id: "plastic",   icon: "🧴", zh: "塑料",   ms: "Plastik",        price: 0.25, points: 25,  color: "#45A8C7" },
+  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         price: 0.10, points: 10,  color: "#8DB580" },
 ];
 
 const DEFAULT_TEAMS = [
@@ -136,7 +136,9 @@ function normalizeCategories(categories, keepExistingPoints = false) {
   });
   return DEFAULT_CATEGORIES.map(def => {
     const existing = byId.get(def.id);
-    return existing && keepExistingPoints ? { ...def, points: Number(existing.points) || def.points } : { ...def };
+    if (!existing || !keepExistingPoints) return { ...def };
+    const points = Number(existing.points) || def.points;
+    return { ...def, points, price: +(points / 100).toFixed(2) };
   });
 }
 
@@ -215,11 +217,15 @@ function removeSession(state, sessionId) {
 }
 
 function updateCategories(state, categories) {
+  const normalized = categories.map(c => ({
+    ...c,
+    points: Math.round((Number(c.price) || 0) * 100),
+  }));
   const next = {
     ...state,
     scoringVersion: SCORING_VERSION,
-    categories,
-    weighIns: state.weighIns.map(w => recalcWeighIn(categories, w)),
+    categories: normalized,
+    weighIns: state.weighIns.map(w => recalcWeighIn(normalized, w)),
   };
   next.entries = next.weighIns;
   save(next);
@@ -326,16 +332,16 @@ function resetSeason(state) {
 
 function exportCSV(state) {
   const rows = [];
-  rows.push(["type", "session", "date", "team", "category_or_member", "kg", "points", "brought", "missed_count"]);
+  rows.push(["type", "session", "date", "team", "category_or_member", "kg", "rm_per_kg", "value_rm", "brought", "missed_count"]);
   state.weighIns.forEach(w => {
     const session = state.sessions.find(s => s.id === w.sessionId) || {};
     const team = state.teams.find(t => t.id === w.teamId) || {};
     const cat = state.categories.find(c => c.id === w.categoryId) || {};
-    rows.push(["weigh_in", session.name || "", session.date || "", team.zh || "", cat.zh || "", w.kg, w.points, "", ""]);
+    rows.push(["weigh_in", session.name || "", session.date || "", team.zh || "", cat.zh || "", w.kg, (cat.points || 0) / 100, (w.points || 0) / 100, "", ""]);
   });
   absenceReport(state).forEach(m => {
     state.sessions.forEach(s => {
-      rows.push(["attendance", s.name, s.date || "", m.teamName, m.name, "", "", attendanceFor(state, s.id, m.id) ? "有带" : "没带", m.missedCount]);
+      rows.push(["attendance", s.name, s.date || "", m.teamName, m.name, "", "", "", attendanceFor(state, s.id, m.id) ? "有带" : "没带", m.missedCount]);
     });
   });
   return "\uFEFF" + rows.map(r => r.map(v => {

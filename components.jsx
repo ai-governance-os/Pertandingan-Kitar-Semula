@@ -77,6 +77,10 @@ function fmt(n, digits = 0) {
   return Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
+function fmtRM(cents) {
+  return "RM " + fmt((Number(cents) || 0) / 100, 2);
+}
+
 function relTime(ts) {
   const s = Math.floor((Date.now() - ts) / 1000);
   if (s < 60) return s + "s";
@@ -86,5 +90,5 @@ function relTime(ts) {
 }
 
 Object.assign(window, {
-  BL, BLinline, SchoolStamp, ModeSwitcher, Confetti, fmt, relTime
+  BL, BLinline, SchoolStamp, ModeSwitcher, Confetti, fmt, fmtRM, relTime
 });
