@@ -1302,7 +1302,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Logout button */
 .logout-btn {
   position: fixed;
-  bottom: 14px; left: 14px;
+  top: 52px; right: 14px;
   z-index: 90;
   background: rgba(255,255,255,0.8);
   border: 2px solid rgba(20,18,40,0.1);
