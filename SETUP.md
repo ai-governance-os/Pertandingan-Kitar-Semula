@@ -90,21 +90,32 @@ window.SUPABASE_CONFIG = {
 
 ---
 
-## 3. 七个模式 · 7 Modes（混合模式 · Hybrid）
+## 3. 五个模式 · 5 Modes
 
-| 按钮 | 功能 | 谁会用 | 是否要 AI |
+| 按钮 | 谁能看 | 谁能改 | 用途 |
 |---|---|---|---|
-| 📝 录入 | 老师输入每次回收重量 | 比赛日老师 | ❌ |
-| 📋 **图鉴** | **学生点物品 → 看脚本 → 奖星**（默认入口） | 学生 / 老师日常 | ❌ 完全免费 |
-| 📊 战况 | 大屏幕显示比赛进度 | 校园电视 / 投影 | ❌ |
-| ⭐ 环保星 | 记录环保 / 品格 / 校园星 | 老师日常 | ❌ |
-| 🎁 奖品 | 兑换、库存、基金 | 协调老师 | ❌ |
-| 🔁 闭环 | 永续行为闭环面板 | 公开展示 | ❌ |
-| ⚙️ 管理 | 比赛设置、CSV 导出 | 管理员 | ❌ |
+| 📊 **战况** | 👨‍👩‍👧 所有人 | — | 回收比赛 (kg, RM, 队伍排行) |
+| 🎁 **奖品** | 👨‍👩‍👧 所有人 | 🔒 老师 | 学生 ⭐ 排行 + 礼物列表 + 兑换 |
+| 📝 录入 | 🔒 老师 | 🔒 老师 | 称重输入（按 RM/kg 自动算分） |
+| 🤖 AI | 🔒 老师 | 🔒 老师 | 拍照分析回收物（混合材料拆解） |
+| ⚙️ 管理 | 🔒 老师 | 🔒 老师 | Session / 类别价格 / CSV / 重置 |
 
-> 🤖 **AI 扫描藏在「图鉴」里面**：图鉴找不到的物品才用 AI（一次约 USD $0.005）。
-> AI 分析完，按 **`💾 加入图鉴`** → 这个物品**下次永远免费**。
-> 这个设计让 App 越用越聪明、越用越便宜。
+### 🔓 登入说明
+- 默认进入 = 📊 **战况**（家长 / 学生直接看到）
+- 公开模式只显示 2 个 chip：战况 + 奖品
+- 点 `🔓 老师登入`（右上）或者点任何老师才能改的按钮 → 弹登入框
+- 登入后模式栏自动展开成 5 个
+
+### ⭐ 星星类型（已分组，避免混淆）
+- **🌱 环保类**（与回收比赛挂钩）：♻️ 回收 / 📄 纸张 / 💡 节电 / 💧 节水 / 🌱 校园
+- **📚 学业品格类**（全方位奖励）：📚 学业 / ⭐ 品格 / 🤝 助人 / 🧭 领导
+- **⚠️ 扣星**（必填原因）
+
+### 🎁 奖品流程
+1. 老师在 📝 录入 称重 → 回收物自动变 RM
+2. 学校用 RM 买奖品 → 老师在 🎁 奖品「管理奖品」加入库存
+3. 老师在战况期间用 🎁 奖品页的 `+ ⭐` 按钮快速给学生加星
+4. 学生用累计的 ⭐ 在 🎁 奖品兑换
 
 ---
 
@@ -168,26 +179,26 @@ window.SUPABASE_CONFIG = {
 ```
 环保小兵/
 ├── index.html              ← 入口
-├── styles.css              ← 完整样式
-├── catalog.js              ← 50 个物品图鉴种子 (新)
+├── styles.css              ← 完整样式（含手机适配）
 ├── data.js                 ← 状态管理 + 全部 helpers
 ├── cloud-sync.js           ← Supabase 实时同步
 ├── ai-client.js            ← AI 调用客户端
-├── components.jsx          ← 模式切换 (7 个模式)
+├── components.jsx          ← 模式切换 (5 个模式)
 ├── tweaks-panel.jsx
-├── mobile-view.jsx         ← 录入
-├── bigscreen-view.jsx      ← 战况
-├── admin-view.jsx          ← 管理
-├── catalog-view.jsx        ← 📋 物品图鉴 (新 · 主入口)
-├── ai-scan-view.jsx        ← 🤖 AI 扫描 (隐藏入口，图鉴内可调用)
-├── star-ledger-view.jsx    ← ⭐ 环保星账本
-├── reward-corner-view.jsx  ← 🎁 奖励角落
-├── eco-loop-dashboard.jsx  ← 🔁 永续闭环
-├── app.jsx                 ← 主 App
+├── mobile-view.jsx         ← 📝 录入
+├── bigscreen-view.jsx      ← 📊 战况
+├── admin-view.jsx          ← ⚙️ 管理
+├── ai-scan-view.jsx        ← 🤖 AI 扫描
+├── reward-corner-view.jsx  ← 🎁 奖品 (含星星排行 + 兑换)
+├── app.jsx                 ← 主 App + 登入 modal
+├── catalog.js              ← (留 git，未挂入 index.html)
+├── catalog-view.jsx        ← (留 git，未挂入 index.html)
+├── star-ledger-view.jsx    ← (留 git，功能并入 reward-corner)
+├── eco-loop-dashboard.jsx  ← (留 git，未挂入 index.html)
 └── supabase/
     └── functions/
         └── analyze-recyclable/
-            └── index.ts    ← Edge Function
+            └── index.ts    ← Edge Function (gpt-4o + 8 个 few-shot)
 ```
 
 ---

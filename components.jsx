@@ -32,31 +32,28 @@ function SchoolStamp({ size = 60, light = false }) {
 }
 
 function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
-  // Order matters — public modes come first so viewers see them on the left.
-  const modes = [
-    { id: "catalog",   icon: "📋", zh: "图鉴",   ms: "Catalog" },
-    { id: "status",    icon: "📊", zh: "战况",   ms: "Status" },
-    { id: "rewards",   icon: "🎁", zh: "奖品",   ms: "Rewards" },
-    { id: "loop",      icon: "🔁", zh: "闭环",   ms: "Loop" },
-    { id: "mobile",    icon: "📝", zh: "录入",   ms: "Input" },
-    { id: "stars",     icon: "⭐", zh: "环保星", ms: "Stars" },
-    { id: "admin",     icon: "⚙️", zh: "管理",   ms: "Admin" },
+  // Public modes shown to everyone; admin modes only appear after login.
+  // Keep the bar lean — 2 chips for viewers, 5 for admin.
+  const ALL_MODES = [
+    { id: "status",  icon: "📊", zh: "战况", ms: "Status",  adminOnly: false },
+    { id: "rewards", icon: "🎁", zh: "奖品", ms: "Rewards", adminOnly: false },
+    { id: "mobile",  icon: "📝", zh: "录入", ms: "Input",   adminOnly: true  },
+    { id: "ai",      icon: "🤖", zh: "AI",   ms: "AI",      adminOnly: true  },
+    { id: "admin",   icon: "⚙️", zh: "管理", ms: "Admin",   adminOnly: true  },
   ];
+  const modes = ALL_MODES.filter(m => authed || !m.adminOnly);
   return (
     <div className="mode-switcher">
-      {modes.map(m => {
-        const locked = !authed && adminOnlyModes.includes(m.id);
-        const classes = [
-          mode === m.id ? "active" : "",
-          locked ? "locked" : "",
-        ].filter(Boolean).join(" ");
-        return (
-          <button key={m.id} className={classes} onClick={() => setMode(m.id)} title={locked ? "需要老师登入 · Admin login required" : ""}>
-            <span className="mode-icon">{m.icon}</span>
-            <span>{m.zh}{locked ? " 🔒" : ""}</span>
-          </button>
-        );
-      })}
+      {modes.map(m => (
+        <button
+          key={m.id}
+          className={mode === m.id ? "active" : ""}
+          onClick={() => setMode(m.id)}
+        >
+          <span className="mode-icon">{m.icon}</span>
+          <span>{m.zh}</span>
+        </button>
+      ))}
     </div>
   );
 }

@@ -62,15 +62,26 @@ const DEFAULT_TEAMS = [
 const DEFAULT_SESSION_ID = "session_1";
 
 const DEFAULT_STAR_TYPES = [
-  { id: "eco_recycle", icon: "♻️", zh: "环保回收", en: "Eco Recycling", defaultStars: 2 },
-  { id: "eco_paper_box", icon: "📄", zh: "纸张回收", en: "Paper Recycling", defaultStars: 1 },
-  { id: "eco_save_electricity", icon: "💡", zh: "节省电源", en: "Save Electricity", defaultStars: 1 },
-  { id: "eco_save_water", icon: "💧", zh: "节省水源", en: "Save Water", defaultStars: 1 },
-  { id: "eco_campus_care", icon: "🌱", zh: "爱护校园", en: "Campus Care", defaultStars: 1 },
-  { id: "character", icon: "⭐", zh: "品格表现", en: "Character", defaultStars: 1 },
-  { id: "leadership", icon: "🧭", zh: "提醒/领导", en: "Leadership", defaultStars: 2 },
-  { id: "deduction", icon: "⚠️", zh: "扣星", en: "Deduction", defaultStars: -1 },
+  // 🌱 环保类（与回收比赛挂钩）
+  { id: "eco_recycle",          group: "eco", icon: "♻️", zh: "环保回收", en: "Eco Recycling",      defaultStars: 2 },
+  { id: "eco_paper_box",        group: "eco", icon: "📄", zh: "纸张回收", en: "Paper Recycling",    defaultStars: 1 },
+  { id: "eco_save_electricity", group: "eco", icon: "💡", zh: "节省电源", en: "Save Electricity",   defaultStars: 1 },
+  { id: "eco_save_water",       group: "eco", icon: "💧", zh: "节省水源", en: "Save Water",         defaultStars: 1 },
+  { id: "eco_campus_care",      group: "eco", icon: "🌱", zh: "爱护校园", en: "Campus Care",        defaultStars: 1 },
+  // 📚 学业品格类（全方位奖励，不只环保）
+  { id: "academic",             group: "character", icon: "📚", zh: "学业进步", en: "Academic Progress", defaultStars: 1 },
+  { id: "character",            group: "character", icon: "⭐", zh: "品格表现", en: "Good Character",   defaultStars: 1 },
+  { id: "helpfulness",          group: "character", icon: "🤝", zh: "助人为乐", en: "Helpfulness",      defaultStars: 1 },
+  { id: "leadership",           group: "character", icon: "🧭", zh: "提醒/领导", en: "Leadership",      defaultStars: 2 },
+  // ⚠️ 扣星
+  { id: "deduction",            group: "deduction", icon: "⚠️", zh: "扣星",     en: "Deduction",       defaultStars: -1 },
 ];
+
+const STAR_GROUP_LABELS = {
+  eco:       { zh: "🌱 环保",     en: "Eco" },
+  character: { zh: "📚 学业品格", en: "Character" },
+  deduction: { zh: "⚠️ 扣星",     en: "Deduction" },
+};
 
 const DEFAULT_REWARD_ITEMS = [
   { id: "reward_pencil", icon: "✏️", nameZh: "铅笔", nameEn: "Pencil", starCost: 10, quantity: 20, purchaseCostRm: 8.00, active: true },
@@ -86,6 +97,27 @@ const DEFAULT_SETTINGS = {
   storePhotos: false,
   teacherReviewRequiredBelowConfidence: 0.75,
 };
+
+function mergeStarTypes(incoming) {
+  const defaults = clone(DEFAULT_STAR_TYPES);
+  if (!Array.isArray(incoming) || !incoming.length) return defaults;
+  const byId = new Map(incoming.map(t => [t.id, t]));
+  // For each default, prefer existing override but always re-apply group/icon if missing.
+  const merged = defaults.map(def => {
+    const exist = byId.get(def.id);
+    if (!exist) return def;
+    return {
+      ...def,
+      ...exist,
+      group: exist.group || def.group,
+      icon: exist.icon || def.icon,
+    };
+  });
+  // Keep any custom user-added star types that aren't in defaults.
+  const defaultIds = new Set(defaults.map(d => d.id));
+  const customs = incoming.filter(t => !defaultIds.has(t.id));
+  return [...merged, ...customs];
+}
 
 function seedCatalog() {
   // EcoCatalog.SEED is defined in catalog.js (loaded before data.js).
@@ -166,7 +198,9 @@ function normalizeState(input) {
   state.attendance = Array.isArray(input.attendance) ? input.attendance : [];
 
   state.aiScans = Array.isArray(input.aiScans) ? input.aiScans : [];
-  state.starTypes = Array.isArray(input.starTypes) && input.starTypes.length ? input.starTypes : clone(DEFAULT_STAR_TYPES);
+  // Always merge incoming star types with defaults so newly-added types (e.g. academic, helpfulness)
+  // and the `group` field appear for existing users without wiping their saved state.
+  state.starTypes = mergeStarTypes(input.starTypes);
   state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
   state.rewardItems = Array.isArray(input.rewardItems) && input.rewardItems.length ? input.rewardItems : clone(DEFAULT_REWARD_ITEMS);
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
@@ -676,7 +710,7 @@ Object.assign(window, {
     // Catalog helpers
     addCatalogItem, updateCatalogItem, removeCatalogItem,
     searchCatalog, catalogStats, aiResultToCatalogItem,
-    DEFAULT_CATEGORIES, DEFAULT_TEAMS, DEFAULT_STAR_TYPES, DEFAULT_REWARD_ITEMS,
+    DEFAULT_CATEGORIES, DEFAULT_TEAMS, DEFAULT_STAR_TYPES, DEFAULT_REWARD_ITEMS, STAR_GROUP_LABELS,
     LEVELS: [
       { lv: 1, zh: "起步", ms: "Mula" },
       { lv: 2, zh: "稳定", ms: "Mantap" },

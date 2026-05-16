@@ -1,19 +1,18 @@
-// 环保小兵 — main app: role-based access (public viewer + admin login), cloud sync, mode switcher.
+// 环保小兵 — main app: public viewer + on-demand admin login, cloud sync, mode switcher.
 
 const { useState, useEffect } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "bigScreenTheme": "arena",
-  "startMode": "catalog"
+  "startMode": "status"
 }/*EDITMODE-END*/;
 
 const ADMIN_ID = "JBC9008";
 const ADMIN_PW = "JBC9008";
 const AUTH_KEY = "eco_warrior_authed_v1";
 
-// Public viewers can browse these; admin-only modes are gated.
-const PUBLIC_MODES = ["catalog", "status", "rewards", "loop"];
-const ADMIN_ONLY_MODES = ["mobile", "stars", "admin", "ai"];
+const PUBLIC_MODES = ["status", "rewards"];
+const ADMIN_ONLY_MODES = ["mobile", "ai", "admin"];
 
 function normalizeMode(mode) {
   if (mode === "bigscreen") return "status";
@@ -21,9 +20,8 @@ function normalizeMode(mode) {
 }
 
 function pickStartMode(tweaks, authed) {
-  const wanted = normalizeMode(tweaks.startMode || (authed ? "mobile" : "catalog"));
-  // If a public viewer somehow lands on an admin-only mode, redirect to catalog.
-  if (!authed && ADMIN_ONLY_MODES.includes(wanted)) return "catalog";
+  const wanted = normalizeMode(tweaks.startMode || (authed ? "mobile" : "status"));
+  if (!authed && ADMIN_ONLY_MODES.includes(wanted)) return "status";
   return wanted;
 }
 
@@ -62,7 +60,7 @@ function LoginModal({ open, onClose, onAuth }) {
           <span className="ms">SJK(C) CHUNG HWA BELEMANG</span>
         </div>
         <h1><span className="zh">老师登入</span></h1>
-        <div className="tagline">Admin Login · 仅老师可输入数据</div>
+        <div className="tagline">Admin Login</div>
 
         <div className="login-form">
           <div className="login-field">
@@ -83,8 +81,8 @@ function LoginModal({ open, onClose, onAuth }) {
         </div>
 
         <div className="footer-note">
-          家长 · 学生可以直接关闭这窗口浏览公开页面<br/>
-          <span style={{opacity:.65}}>Parents & students: just close this to keep browsing</span>
+          家长 · 学生可以直接关闭这窗口继续浏览<br/>
+          <span style={{opacity:.65}}>Parents & students: close to keep browsing</span>
         </div>
       </form>
     </div>
@@ -106,14 +104,6 @@ function SyncStatusPill({ mode, dark, errorMsg, onClick }) {
   );
 }
 
-function ViewerBadge() {
-  return (
-    <div className="viewer-badge" title="仅老师可输入数据 · Admin login required to edit">
-      👀 访客模式 · Viewer
-    </div>
-  );
-}
-
 function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === "1");
   const [loginOpen, setLoginOpen] = useState(false);
@@ -123,7 +113,7 @@ function App() {
   const [syncMode, setSyncMode] = useState("local");
   const [syncErr, setSyncErr] = useState(null);
 
-  // Cloud sync — runs for everyone so viewers see live data.
+  // Cloud sync runs for everyone so viewers see live data.
   useEffect(() => {
     CloudSync.init(window.SUPABASE_CONFIG);
     const offChange = CloudSync.onChange(s => setState(EcoData.load()));
@@ -143,11 +133,9 @@ function App() {
     if (!window.confirm("登出？\nLog keluar?")) return;
     localStorage.removeItem(AUTH_KEY);
     setAuthed(false);
-    // If currently on an admin-only mode, kick back to catalog.
-    if (ADMIN_ONLY_MODES.includes(mode)) setMode("catalog");
+    if (ADMIN_ONLY_MODES.includes(mode)) setMode("status");
   }
 
-  // If a viewer tries to click an admin-only mode chip, request login.
   function handleSetMode(next) {
     if (!authed && ADMIN_ONLY_MODES.includes(next)) {
       setLoginOpen(true);
@@ -156,7 +144,6 @@ function App() {
     setMode(next);
   }
 
-  // Any view can call requireAuth(action) — runs action if authed, else opens login modal.
   function requireAuth(action) {
     if (authed) return action ? action() : true;
     setLoginOpen(true);
@@ -180,25 +167,20 @@ function App() {
         }}
       />
 
-      {!authed && <ViewerBadge />}
-
       {authed ? (
         <button className={`logout-btn ${isDark ? "on-dark" : ""}`} onClick={logout}>
           👤 老师 · 登出
         </button>
       ) : (
         <button className={`logout-btn login-btn ${isDark ? "on-dark" : ""}`} onClick={() => setLoginOpen(true)}>
-          🔓 老师登入 · Admin Login
+          🔓 老师登入
         </button>
       )}
 
       {mode === "mobile" && <MobileView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
-      {mode === "catalog" && <CatalogView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
-      {mode === "stars" && <StarLedgerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
-      {mode === "loop" && <EcoLoopDashboard state={state} />}
       {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
 
       {authed && (
@@ -220,12 +202,10 @@ function App() {
               label="开机进入"
               value={tweaks.startMode}
               options={[
-                { value: "catalog", label: "图鉴" },
-                { value: "mobile", label: "录入" },
-                { value: "stars", label: "星" },
-                { value: "rewards", label: "奖" },
-                { value: "loop", label: "闭环" },
                 { value: "status", label: "战况" },
+                { value: "rewards", label: "奖品" },
+                { value: "mobile", label: "录入" },
+                { value: "ai", label: "AI" },
                 { value: "admin", label: "管理" },
               ]}
               onChange={v => setTweak("startMode", v)}

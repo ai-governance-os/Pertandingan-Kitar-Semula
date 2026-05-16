@@ -163,13 +163,13 @@ UI is bilingual Chinese (Simplified) + English — always fill BOTH.
 ═══════════════════════════════════════════════════════════════
 SCHOOL BIN CATEGORIES (use these exact bin_category_id values)
 ═══════════════════════════════════════════════════════════════
-- aluminum         铝罐 / Tin aluminium
-- used_oil         回锅油 / Minyak terpakai
-- newspaper        报纸 / Surat khabar
-- metal            铁制品 / Besi
-- cardboard        纸皮 / Kotak kadbod
-- plastic          塑料 / Plastik
-- paper            纸张 / Kertas
+- aluminum         铝罐 / Tin aluminium    (RM 5.50/kg — most valuable)
+- used_oil         回锅油 / Minyak terpakai (RM 3.40/kg)
+- newspaper        报纸 / Surat khabar     (RM 1.00/kg)
+- metal            铁制品 / Besi           (RM 0.40/kg, sharp edges!)
+- cardboard        纸皮 / Kotak kadbod     (RM 0.25/kg)
+- plastic          塑料 / Plastik          (RM 0.25/kg)
+- paper            纸张 / Kertas           (RM 0.10/kg)
 - ewaste           电子废物 / E-waste
 - hazardous        危险品 / Bahan bahaya
 - general_waste    普通垃圾 / Sampah am
@@ -181,103 +181,105 @@ SCHOOL BIN CATEGORIES (use these exact bin_category_id values)
 If an item has ANY of these visible separable components, you MUST list EACH as its own entry in recommended_parts:
   • cap / lid / cover (盖子)
   • body / shell (盒身 / 瓶身)
-  • label / sticker / wrapper (标签 / 包装纸)
-  • straw / spout (吸管 / 倒嘴)
+  • label / sticker / wrapper (标签)
+  • straw / spout (吸管)
   • inner foil / aluminium lining (内层铝膜)
   • plastic window / cellophane (塑料窗)
   • metal ring / handle (金属环 / 提手)
+  • pump / spray nozzle (压头 / 喷嘴)
 
-Be GENEROUS with parts. A normal Tetra Pak has 3 parts. A normal PET bottle has 3 parts. A milk-powder tin has 3 parts.
-Single-material items (e.g. a plain newspaper, a plain aluminum can) have exactly 1 part — that's fine too.
-
+Be GENEROUS with parts. A normal Tetra Pak has 3 parts. A normal PET bottle has 3 parts. A toothpaste tube has 2. A milk-powder tin has 3.
+Single-material items (a plain newspaper, a plain aluminum can) have exactly 1 part — that's correct too.
 NEVER lump multiple components into one "mixed" part. Split them.
 
 ═══════════════════════════════════════════════════════════════
-📚 EXAMPLES — copy this level of detail
+📚 EIGHT WORKED EXAMPLES — match this level of detail
 ═══════════════════════════════════════════════════════════════
 
-▼ EXAMPLE A: A Tetra Pak juice carton with blue plastic cap, white printed body, "Mockup" label
-{
-  "is_recyclable_candidate": true,
-  "overall_confidence": 0.92,
-  "detected_items": [{
-    "label_zh": "果汁纸盒 (Tetra Pak)",
-    "label_en": "Juice carton (Tetra Pak)",
-    "visible_state": "clean",
-    "materials": ["paper", "plastic", "aluminum"],
-    "is_mixed_material": true,
-    "confidence": 0.92,
-    "recommended_parts": [
-      {
-        "part_zh": "蓝色塑料盖",
-        "part_en": "Blue plastic cap",
-        "material": "HDPE plastic",
-        "bin_category_id": "plastic",
-        "bin_label_zh": "塑料",
-        "bin_label_en": "Plastic",
-        "action": "拧下盖子，丢入塑料桶 · Unscrew the cap and drop into the plastic bin"
-      },
-      {
-        "part_zh": "纸盒身",
-        "part_en": "Carton body",
-        "material": "laminated paperboard",
-        "bin_category_id": "paper",
-        "bin_label_zh": "纸张",
-        "bin_label_en": "Paper",
-        "action": "倒空 → 冲洗 → 撕开摊平 · Empty → rinse → tear open and flatten"
-      },
-      {
-        "part_zh": "内层铝箔膜",
-        "part_en": "Inner aluminum foil lining",
-        "material": "aluminum foil",
-        "bin_category_id": "paper",
-        "bin_label_zh": "纸张 (与盒身一起)",
-        "bin_label_en": "Paper (with the body)",
-        "action": "通常和纸一起回收，无需单独撕 · Usually recycled with the paper body, no need to separate"
-      }
-    ],
-    "eco_actions": ["先拧盖", "倒空冲洗", "压扁省空间"]
-  }],
-  "main_recommendation": {
-    "summary_zh": "这是 Tetra Pak 果汁盒。拧下塑料盖丢塑料桶，盒身倒空冲洗后压扁丢纸桶。",
-    "summary_en": "This is a Tetra Pak juice carton. Unscrew the plastic cap to the plastic bin; rinse and flatten the body for the paper bin.",
-    "award_star_suggestion": 2,
-    "needs_teacher_review": false
-  },
-  "student_message": {
-    "zh": "做得好！记得先拧盖子 → 倒空 → 压扁，三步就 OK！",
-    "en": "Nice! Remember: unscrew cap → empty → flatten. Three steps, done!"
-  },
-  "teacher_note": {
-    "zh": "示范如何快速拧盖、撕开盒底压扁。",
-    "en": "Demonstrate fast cap removal and flattening the carton."
-  },
-  "safety_flags": []
-}
+▼ EXAMPLE A — Tetra Pak juice carton (blue plastic cap + printed body)
+3 parts:
+  1. 蓝色塑料盖 cap → plastic bin → "拧下盖子"
+  2. 纸盒身 carton body → paper bin → "倒空 → 冲洗 → 撕开摊平"
+  3. 内层铝箔 inner foil → paper bin (with body) → "和纸一起回收，无需单独撕"
+materials: ["paper", "plastic", "aluminum"]
+summary_zh: "Tetra Pak 果汁盒。拧下塑料盖丢塑料桶，盒身倒空冲洗后压扁丢纸桶。"
+award_star_suggestion: 2
 
-▼ EXAMPLE B: A clear PET water bottle with cap and printed label
-recommended_parts should have 3 entries:
+▼ EXAMPLE B — PET clear water bottle (cap + body + label)
+3 parts:
   1. 瓶盖 cap → plastic bin → "拧下来"
-  2. 瓶身 body → plastic bin → "倒空、冲洗、压扁"
-  3. 标签 label → general_waste OR plastic → "撕下标签"
+  2. 瓶身 body → plastic bin → "倒空 → 冲洗 → 压扁"
+  3. 收缩塑料标签 shrink label → general_waste → "撕下来（多数是收缩塑料）"
+materials: ["PET plastic", "HDPE cap", "shrink plastic label"]
+award_star_suggestion: 2
 
-▼ EXAMPLE C: A used aluminum drink can (single material)
-recommended_parts has just 1 entry:
-  1. 整罐 whole can → aluminum bin → "倒空、冲洗、压扁"
-(That's correct — don't fabricate fake parts for single-material items.)
+▼ EXAMPLE C — Used aluminum drink can (single material)
+1 part:
+  1. 整罐 whole can → aluminum bin → "倒空 → 冲洗 → 压扁 (小心罐口)"
+materials: ["aluminum"]
+award_star_suggestion: 1
+(Don't fabricate fake parts for single-material items.)
+
+▼ EXAMPLE D — Toothpaste tube
+2 parts:
+  1. 塑料盖 cap → plastic bin → "拧下来"
+  2. 铝塑复合管身 aluminum-plastic tube → general_waste → "复合材料不易回收，多数当一般垃圾"
+materials: ["plastic cap", "aluminum-plastic laminate"]
+safety_flags: []
+summary_zh: "牙膏管是复合材料。盖子分开丢塑料，管身多数只能丢一般垃圾。"
+award_star_suggestion: 2
+
+▼ EXAMPLE E — Aerosol spray can (insecticide, hair spray, etc.)
+1 part with strong safety warning:
+  1. 整罐 whole can → hazardous bin → "用完才丢，绝对不能压扁（会爆炸）"
+materials: ["pressurized aluminum/steel"]
+safety_flags: ["chemical"]
+needs_teacher_review: true
+student_message: "喷雾罐有压力，绝对不能压扁会爆炸！让老师处理。"
+award_star_suggestion: 0
+
+▼ EXAMPLE F — Glass bottle with metal cap
+2 parts with safety:
+  1. 金属盖 metal cap → metal bin → "拧下来"
+  2. 玻璃瓶身 glass body → general_waste → "学校没有玻璃桶，小心放置交给老师 (RM 没有玻璃回收链)"
+materials: ["glass", "metal cap"]
+safety_flags: ["broken_glass"]
+award_star_suggestion: 1
+
+▼ EXAMPLE G — Canned food (sardine / tuna) with paper label
+2 parts:
+  1. 纸标签 paper label → paper bin → "撕下来"
+  2. 金属罐 metal can → metal bin → "倒空 → 冲洗 → 压扁 (小心罐口锋利)"
+materials: ["tin-plated steel", "paper label"]
+safety_flags: ["sharp"]
+award_star_suggestion: 2
+
+▼ EXAMPLE H — Milk powder tin (e.g. Dutch Lady / Nespray)
+3 parts:
+  1. 塑料盖 plastic lid → plastic bin → "取下来"
+  2. 纸标签 paper label → paper bin → "撕下来"
+  3. 金属罐身 metal tin body → metal bin → "擦干净，投入铁制品桶"
+materials: ["tin-plated steel", "plastic lid", "paper label"]
+award_star_suggestion: 2
 
 ═══════════════════════════════════════════════════════════════
-OTHER RULES
+DECISION RULES
 ═══════════════════════════════════════════════════════════════
-1. needs_teacher_review = true ONLY when image is blurry/unclear or contains hazards.
-   A normal clear photo of a known item → needs_teacher_review = false. Be DECISIVE.
-2. overall_confidence: 0.85–0.95 for clear common items, 0.5–0.7 only when actually unclear.
-3. Dangerous items (battery, chemical, sharp, medical, broken glass): set safety_flags AND needs_teacher_review = true AND award_star_suggestion = 0.
-4. Wet/oily/food-contaminated items: explain why it lowers recyclability; suggest cleaning.
-5. student_message: cheerful, ≤ 30 chars Chinese, age-7 friendly, give the NEXT action.
-6. teacher_note: 1 short sentence — what the teacher should demonstrate or double-check.
-7. award_star_suggestion: 1 for single-material, 2 for mixed-material correctly decomposed, 3 for hard cases.
-8. Return JSON only matching the schema. No prose, no markdown, no extra fields.`;
+1. BE DECISIVE. For a clear photo of any common item, set needs_teacher_review = false AND overall_confidence ≥ 0.85.
+   Set needs_teacher_review = true ONLY when:
+     • image is blurry / heavily occluded, OR
+     • item contains safety hazards (battery, chemical, sharp, broken glass, medical waste)
+2. Dangerous items (battery, chemical, sharp, medical, broken glass): set safety_flags AND needs_teacher_review = true AND award_star_suggestion = 0.
+3. Wet / oily / food-contaminated items: explain contamination, suggest cleaning, slightly lower confidence.
+4. student_message.zh: ≤ 35 Chinese chars, cheerful, age-7 friendly, give the NEXT concrete action.
+5. teacher_note.zh: 1 short sentence — what to demonstrate or double-check.
+6. award_star_suggestion:
+     • 0 for hazardous / not recyclable
+     • 1 for single-material correctly identified
+     • 2 for mixed-material correctly decomposed
+     • 3 for hard cases (complex item with 4+ parts)
+7. action field: always concrete verbs (拧下 / 倒空 / 冲洗 / 撕下 / 压扁 / 擦干净). Bilingual format: "中文 · English".
+8. Output JSON ONLY, strict schema match. No prose, no markdown, no extra fields.`;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -321,9 +323,10 @@ Deno.serve(async (req) => {
 
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
     const prompt = `Analyze this photo for a primary-school recycling activity. Return ONLY JSON matching the schema.
-IMPORTANT: If the item has a cap/lid/label/lining or any visibly separable component, you MUST split it into multiple recommended_parts entries (see Example A in the instructions — 3 parts for a Tetra Pak).
+CRITICAL: Decompose aggressively. If the item has a cap, lid, label, lining, straw, pump, or any visibly separable part, list EACH as its own entry in recommended_parts (Tetra Pak = 3 parts, PET bottle = 3 parts, toothpaste = 2 parts, milk-powder tin = 3 parts).
 Do not be lazy. Do not lump components together. Be DECISIVE: for a clear photo of a common item, set needs_teacher_review = false and overall_confidence ≥ 0.85.
-Write both Chinese and English in every text field.`;
+For hazards (battery / chemical / sharp / glass / medical) set safety_flags AND award_star_suggestion = 0.
+Write both Chinese and English in every text field. Output JSON only.`;
 
     const openaiResp = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
