@@ -349,79 +349,234 @@ function RedeemModal({ state, student, onCancel, onRedeem }) {
 
 function RewardAdminPanel({ state, setState }) {
   const { useState } = React;
-  const [newName, setNewName] = useState("");
-  const [newEn, setNewEn] = useState("");
-  const [newCost, setNewCost] = useState(10);
-  const [newQty, setNewQty] = useState(10);
-  const [newIcon, setNewIcon] = useState("🎁");
   const [expanded, setExpanded] = useState(false);
+  const [adding, setAdding] = useState(false);
 
-  function addItem() {
-    if (!newName.trim()) { alert("请输入奖品名称 · Enter a reward name."); return; }
-    setState(EcoData.addRewardItem(state, {
-      icon: newIcon || "🎁",
-      nameZh: newName.trim(),
-      nameEn: newEn.trim() || newName.trim(),
-      starCost: Number(newCost) || 1,
-      quantity: Number(newQty) || 0,
-      purchaseCostRm: 0,
-      active: true,
-    }));
-    setNewName(""); setNewEn(""); setNewCost(10); setNewQty(10); setNewIcon("🎁");
+  function patch(id, patch) {
+    setState(EcoData.updateRewardItem(state, id, patch));
   }
 
   function bumpQty(id, delta) {
     const item = (state.rewardItems || []).find(i => i.id === id);
     if (!item) return;
-    setState(EcoData.updateRewardItem(state, id, { quantity: Math.max(0, (item.quantity || 0) + delta) }));
+    patch(id, { quantity: Math.max(0, (item.quantity || 0) + delta) });
+  }
+
+  function bumpCost(id, delta) {
+    const item = (state.rewardItems || []).find(i => i.id === id);
+    if (!item) return;
+    patch(id, { starCost: Math.max(1, (item.starCost || 1) + delta) });
   }
 
   function deleteItem(id) {
-    if (!window.confirm("删除这个奖品？\nRemove this reward?")) return;
+    const item = (state.rewardItems || []).find(i => i.id === id);
+    if (!item) return;
+    if (!window.confirm(`删除「${item.nameZh}」？\nRemove "${item.nameEn}"?`)) return;
     setState(EcoData.removeRewardItem(state, id));
   }
 
   return (
     <div className="entry-panel">
       <div
-        className="panel-title"
-        style={{display:'flex', justifyContent:'space-between', alignItems:'center', cursor:'pointer'}}
+        className="panel-title reward-admin-header"
         onClick={() => setExpanded(e => !e)}
       >
         <strong>🛠️ 管理奖品（老师）· Admin: manage rewards</strong>
-        <button className="chunky-btn small-btn">{expanded ? "收起" : "展开"}</button>
+        <button className="chunky-btn small-btn">{expanded ? "收起 ▲" : "展开 ▼"}</button>
       </div>
 
       {expanded && (
-        <>
-          <div className="reward-admin-list">
+        <div className="reward-admin-wrap">
+          <p className="reward-admin-tip">
+            💡 点任何字段都可以直接修改 · Tap any field to edit it
+          </p>
+
+          <div className="reward-edit-list">
             {(state.rewardItems || []).map(item => (
-              <div className="reward-admin-row" key={item.id}>
-                <span className="reward-admin-icon">{item.icon}</span>
-                <span className="reward-admin-name">
-                  {item.nameZh} <small>· {item.nameEn}</small>
-                </span>
-                <span className="reward-admin-cost">{item.starCost} ⭐</span>
-                <span className="reward-admin-qty">
-                  <button className="leader-btn sub" onClick={() => bumpQty(item.id, -1)}>−</button>
-                  <b>{item.quantity}</b>
-                  <button className="leader-btn add" onClick={() => bumpQty(item.id, +1)}>+</button>
-                </span>
-                <button className="leader-btn sub" onClick={() => deleteItem(item.id)} title="删除">×</button>
-              </div>
+              <RewardEditCard
+                key={item.id}
+                item={item}
+                onPatch={(p) => patch(item.id, p)}
+                onBumpCost={(d) => bumpCost(item.id, d)}
+                onBumpQty={(d) => bumpQty(item.id, d)}
+                onDelete={() => deleteItem(item.id)}
+              />
             ))}
+            {(state.rewardItems || []).length === 0 && (
+              <div className="ai-history-empty">还没有奖品，点下方「➕ 新增奖品」</div>
+            )}
           </div>
 
-          <div className="reward-add-row" style={{marginTop:14}}>
-            <input style={{maxWidth:60}} placeholder="🎁" value={newIcon} onChange={e => setNewIcon(e.target.value)} />
-            <input placeholder="中文名" value={newName} onChange={e => setNewName(e.target.value)} />
-            <input placeholder="English name" value={newEn} onChange={e => setNewEn(e.target.value)} />
-            <input type="number" placeholder="星星" value={newCost} onChange={e => setNewCost(e.target.value)} />
-            <input type="number" placeholder="数量" value={newQty} onChange={e => setNewQty(e.target.value)} />
-            <button className="chunky-btn primary" onClick={addItem}>➕ 新增</button>
-          </div>
-        </>
+          {adding ? (
+            <NewRewardForm
+              onCancel={() => setAdding(false)}
+              onAdd={(data) => {
+                setState(EcoData.addRewardItem(state, data));
+                setAdding(false);
+              }}
+            />
+          ) : (
+            <button
+              className="chunky-btn primary reward-add-btn"
+              onClick={() => setAdding(true)}
+            >
+              ➕ 新增奖品 · Add Reward
+            </button>
+          )}
+        </div>
       )}
+    </div>
+  );
+}
+
+// One editable row per reward. Every field is inline-editable.
+function RewardEditCard({ item, onPatch, onBumpCost, onBumpQty, onDelete }) {
+  return (
+    <div className="reward-edit-card">
+      <div className="reward-edit-row">
+        <input
+          className="reward-edit-icon-input"
+          value={item.icon || "🎁"}
+          onChange={e => onPatch({ icon: e.target.value })}
+          aria-label="icon"
+        />
+        <div className="reward-edit-names">
+          <input
+            className="reward-edit-name-zh"
+            value={item.nameZh}
+            onChange={e => onPatch({ nameZh: e.target.value })}
+            placeholder="中文名"
+          />
+          <input
+            className="reward-edit-name-en"
+            value={item.nameEn}
+            onChange={e => onPatch({ nameEn: e.target.value })}
+            placeholder="English name"
+          />
+        </div>
+        <button className="reward-delete-btn" onClick={onDelete} title="删除 · Delete">
+          🗑️
+        </button>
+      </div>
+
+      <div className="reward-edit-row reward-edit-numbers">
+        <label className="reward-edit-num">
+          <span>💰 价格 ⭐ · Cost</span>
+          <div className="reward-edit-stepper">
+            <button type="button" onClick={() => onBumpCost(-1)}>−</button>
+            <input
+              type="number"
+              min="1"
+              value={item.starCost}
+              onChange={e => onPatch({ starCost: Math.max(1, Number(e.target.value) || 1) })}
+            />
+            <button type="button" onClick={() => onBumpCost(+1)}>+</button>
+            <span className="reward-edit-unit">⭐</span>
+          </div>
+        </label>
+
+        <label className="reward-edit-num">
+          <span>📦 库存 · Stock</span>
+          <div className="reward-edit-stepper">
+            <button type="button" onClick={() => onBumpQty(-1)}>−</button>
+            <input
+              type="number"
+              min="0"
+              value={item.quantity}
+              onChange={e => onPatch({ quantity: Math.max(0, Number(e.target.value) || 0) })}
+            />
+            <button type="button" onClick={() => onBumpQty(+1)}>+</button>
+            <span className="reward-edit-unit">pcs</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function NewRewardForm({ onAdd, onCancel }) {
+  const { useState } = React;
+  const [icon, setIcon] = useState("🎁");
+  const [nameZh, setNameZh] = useState("");
+  const [nameEn, setNameEn] = useState("");
+  const [starCost, setStarCost] = useState(10);
+  const [quantity, setQuantity] = useState(10);
+
+  function submit() {
+    if (!nameZh.trim()) { alert("请输入奖品中文名 · Enter a Chinese name."); return; }
+    onAdd({
+      icon: icon || "🎁",
+      nameZh: nameZh.trim(),
+      nameEn: nameEn.trim() || nameZh.trim(),
+      starCost: Number(starCost) || 1,
+      quantity: Number(quantity) || 0,
+      purchaseCostRm: 0,
+      active: true,
+    });
+  }
+
+  return (
+    <div className="reward-edit-card reward-new-card">
+      <div className="reward-edit-row">
+        <input
+          className="reward-edit-icon-input"
+          value={icon}
+          onChange={e => setIcon(e.target.value)}
+          aria-label="icon"
+        />
+        <div className="reward-edit-names">
+          <input
+            className="reward-edit-name-zh"
+            value={nameZh}
+            onChange={e => setNameZh(e.target.value)}
+            placeholder="中文名（必填）"
+            autoFocus
+          />
+          <input
+            className="reward-edit-name-en"
+            value={nameEn}
+            onChange={e => setNameEn(e.target.value)}
+            placeholder="English name"
+          />
+        </div>
+      </div>
+
+      <div className="reward-edit-row reward-edit-numbers">
+        <label className="reward-edit-num">
+          <span>💰 价格 ⭐</span>
+          <div className="reward-edit-stepper">
+            <button type="button" onClick={() => setStarCost(s => Math.max(1, Number(s) - 1))}>−</button>
+            <input
+              type="number"
+              min="1"
+              value={starCost}
+              onChange={e => setStarCost(e.target.value)}
+            />
+            <button type="button" onClick={() => setStarCost(s => Number(s) + 1)}>+</button>
+            <span className="reward-edit-unit">⭐</span>
+          </div>
+        </label>
+
+        <label className="reward-edit-num">
+          <span>📦 库存</span>
+          <div className="reward-edit-stepper">
+            <button type="button" onClick={() => setQuantity(q => Math.max(0, Number(q) - 1))}>−</button>
+            <input
+              type="number"
+              min="0"
+              value={quantity}
+              onChange={e => setQuantity(e.target.value)}
+            />
+            <button type="button" onClick={() => setQuantity(q => Number(q) + 1)}>+</button>
+            <span className="reward-edit-unit">pcs</span>
+          </div>
+        </label>
+      </div>
+
+      <div className="reward-new-actions">
+        <button className="chunky-btn" onClick={onCancel}>取消 · Cancel</button>
+        <button className="chunky-btn primary" onClick={submit}>✅ 加入库存 · Save</button>
+      </div>
     </div>
   );
 }
