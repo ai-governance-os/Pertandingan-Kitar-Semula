@@ -262,6 +262,105 @@ award_star_suggestion: 2
 materials: ["tin-plated steel", "plastic lid", "paper label"]
 award_star_suggestion: 2
 
+▼ EXAMPLE I — Plastic bag stuffed with multiple recyclables (a common school pile)
+The bag itself + every visible item inside = each gets its own detected_items entry.
+Example: a transparent plastic bag containing 1 PET bottle, 1 newspaper bundle, 1 aluminum can →
+  detected_items = [
+    {label: "塑料袋 plastic bag", 1 part to plastic bin},
+    {label: "PET 矿泉水瓶 PET water bottle", 3 parts},
+    {label: "报纸 newspaper", 1 part to newspaper bin},
+    {label: "铝罐 aluminum can", 1 part to aluminum bin}
+  ]
+NEVER report this as one "mixed bag" or "miscellaneous". List EACH item separately.
+
+▼ EXAMPLE J — Ballpoint plastic pen (3 materials but too small to disassemble)
+1 part:
+  1. 整支笔 whole pen → general_waste → "用完再丢；笔太小，学校无法逐件拆解回收"
+materials: ["plastic body", "metal tip", "ink tube"]
+student_message: "用完一支笔再换新的，最环保！"
+award_star_suggestion: 0
+(3 materials but practical decomposition is impossible at primary school scale → 1 part is correct.)
+
+▼ EXAMPLE K — Spiral notebook with plastic cover
+3 parts:
+  1. 塑料封面 plastic cover → plastic bin → "撕下来"
+  2. 金属线圈 metal spiral → metal bin → "用钳子拆下来"
+  3. 纸页 paper pages → paper bin → "撕开摊平叠好"
+materials: ["paper pages", "metal spiral", "plastic cover"]
+award_star_suggestion: 3
+(Even "school stationery" can be decomposed — be diligent.)
+
+▼ EXAMPLE L — Snack wrapper (chips / biscuit / candy with foil-plastic laminate)
+1 part:
+  1. 整袋 whole wrapper → general_waste → "铝塑复合膜，无法分离 → 一般垃圾"
+materials: ["aluminum-plastic laminate"]
+student_message: "选少包装的零食，可以减少这种垃圾！"
+award_star_suggestion: 0
+(Composite at molecular level — keep as 1 part, but EXPLAIN why so it educates.)
+
+▼ EXAMPLE M — Tetra Pak with a metal straw and plastic wrapper stuffed inside
+This is a STUDENT-COMBINED pile, not factory packaging. Treat each as SEPARATE detected_items:
+  detected_items = [
+    {label: "Tetra Pak 纸盒", 3 parts: cap/body/foil},
+    {label: "金属吸管 metal straw", 1 part to metal bin: "冲洗，投入铁制品桶"},
+    {label: "塑料袋 plastic wrapper", 1 part to plastic bin: "冲洗"}
+  ]
+NEVER bundle these into "one mixed item". The student stuffed them together — your job is to UNDO that.
+
+═══════════════════════════════════════════════════════════════
+🧠 THINKING FRAMEWORK — apply silently before writing JSON
+═══════════════════════════════════════════════════════════════
+For EACH distinct object in the photo, mentally answer 3 questions:
+  Q1. What MATERIALS do I see? (paper / plastic / metal / glass / rubber / aluminum / ...)
+  Q2. Are they JOINED, or can a child physically separate them in under 30 seconds?
+  Q3. Is decomposition PRACTICAL (worth doing) at primary-school scale?
+
+Mapping:
+  • Q1 lists multiple AND Q2 = yes AND Q3 = yes  → multiple recommended_parts (e.g. Tetra Pak, PET bottle, milk-powder tin, notebook)
+  • Q1 lists multiple BUT Q2 = yes AND Q3 = no   → 1 part = general_waste, explain in action (e.g. pen, eraser, straw)
+  • Q1 lists multiple BUT Q2 = no (fused at molecular level) → 1 part, explain (e.g. snack wrapper, paper cup, thermal receipt)
+  • Q1 single material → 1 part (e.g. aluminum can, newspaper)
+
+Do NOT output your thinking. Only output the final JSON.
+
+═══════════════════════════════════════════════════════════════
+🚫 FORBIDDEN OUTPUTS — these are lazy and WRONG
+═══════════════════════════════════════════════════════════════
+NEVER write a recommended_parts entry like:
+  ❌ "整个物品 · Whole item"          (unless it really IS single-material; name the material)
+  ❌ "混合材料部分 · Mixed material"   (LAZY — name each material)
+  ❌ "其他部分 · Other parts"          (too vague — be specific)
+  ❌ "未知材料 · Unknown material"     (try harder; if truly unknown, set needs_teacher_review)
+
+NEVER write a summary_zh like:
+  ❌ "需要老师确认"                    (only for blurry/dangerous; clear common items must be decisive)
+  ❌ "这是混合材料，请分类"              (BE SPECIFIC — name parts + bins)
+  ❌ "请按照学校规定处理"                (no — give concrete steps)
+
+If you catch yourself drafting any of these, REWRITE with concrete material names and bin destinations.
+
+═══════════════════════════════════════════════════════════════
+💰 WHY DECOMPOSITION MATTERS — economic motivation
+═══════════════════════════════════════════════════════════════
+The school turns recyclables into money for student rewards. Bin values:
+  • aluminum     RM 5.50/kg  ← most valuable
+  • used_oil     RM 3.40/kg
+  • newspaper    RM 1.00/kg
+  • metal        RM 0.40/kg
+  • cardboard    RM 0.25/kg
+  • plastic      RM 0.25/kg
+  • paper        RM 0.10/kg
+  • general_waste = RM 0.00 (wasted opportunity)
+
+EXAMPLE: A milk-powder tin thrown whole into general_waste = RM 0.
+Correctly decomposed:
+  • plastic lid → plastic bin    (RM 0.25/kg)
+  • paper label → paper bin      (RM 0.10/kg)
+  • metal body  → metal bin      (RM 0.40/kg ← highest of the 3)
+→ School gets MORE money → MORE rewards for students.
+
+So DECOMPOSE AGGRESSIVELY. Each correctly identified part = more value for the school.
+
 ═══════════════════════════════════════════════════════════════
 DECISION RULES
 ═══════════════════════════════════════════════════════════════
@@ -323,9 +422,26 @@ Deno.serve(async (req) => {
 
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
     const prompt = `Analyze this photo for a primary-school recycling activity. Return ONLY JSON matching the schema.
-CRITICAL: Decompose aggressively. If the item has a cap, lid, label, lining, straw, pump, or any visibly separable part, list EACH as its own entry in recommended_parts (Tetra Pak = 3 parts, PET bottle = 3 parts, toothpaste = 2 parts, milk-powder tin = 3 parts).
-Do not be lazy. Do not lump components together. Be DECISIVE: for a clear photo of a common item, set needs_teacher_review = false and overall_confidence ≥ 0.85.
-For hazards (battery / chemical / sharp / glass / medical) set safety_flags AND award_star_suggestion = 0.
+
+APPLY THE THINKING FRAMEWORK from your instructions:
+  1. For each distinct object, identify materials
+  2. Decide if separable in <30s by a child
+  3. Decide if decomposition is practical at school scale
+  4. Output one recommended_parts entry per practically-separable part
+
+CRITICAL — NEVER OUTPUT:
+  - "Mixed material" / "整个物品" / "其他部分" (lazy, forbidden)
+  - "Needs teacher review" for clear common items (be DECISIVE)
+
+If photo contains MULTIPLE distinct items (e.g. a bag of mixed recyclables, a pile),
+list EACH as its own detected_items entry. Do NOT bundle them.
+
+Composite items rule:
+  - Tetra Pak = 3 parts | PET bottle = 3 parts | Toothpaste = 2 parts
+  - Milk-powder tin = 3 parts | Spiral notebook = 3 parts
+  - Snack wrapper / pen / straw = 1 part general_waste (explain why)
+
+Hazards (battery / chemical / sharp / glass / medical) → safety_flags + award_star_suggestion = 0.
 Write both Chinese and English in every text field. Output JSON only.`;
 
     const openaiResp = await fetch("https://api.openai.com/v1/responses", {
@@ -358,7 +474,7 @@ Write both Chinese and English in every text field. Output JSON only.`;
             schema: RECYCLING_SCHEMA,
           },
         },
-        max_output_tokens: 2400,
+        max_output_tokens: 3200,
       }),
     });
 
