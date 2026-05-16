@@ -1,30 +1,49 @@
-// 环保小兵 — main app: login, cloud sync, mode switcher
+// 环保小兵 — main app: role-based access (public viewer + admin login), cloud sync, mode switcher.
 
 const { useState, useEffect } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "bigScreenTheme": "arena",
-  "startMode": "mobile"
+  "startMode": "catalog"
 }/*EDITMODE-END*/;
 
 const ADMIN_ID = "JBC9008";
 const ADMIN_PW = "JBC9008";
 const AUTH_KEY = "eco_warrior_authed_v1";
 
+// Public viewers can browse these; admin-only modes are gated.
+const PUBLIC_MODES = ["catalog", "status", "rewards", "loop"];
+const ADMIN_ONLY_MODES = ["mobile", "stars", "admin", "ai"];
+
 function normalizeMode(mode) {
-  return mode === "bigscreen" ? "status" : mode;
+  if (mode === "bigscreen") return "status";
+  return mode;
 }
 
-function LoginGate({ onAuth }) {
+function pickStartMode(tweaks, authed) {
+  const wanted = normalizeMode(tweaks.startMode || (authed ? "mobile" : "catalog"));
+  // If a public viewer somehow lands on an admin-only mode, redirect to catalog.
+  if (!authed && ADMIN_ONLY_MODES.includes(wanted)) return "catalog";
+  return wanted;
+}
+
+function LoginModal({ open, onClose, onAuth }) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    if (!open) { setId(""); setPw(""); setErr(""); }
+  }, [open]);
+
+  if (!open) return null;
 
   function submit(e) {
     e.preventDefault();
     if (id.trim().toUpperCase() === ADMIN_ID && pw === ADMIN_PW) {
       localStorage.setItem(AUTH_KEY, "1");
       onAuth();
+      onClose();
     } else {
       setErr("账号或密码错误 · ID atau kata laluan salah");
       setPw("");
@@ -32,8 +51,9 @@ function LoginGate({ onAuth }) {
   }
 
   return (
-    <div className="login-gate">
-      <form className="login-card" onSubmit={submit}>
+    <div className="login-modal-backdrop" onClick={onClose}>
+      <form className="login-card login-modal" onClick={e => e.stopPropagation()} onSubmit={submit}>
+        <button type="button" className="login-modal-close" onClick={onClose} aria-label="Close">×</button>
         <div className="logo-pair">
           <img src="logo LATEST.jpg" alt="SJK(C) Chung Hwa Belemang" />
         </div>
@@ -41,13 +61,13 @@ function LoginGate({ onAuth }) {
           <span style={{fontFamily:'"ZCOOL KuaiLe", var(--font-display)', fontSize:18}}>文林望中华学校</span>
           <span className="ms">SJK(C) CHUNG HWA BELEMANG</span>
         </div>
-        <h1><span className="zh">环保小兵</span></h1>
-        <div className="tagline">HARI MESRA ALAM · 资源回收赛</div>
+        <h1><span className="zh">老师登入</span></h1>
+        <div className="tagline">Admin Login · 仅老师可输入数据</div>
 
         <div className="login-form">
           <div className="login-field">
             <label>账号 · ID</label>
-            <input value={id} onChange={e => setId(e.target.value)} placeholder="JBC9008" autoComplete="username" autoCapitalize="characters" />
+            <input value={id} onChange={e => setId(e.target.value)} placeholder="JBC9008" autoComplete="username" autoCapitalize="characters" autoFocus />
           </div>
           <div className="login-field">
             <label>密码 · Kata laluan</label>
@@ -63,7 +83,8 @@ function LoginGate({ onAuth }) {
         </div>
 
         <div className="footer-note">
-          老师录入重量、Session 分数与组员记录
+          家长 · 学生可以直接关闭这窗口浏览公开页面<br/>
+          <span style={{opacity:.65}}>Parents & students: just close this to keep browsing</span>
         </div>
       </form>
     </div>
@@ -85,21 +106,30 @@ function SyncStatusPill({ mode, dark, errorMsg, onClick }) {
   );
 }
 
+function ViewerBadge() {
+  return (
+    <div className="viewer-badge" title="仅老师可输入数据 · Admin login required to edit">
+      👀 访客模式 · Viewer
+    </div>
+  );
+}
+
 function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === "1");
+  const [loginOpen, setLoginOpen] = useState(false);
   const [state, setState] = useState(() => EcoData.load());
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [mode, setMode] = useState(() => normalizeMode(tweaks.startMode || "mobile"));
+  const [mode, setMode] = useState(() => pickStartMode(tweaks, localStorage.getItem(AUTH_KEY) === "1"));
   const [syncMode, setSyncMode] = useState("local");
   const [syncErr, setSyncErr] = useState(null);
 
+  // Cloud sync — runs for everyone so viewers see live data.
   useEffect(() => {
-    if (!authed) return;
     CloudSync.init(window.SUPABASE_CONFIG);
     const offChange = CloudSync.onChange(s => setState(EcoData.load()));
     const offStatus = CloudSync.onStatus((m, err) => { setSyncMode(m); setSyncErr(err); });
     return () => { offChange(); offStatus(); };
-  }, [authed]);
+  }, []);
 
   useEffect(() => {
     function onStorage(e) {
@@ -113,15 +143,32 @@ function App() {
     if (!window.confirm("登出？\nLog keluar?")) return;
     localStorage.removeItem(AUTH_KEY);
     setAuthed(false);
+    // If currently on an admin-only mode, kick back to catalog.
+    if (ADMIN_ONLY_MODES.includes(mode)) setMode("catalog");
   }
 
-  if (!authed) return <LoginGate onAuth={() => setAuthed(true)} />;
+  // If a viewer tries to click an admin-only mode chip, request login.
+  function handleSetMode(next) {
+    if (!authed && ADMIN_ONLY_MODES.includes(next)) {
+      setLoginOpen(true);
+      return;
+    }
+    setMode(next);
+  }
+
+  // Any view can call requireAuth(action) — runs action if authed, else opens login modal.
+  function requireAuth(action) {
+    if (authed) return action ? action() : true;
+    setLoginOpen(true);
+    return false;
+  }
 
   const isDark = false;
 
   return (
     <>
-      <ModeSwitcher mode={mode} setMode={setMode} />
+      <ModeSwitcher mode={mode} setMode={handleSetMode} authed={authed} adminOnlyModes={ADMIN_ONLY_MODES} />
+
       <SyncStatusPill
         mode={syncMode}
         errorMsg={syncErr}
@@ -132,47 +179,66 @@ function App() {
           else alert(syncMode === "cloud" ? "云同步运行中" : "正在连接云端");
         }}
       />
-      <button className={`logout-btn ${isDark ? "on-dark" : ""}`} onClick={logout}>登出 · Log Keluar</button>
 
-      {mode === "mobile" && <MobileView state={state} setState={setState} />}
+      {!authed && <ViewerBadge />}
+
+      {authed ? (
+        <button className={`logout-btn ${isDark ? "on-dark" : ""}`} onClick={logout}>
+          👤 老师 · 登出
+        </button>
+      ) : (
+        <button className={`logout-btn login-btn ${isDark ? "on-dark" : ""}`} onClick={() => setLoginOpen(true)}>
+          🔓 老师登入 · Admin Login
+        </button>
+      )}
+
+      {mode === "mobile" && <MobileView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
-      {mode === "catalog" && <CatalogView state={state} setState={setState} />}
-      {mode === "ai" && <AIScanView state={state} setState={setState} />}
-      {mode === "stars" && <StarLedgerView state={state} setState={setState} />}
-      {mode === "rewards" && <RewardCornerView state={state} setState={setState} />}
+      {mode === "catalog" && <CatalogView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
+      {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
+      {mode === "stars" && <StarLedgerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
+      {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {mode === "loop" && <EcoLoopDashboard state={state} />}
-      {mode === "admin" && <AdminView state={state} setState={setState} />}
+      {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
 
-      <TweaksPanel title="Tweaks">
-        <TweakSection label="战况风格 · Tema Status">
-          <TweakSelect
-            label="主题"
-            value={tweaks.bigScreenTheme}
-            options={[
-              { value: "arena", label: "竞技场 · Arena" },
-              { value: "map", label: "路线图 · Peta" },
-              { value: "retro", label: "复古 · Retro" },
-            ]}
-            onChange={v => setTweak("bigScreenTheme", v)}
-          />
-        </TweakSection>
-        <TweakSection label="默认模式 · Mod Mula">
-          <TweakRadio
-            label="开机进入"
-            value={tweaks.startMode}
-            options={[
-              { value: "mobile", label: "录入" },
-              { value: "catalog", label: "图鉴" },
-              { value: "stars", label: "星" },
-              { value: "rewards", label: "奖" },
-              { value: "loop", label: "闭环" },
-              { value: "status", label: "战况" },
-              { value: "admin", label: "管理" },
-            ]}
-            onChange={v => setTweak("startMode", v)}
-          />
-        </TweakSection>
-      </TweaksPanel>
+      {authed && (
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="战况风格 · Tema Status">
+            <TweakSelect
+              label="主题"
+              value={tweaks.bigScreenTheme}
+              options={[
+                { value: "arena", label: "竞技场 · Arena" },
+                { value: "map", label: "路线图 · Peta" },
+                { value: "retro", label: "复古 · Retro" },
+              ]}
+              onChange={v => setTweak("bigScreenTheme", v)}
+            />
+          </TweakSection>
+          <TweakSection label="默认模式 · Mod Mula">
+            <TweakRadio
+              label="开机进入"
+              value={tweaks.startMode}
+              options={[
+                { value: "catalog", label: "图鉴" },
+                { value: "mobile", label: "录入" },
+                { value: "stars", label: "星" },
+                { value: "rewards", label: "奖" },
+                { value: "loop", label: "闭环" },
+                { value: "status", label: "战况" },
+                { value: "admin", label: "管理" },
+              ]}
+              onChange={v => setTweak("startMode", v)}
+            />
+          </TweakSection>
+        </TweaksPanel>
+      )}
+
+      <LoginModal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        onAuth={() => setAuthed(true)}
+      />
     </>
   );
 }

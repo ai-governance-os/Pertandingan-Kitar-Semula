@@ -1,6 +1,6 @@
 // Reward Corner — fund tracker, inventory management, and star-based redemption.
 
-function RewardCornerView({ state, setState }) {
+function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) => fn && fn() }) {
   const { useState, useMemo } = React;
 
   const [redeemTeamId, setRedeemTeamId] = useState(state.teams[0]?.id || "");
@@ -24,6 +24,7 @@ function RewardCornerView({ state, setState }) {
   const recentRedemptions = useMemo(() => (state.rewardRedemptions || []).slice(0, 10), [state.rewardRedemptions]);
 
   function redeem() {
+    if (!requireAuth()) return;
     if (!student) { alert("请选择学生 · Pick a student first."); return; }
     if (!redeemItemId) { alert("请选择奖品 · Pick a reward."); return; }
     const next = EcoData.redeemReward(state, {
@@ -40,6 +41,7 @@ function RewardCornerView({ state, setState }) {
   }
 
   function addItem() {
+    if (!requireAuth()) return;
     if (!newName.trim()) { alert("请输入奖品名称 · Enter a reward name."); return; }
     setState(EcoData.addRewardItem(state, {
       icon: newIcon || "🎁",
@@ -54,17 +56,20 @@ function RewardCornerView({ state, setState }) {
   }
 
   function bumpQty(id, delta) {
+    if (!requireAuth()) return;
     const item = (state.rewardItems || []).find(i => i.id === id);
     if (!item) return;
     setState(EcoData.updateRewardItem(state, id, { quantity: Math.max(0, (item.quantity || 0) + delta) }));
   }
 
   function deleteItem(id) {
+    if (!requireAuth()) return;
     if (!window.confirm("删除这个奖品？\nRemove this reward?")) return;
     setState(EcoData.removeRewardItem(state, id));
   }
 
   function logFund() {
+    if (!requireAuth()) return;
     const amt = Number(fundAmount) || 0;
     if (!amt) { alert("金额不能是 0 · Amount cannot be 0."); return; }
     const signed = fundType === "purchase" ? -Math.abs(amt) : Math.abs(amt);
@@ -97,58 +102,55 @@ function RewardCornerView({ state, setState }) {
             <StatBox label="奖品支出" sub="Reward spend" value={fmt(fund.rewardCostRm || 0, 2)} unit="RM" color="#C8341A" />
             <StatBox label="估计余额" sub="Balance" value={fmt(fund.estimatedBalanceRm || 0, 2)} unit="RM" color="#2EC4B6" />
           </div>
-          <div className="fund-form">
-            <select value={fundType} onChange={e => setFundType(e.target.value)}>
-              <option value="topup">💵 收入 · Income</option>
-              <option value="purchase">🛒 采购支出 · Purchase</option>
-              <option value="donation">🎁 捐赠 · Donation</option>
-            </select>
-            <input
-              type="number"
-              placeholder="RM"
-              value={fundAmount}
-              onChange={e => setFundAmount(e.target.value)}
-            />
-            <input
-              placeholder="说明 · Note"
-              value={fundNote}
-              onChange={e => setFundNote(e.target.value)}
-            />
-            <button className="chunky-btn primary" onClick={logFund}>记录 · Log</button>
-          </div>
-        </div>
-
-        <div className="admin-section redeem-section">
-          <h2>✨ 兑换奖品 · Redeem</h2>
-          <div className="redeem-row">
-            <select value={redeemTeamId} onChange={e => { setRedeemTeamId(e.target.value); setRedeemStudentId(""); }}>
-              {state.teams.map(t => <option key={t.id} value={t.id}>{t.icon} {t.zh}</option>)}
-            </select>
-            <select value={redeemStudentId} onChange={e => setRedeemStudentId(e.target.value)}>
-              <option value="">— 选择学生 · Choose —</option>
-              {(team?.members || []).map(m => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({EcoData.studentStarBalance(state, m.id)} ⭐)
-                </option>
-              ))}
-            </select>
-            <select value={redeemItemId} onChange={e => setRedeemItemId(e.target.value)}>
-              {(state.rewardItems || []).filter(i => i.active !== false).map(i => (
-                <option key={i.id} value={i.id}>
-                  {i.icon || "🎁"} {i.nameZh} ({i.starCost} ⭐ · 库存 {i.quantity})
-                </option>
-              ))}
-            </select>
-            <button className="chunky-btn primary big-redeem-btn" onClick={redeem} disabled={!student}>
-              🎁 立即兑换 · Redeem
-            </button>
-          </div>
-          {student && (
-            <div className="redeem-balance">
-              {student.name} 现有 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
+          {authed ? (
+            <div className="fund-form">
+              <select value={fundType} onChange={e => setFundType(e.target.value)}>
+                <option value="topup">💵 收入 · Income</option>
+                <option value="purchase">🛒 采购支出 · Purchase</option>
+                <option value="donation">🎁 捐赠 · Donation</option>
+              </select>
+              <input type="number" placeholder="RM" value={fundAmount} onChange={e => setFundAmount(e.target.value)} />
+              <input placeholder="说明 · Note" value={fundNote} onChange={e => setFundNote(e.target.value)} />
+              <button className="chunky-btn primary" onClick={logFund}>记录 · Log</button>
             </div>
+          ) : (
+            <ViewerHint />
           )}
         </div>
+
+        {authed && (
+          <div className="admin-section redeem-section">
+            <h2>✨ 兑换奖品 · Redeem</h2>
+            <div className="redeem-row">
+              <select value={redeemTeamId} onChange={e => { setRedeemTeamId(e.target.value); setRedeemStudentId(""); }}>
+                {state.teams.map(t => <option key={t.id} value={t.id}>{t.icon} {t.zh}</option>)}
+              </select>
+              <select value={redeemStudentId} onChange={e => setRedeemStudentId(e.target.value)}>
+                <option value="">— 选择学生 · Choose —</option>
+                {(team?.members || []).map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({EcoData.studentStarBalance(state, m.id)} ⭐)
+                  </option>
+                ))}
+              </select>
+              <select value={redeemItemId} onChange={e => setRedeemItemId(e.target.value)}>
+                {(state.rewardItems || []).filter(i => i.active !== false).map(i => (
+                  <option key={i.id} value={i.id}>
+                    {i.icon || "🎁"} {i.nameZh} ({i.starCost} ⭐ · 库存 {i.quantity})
+                  </option>
+                ))}
+              </select>
+              <button className="chunky-btn primary big-redeem-btn" onClick={redeem} disabled={!student}>
+                🎁 立即兑换 · Redeem
+              </button>
+            </div>
+            {student && (
+              <div className="redeem-balance">
+                {student.name} 现有 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="admin-section">
           <h2>🛍️ 奖品库存 · Reward Inventory</h2>
@@ -161,26 +163,38 @@ function RewardCornerView({ state, setState }) {
                   <small>{item.nameEn}</small>
                 </div>
                 <div className="reward-cost">{item.starCost} ⭐</div>
-                <div className="reward-qty-row">
-                  <button className="chunky-btn small-btn" onClick={() => bumpQty(item.id, -1)}>−</button>
-                  <span><b>{item.quantity}</b> pcs</span>
-                  <button className="chunky-btn small-btn" onClick={() => bumpQty(item.id, 1)}>+</button>
-                </div>
-                <button className="chunky-btn small-btn reward-delete" onClick={() => deleteItem(item.id)}>删除</button>
+                {authed ? (
+                  <>
+                    <div className="reward-qty-row">
+                      <button className="chunky-btn small-btn" onClick={() => bumpQty(item.id, -1)}>−</button>
+                      <span><b>{item.quantity}</b> pcs</span>
+                      <button className="chunky-btn small-btn" onClick={() => bumpQty(item.id, 1)}>+</button>
+                    </div>
+                    <button className="chunky-btn small-btn reward-delete" onClick={() => deleteItem(item.id)}>删除</button>
+                  </>
+                ) : (
+                  <div className="reward-qty-row" style={{justifyContent:'center'}}>
+                    <span>库存 <b>{item.quantity}</b> pcs</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
-          <h3 style={{marginTop:24}}>➕ 新增奖品 · Add Reward</h3>
-          <div className="reward-add-row">
-            <input style={{maxWidth:60}} placeholder="🎁" value={newIcon} onChange={e => setNewIcon(e.target.value)} />
-            <input placeholder="中文名" value={newName} onChange={e => setNewName(e.target.value)} />
-            <input placeholder="English name" value={newEn} onChange={e => setNewEn(e.target.value)} />
-            <input type="number" placeholder="星星 ⭐" value={newCost} onChange={e => setNewCost(e.target.value)} />
-            <input type="number" placeholder="数量" value={newQty} onChange={e => setNewQty(e.target.value)} />
-            <input type="number" placeholder="单价 RM" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
-            <button className="chunky-btn primary" onClick={addItem}>新增 · Add</button>
-          </div>
+          {authed && (
+            <>
+              <h3 style={{marginTop:24}}>➕ 新增奖品 · Add Reward</h3>
+              <div className="reward-add-row">
+                <input style={{maxWidth:60}} placeholder="🎁" value={newIcon} onChange={e => setNewIcon(e.target.value)} />
+                <input placeholder="中文名" value={newName} onChange={e => setNewName(e.target.value)} />
+                <input placeholder="English name" value={newEn} onChange={e => setNewEn(e.target.value)} />
+                <input type="number" placeholder="星星 ⭐" value={newCost} onChange={e => setNewCost(e.target.value)} />
+                <input type="number" placeholder="数量" value={newQty} onChange={e => setNewQty(e.target.value)} />
+                <input type="number" placeholder="单价 RM" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
+                <button className="chunky-btn primary" onClick={addItem}>新增 · Add</button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="admin-section">

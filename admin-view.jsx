@@ -2,7 +2,12 @@
 
 const { useState: useStateA, useMemo: useMemoA } = React;
 
-function AdminView({ state, setState }) {
+function AdminView(props) {
+  if (!props.authed) return <AdminGate authed={false} requireAuth={props.requireAuth}>{null}</AdminGate>;
+  return <AdminViewInner {...props} />;
+}
+
+function AdminViewInner({ state, setState }) {
   const [confirmReset, setConfirmReset] = useStateA(false);
   const report = useMemoA(() => EcoData.absenceReport(state), [state]);
   const ineligible = report.filter(r => !r.eligible);

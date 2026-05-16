@@ -2,7 +2,7 @@
 // Student flow: pick group → pick item → see scripted advice → award star (optional).
 // AI fallback: if not in catalog, scan with AI; teacher can save result back to catalog.
 
-function CatalogView({ state, setState }) {
+function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn && fn() }) {
   const { useState, useMemo, useRef } = React;
 
   const [group, setGroup] = useState("all");
@@ -29,6 +29,7 @@ function CatalogView({ state, setState }) {
   const selectedItem = selected ? allItems.find(i => i.id === selected) : null;
 
   function awardStarFromCatalog(item) {
+    if (!requireAuth()) return;
     if (!student) { alert("请先选择学生 · Pick a student first"); return; }
     const stars = item.starSuggestion || 1;
     const event = {
@@ -42,6 +43,11 @@ function CatalogView({ state, setState }) {
     };
     setState(EcoData.addStarEvent(state, event));
     alert(`🌟 ${student.name} +${stars} ⭐`);
+  }
+
+  function openAI() {
+    if (!requireAuth()) return;
+    setShowAI(true);
   }
 
   return (
@@ -137,8 +143,8 @@ function CatalogView({ state, setState }) {
           {items.length === 0 && (
             <div className="catalog-empty">
               没有匹配的物品 · No items match.<br/>
-              <button className="chunky-btn primary" onClick={() => setShowAI(true)}>
-                🤖 让 AI 帮我认 · Ask AI
+              <button className="chunky-btn primary" onClick={openAI}>
+                🤖 让 AI 帮我认 · Ask AI{!authed && " 🔒"}
               </button>
             </div>
           )}
@@ -150,6 +156,7 @@ function CatalogView({ state, setState }) {
             item={selectedItem}
             binLabels={binLabels}
             student={student}
+            authed={authed}
             onAwardStar={() => awardStarFromCatalog(selectedItem)}
             onClose={() => setSelected(null)}
           />
@@ -158,9 +165,9 @@ function CatalogView({ state, setState }) {
         {/* AI fallback toggle */}
         <div className="catalog-ai-toggle">
           {!showAI ? (
-            <button className="chunky-btn catalog-ai-show-btn" onClick={() => setShowAI(true)}>
-              🤖 找不到？让 AI 帮我认
-              <small>Not in catalog? Ask AI</small>
+            <button className="chunky-btn catalog-ai-show-btn" onClick={openAI}>
+              🤖 找不到？让 AI 帮我认{!authed && " 🔒"}
+              <small>{authed ? "Not in catalog? Ask AI" : "Admin login required"}</small>
             </button>
           ) : (
             <CatalogAIFallback
@@ -177,7 +184,7 @@ function CatalogView({ state, setState }) {
   );
 }
 
-function CatalogDetail({ item, binLabels, student, onAwardStar, onClose }) {
+function CatalogDetail({ item, binLabels, student, authed = true, onAwardStar, onClose }) {
   const bin = binLabels[item.binId] || {};
   return (
     <div className="entry-panel catalog-detail">
@@ -245,11 +252,11 @@ function CatalogDetail({ item, binLabels, student, onAwardStar, onClose }) {
         <button
           className="chunky-btn ai-award-btn"
           onClick={onAwardStar}
-          disabled={!student}
-          title={!student ? "先选学生 · Pick a student first" : ""}
+          disabled={authed && !student}
+          title={!authed ? "需要老师登入 · Admin login required" : (!student ? "先选学生 · Pick a student first" : "")}
         >
-          🌟 奖励 {item.starSuggestion || 1} ⭐
-          <small>{student ? `Award ${student.name}` : "Pick student first"}</small>
+          🌟 奖励 {item.starSuggestion || 1} ⭐{!authed && " 🔒"}
+          <small>{!authed ? "Admin login required" : (student ? `Award ${student.name}` : "Pick student first")}</small>
         </button>
       </div>
     </div>

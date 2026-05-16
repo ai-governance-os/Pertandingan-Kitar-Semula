@@ -1,6 +1,11 @@
 // Star Ledger View — quick-tap eco/character star awards with deduction-requires-reason flow.
 
-function StarLedgerView({ state, setState }) {
+function StarLedgerView(props) {
+  if (!props.authed) return <AdminGate authed={false} requireAuth={props.requireAuth}>{null}</AdminGate>;
+  return <StarLedgerViewInner {...props} />;
+}
+
+function StarLedgerViewInner({ state, setState }) {
   const { useState, useMemo } = React;
 
   const [teamId, setTeamId] = useState(state.teams[0]?.id || "");

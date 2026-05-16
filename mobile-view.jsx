@@ -28,7 +28,12 @@ function isWeightInputAllowed(value) {
   return /^(\d+(\.\d*)?|\.\d*)?$/.test(value);
 }
 
-function MobileView({ state, setState }) {
+function MobileView(props) {
+  if (!props.authed) return <AdminGate authed={false} requireAuth={props.requireAuth}>{null}</AdminGate>;
+  return <MobileViewInner {...props} />;
+}
+
+function MobileViewInner({ state, setState }) {
   const session = EcoData.activeSession(state);
   const [teamId, setTeamId] = useStateM(state.teams[0]?.id);
   const [draftWeights, setDraftWeights] = useStateM({});

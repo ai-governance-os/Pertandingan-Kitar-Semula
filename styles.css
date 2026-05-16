@@ -3106,3 +3106,137 @@ button { font-family: inherit; cursor: pointer; }
   border: 2px dashed #9B59B6;
   background: rgba(155,89,182,.04);
 }
+
+/* ================================================== */
+/* ROLE-BASED ACCESS — Viewer / Admin                  */
+/* ================================================== */
+
+.login-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,18,38,.55);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal .15s ease;
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.login-modal {
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: popInModal .2s ease;
+}
+@keyframes popInModal {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: transparent;
+  border: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 50%;
+}
+.login-modal-close:hover {
+  background: rgba(0,0,0,.06);
+  color: var(--ink);
+}
+
+.viewer-badge {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #FFE5DC, #FFC1A8);
+  color: #6B2410;
+  border: 2px solid #C8341A;
+  padding: 6px 14px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 13px;
+  z-index: 100;
+  box-shadow: 0 4px 0 rgba(20,18,40,.12);
+  pointer-events: none;
+}
+
+.login-btn {
+  background: linear-gradient(180deg, #2EC4B6, #167B72) !important;
+  color: white !important;
+  border-color: #0D5752 !important;
+}
+
+.mode-switcher button.locked {
+  opacity: 0.55;
+  background: rgba(0,0,0,.04);
+  position: relative;
+}
+.mode-switcher button.locked:hover {
+  opacity: 0.85;
+}
+
+.viewer-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255,201,60,.18);
+  border: 2px dashed #C68B00;
+  color: #6B4500;
+  font-weight: 700;
+  margin-top: 14px;
+}
+.viewer-hint span { font-size: 14px; }
+
+.admin-gate-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px !important;
+}
+.admin-gate-card {
+  text-align: center;
+  padding: 24px 28px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #FFF8EE 0%, #FFEDDA 100%);
+  border: 3px dashed #C68B00;
+  max-width: 480px;
+  width: 100%;
+}
+.admin-gate-lock {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.admin-gate-card h2 {
+  margin: 8px 0 12px;
+  font-size: 22px;
+  color: var(--ink);
+}
+.admin-gate-card h2 small {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0.65;
+  margin-top: 4px;
+}
+.admin-gate-card p {
+  font-size: 14px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 10px 0;
+}

@@ -1,6 +1,11 @@
 // AI Scan View — teacher-friendly camera/upload interface for recycling classification.
 
-function AIScanView({ state, setState }) {
+function AIScanView(props) {
+  if (!props.authed) return <AdminGate authed={false} requireAuth={props.requireAuth}>{null}</AdminGate>;
+  return <AIScanViewInner {...props} />;
+}
+
+function AIScanViewInner({ state, setState }) {
   const { useState, useRef, useMemo } = React;
 
   const [file, setFile] = useState(null);

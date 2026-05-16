@@ -31,24 +31,32 @@ function SchoolStamp({ size = 60, light = false }) {
   );
 }
 
-function ModeSwitcher({ mode, setMode }) {
+function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
+  // Order matters — public modes come first so viewers see them on the left.
   const modes = [
-    { id: "mobile",    icon: "📝", zh: "录入", ms: "Input" },
-    { id: "catalog",   icon: "📋", zh: "图鉴", ms: "Catalog" },
-    { id: "status",    icon: "📊", zh: "战况", ms: "Status" },
+    { id: "catalog",   icon: "📋", zh: "图鉴",   ms: "Catalog" },
+    { id: "status",    icon: "📊", zh: "战况",   ms: "Status" },
+    { id: "rewards",   icon: "🎁", zh: "奖品",   ms: "Rewards" },
+    { id: "loop",      icon: "🔁", zh: "闭环",   ms: "Loop" },
+    { id: "mobile",    icon: "📝", zh: "录入",   ms: "Input" },
     { id: "stars",     icon: "⭐", zh: "环保星", ms: "Stars" },
-    { id: "rewards",   icon: "🎁", zh: "奖品", ms: "Rewards" },
-    { id: "loop",      icon: "🔁", zh: "闭环", ms: "Loop" },
-    { id: "admin",     icon: "⚙️", zh: "管理", ms: "Admin" },
+    { id: "admin",     icon: "⚙️", zh: "管理",   ms: "Admin" },
   ];
   return (
     <div className="mode-switcher">
-      {modes.map(m => (
-        <button key={m.id} className={mode===m.id?"active":""} onClick={()=>setMode(m.id)}>
-          <span className="mode-icon">{m.icon}</span>
-          <span>{m.zh}</span>
-        </button>
-      ))}
+      {modes.map(m => {
+        const locked = !authed && adminOnlyModes.includes(m.id);
+        const classes = [
+          mode === m.id ? "active" : "",
+          locked ? "locked" : "",
+        ].filter(Boolean).join(" ");
+        return (
+          <button key={m.id} className={classes} onClick={() => setMode(m.id)} title={locked ? "需要老师登入 · Admin login required" : ""}>
+            <span className="mode-icon">{m.icon}</span>
+            <span>{m.zh}{locked ? " 🔒" : ""}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -93,6 +101,39 @@ function relTime(ts) {
   return Math.floor(s/86400) + "d";
 }
 
+function ViewerHint({ children }) {
+  return (
+    <div className="viewer-hint">
+      🔒 <span>{children || "需要老师登入才能操作 · Admin login required to edit"}</span>
+    </div>
+  );
+}
+
+function AdminGate({ authed, requireAuth, children }) {
+  if (authed) return children;
+  return (
+    <div className="mobile-view teacher-entry">
+      <div className="mobile-frame teacher-frame admin-gate-frame">
+        <div style={{display:'flex', justifyContent:'center', marginBottom:14}}>
+          <SchoolStamp size={84} />
+        </div>
+        <div className="admin-gate-card">
+          <div className="admin-gate-lock">🔒</div>
+          <h2>仅老师可进入<br/><small>Admin only area</small></h2>
+          <p>这个页面用来记录或修改数据，需要老师登入。<br/>
+          家长 / 学生可以浏览 <b>📋 图鉴</b>、<b>📊 战况</b>、<b>🎁 奖品</b> 和 <b>🔁 闭环</b> 这几个公开页面。</p>
+          <p style={{opacity:.7, fontSize:13}}>This page edits data and needs admin login.<br/>
+          Parents & students can browse Catalog / Status / Rewards / Loop without logging in.</p>
+          <button className="chunky-btn primary" style={{marginTop:14, fontSize:17, padding:'14px 24px'}} onClick={() => requireAuth && requireAuth()}>
+            🔓 老师登入 · Admin Login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 Object.assign(window, {
-  BL, BLinline, SchoolStamp, ModeSwitcher, Confetti, fmt, fmtRM, relTime
+  BL, BLinline, SchoolStamp, ModeSwitcher, Confetti, fmt, fmtRM, relTime,
+  ViewerHint, AdminGate,
 });
