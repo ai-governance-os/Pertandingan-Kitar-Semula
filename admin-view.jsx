@@ -206,3 +206,4 @@ function StatBox({ label, sub, value, unit, color }) {
 }
 
 window.AdminView = AdminView;
+window.StatBox = StatBox;

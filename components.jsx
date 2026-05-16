@@ -34,7 +34,11 @@ function SchoolStamp({ size = 60, light = false }) {
 function ModeSwitcher({ mode, setMode }) {
   const modes = [
     { id: "mobile",    icon: "📝", zh: "录入", ms: "Input" },
+    { id: "catalog",   icon: "📋", zh: "图鉴", ms: "Catalog" },
     { id: "status",    icon: "📊", zh: "战况", ms: "Status" },
+    { id: "stars",     icon: "⭐", zh: "环保星", ms: "Stars" },
+    { id: "rewards",   icon: "🎁", zh: "奖品", ms: "Rewards" },
+    { id: "loop",      icon: "🔁", zh: "闭环", ms: "Loop" },
     { id: "admin",     icon: "⚙️", zh: "管理", ms: "Admin" },
   ];
   return (

@@ -136,6 +136,11 @@ function App() {
 
       {mode === "mobile" && <MobileView state={state} setState={setState} />}
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
+      {mode === "catalog" && <CatalogView state={state} setState={setState} />}
+      {mode === "ai" && <AIScanView state={state} setState={setState} />}
+      {mode === "stars" && <StarLedgerView state={state} setState={setState} />}
+      {mode === "rewards" && <RewardCornerView state={state} setState={setState} />}
+      {mode === "loop" && <EcoLoopDashboard state={state} />}
       {mode === "admin" && <AdminView state={state} setState={setState} />}
 
       <TweaksPanel title="Tweaks">
@@ -157,6 +162,10 @@ function App() {
             value={tweaks.startMode}
             options={[
               { value: "mobile", label: "录入" },
+              { value: "catalog", label: "图鉴" },
+              { value: "stars", label: "星" },
+              { value: "rewards", label: "奖" },
+              { value: "loop", label: "闭环" },
               { value: "status", label: "战况" },
               { value: "admin", label: "管理" },
             ]}

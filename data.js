@@ -61,6 +61,40 @@ const DEFAULT_TEAMS = [
 
 const DEFAULT_SESSION_ID = "session_1";
 
+const DEFAULT_STAR_TYPES = [
+  { id: "eco_recycle", icon: "♻️", zh: "环保回收", en: "Eco Recycling", defaultStars: 2 },
+  { id: "eco_paper_box", icon: "📄", zh: "纸张回收", en: "Paper Recycling", defaultStars: 1 },
+  { id: "eco_save_electricity", icon: "💡", zh: "节省电源", en: "Save Electricity", defaultStars: 1 },
+  { id: "eco_save_water", icon: "💧", zh: "节省水源", en: "Save Water", defaultStars: 1 },
+  { id: "eco_campus_care", icon: "🌱", zh: "爱护校园", en: "Campus Care", defaultStars: 1 },
+  { id: "character", icon: "⭐", zh: "品格表现", en: "Character", defaultStars: 1 },
+  { id: "leadership", icon: "🧭", zh: "提醒/领导", en: "Leadership", defaultStars: 2 },
+  { id: "deduction", icon: "⚠️", zh: "扣星", en: "Deduction", defaultStars: -1 },
+];
+
+const DEFAULT_REWARD_ITEMS = [
+  { id: "reward_pencil", icon: "✏️", nameZh: "铅笔", nameEn: "Pencil", starCost: 10, quantity: 20, purchaseCostRm: 8.00, active: true },
+  { id: "reward_eraser", icon: "🧽", nameZh: "橡皮擦", nameEn: "Eraser", starCost: 8, quantity: 20, purchaseCostRm: 6.00, active: true },
+  { id: "reward_ruler", icon: "📏", nameZh: "尺子", nameEn: "Ruler", starCost: 12, quantity: 15, purchaseCostRm: 7.50, active: true },
+  { id: "reward_notebook", icon: "📓", nameZh: "笔记本", nameEn: "Notebook", starCost: 25, quantity: 10, purchaseCostRm: 15.00, active: true },
+  { id: "reward_sticker", icon: "🌟", nameZh: "贴纸包", nameEn: "Sticker pack", starCost: 5, quantity: 30, purchaseCostRm: 4.00, active: true },
+];
+
+const DEFAULT_SETTINGS = {
+  aiEnabled: true,
+  aiLocale: "zh_en",
+  storePhotos: false,
+  teacherReviewRequiredBelowConfidence: 0.75,
+};
+
+function seedCatalog() {
+  // EcoCatalog.SEED is defined in catalog.js (loaded before data.js).
+  // Fallback to empty array if catalog.js failed to load.
+  return (window.EcoCatalog && Array.isArray(window.EcoCatalog.SEED))
+    ? clone(window.EcoCatalog.SEED)
+    : [];
+}
+
 function defaultState() {
   return {
     version: 2,
@@ -73,6 +107,14 @@ function defaultState() {
     activeSessionId: DEFAULT_SESSION_ID,
     weighIns: [],
     attendance: [],
+    aiScans: [],
+    starTypes: clone(DEFAULT_STAR_TYPES),
+    starLedger: [],
+    rewardItems: clone(DEFAULT_REWARD_ITEMS),
+    rewardRedemptions: [],
+    fundEvents: [],
+    catalog: seedCatalog(),
+    settings: { ...DEFAULT_SETTINGS },
     season: { startedAt: Date.now(), name: { zh: "2026 环保回收赛", ms: "Musim Kitar Semula 2026" } },
   };
 }
@@ -122,6 +164,16 @@ function normalizeState(input) {
   state.weighIns = state.weighIns.map(w => recalcWeighIn(state.categories, w)).filter(w => w.kg > 0);
   state.entries = state.weighIns;
   state.attendance = Array.isArray(input.attendance) ? input.attendance : [];
+
+  state.aiScans = Array.isArray(input.aiScans) ? input.aiScans : [];
+  state.starTypes = Array.isArray(input.starTypes) && input.starTypes.length ? input.starTypes : clone(DEFAULT_STAR_TYPES);
+  state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
+  state.rewardItems = Array.isArray(input.rewardItems) && input.rewardItems.length ? input.rewardItems : clone(DEFAULT_REWARD_ITEMS);
+  state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
+  state.fundEvents = Array.isArray(input.fundEvents) ? input.fundEvents : [];
+  state.catalog = Array.isArray(input.catalog) && input.catalog.length ? input.catalog : seedCatalog();
+  state.settings = { ...DEFAULT_SETTINGS, ...(input.settings || {}) };
+
   state.season = input.season || base.season;
 
   save(state);
@@ -330,6 +382,260 @@ function resetSeason(state) {
   return fresh;
 }
 
+// ─────────────────────────── AI scans ───────────────────────────
+
+function addAiScan(state, scan) {
+  const clean = { ...scan, id: scan.id || makeId("scan"), ts: scan.ts || Date.now() };
+  const next = { ...state, aiScans: [clean, ...(state.aiScans || [])].slice(0, 500) };
+  save(next);
+  return next;
+}
+
+function updateAiScanDecision(state, scanId, patch) {
+  const next = {
+    ...state,
+    aiScans: (state.aiScans || []).map(s => s.id === scanId ? { ...s, ...patch } : s),
+  };
+  save(next);
+  return next;
+}
+
+// ─────────────────────────── Star ledger ───────────────────────────
+
+function addStarEvent(state, event) {
+  const stars = Number(event.stars) || 0;
+  if (stars < 0 && !String(event.reasonZh || event.reasonEn || "").trim()) {
+    alert("扣星必须写原因 · Deduction requires a reason.");
+    return state;
+  }
+  const clean = {
+    ...event,
+    id: event.id || makeId("star"),
+    ts: event.ts || Date.now(),
+    stars,
+  };
+  const next = { ...state, starLedger: [clean, ...(state.starLedger || [])] };
+  save(next);
+  return next;
+}
+
+function removeStarEvent(state, eventId) {
+  const next = { ...state, starLedger: (state.starLedger || []).filter(e => e.id !== eventId) };
+  save(next);
+  return next;
+}
+
+function studentStarBalance(state, studentId) {
+  const earned = (state.starLedger || [])
+    .filter(e => e.studentId === studentId)
+    .reduce((sum, e) => sum + (Number(e.stars) || 0), 0);
+  const spent = (state.rewardRedemptions || [])
+    .filter(r => r.studentId === studentId)
+    .reduce((sum, r) => sum + (Number(r.starsSpent) || 0), 0);
+  return earned - spent;
+}
+
+function studentStarReport(state) {
+  const members = state.teams.flatMap(t =>
+    t.members.map(m => ({ ...m, teamId: t.id, teamName: t.zh, teamIcon: t.icon }))
+  );
+  return members
+    .map(m => ({ ...m, balance: studentStarBalance(state, m.id) }))
+    .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
+}
+
+function teamStarStats(state, teamId) {
+  const stars = (state.starLedger || [])
+    .filter(e => e.teamId === teamId)
+    .reduce((sum, e) => sum + (Number(e.stars) || 0), 0);
+  return { stars };
+}
+
+// ─────────────────────────── Reward corner ───────────────────────────
+
+function addRewardItem(state, item) {
+  const clean = { ...item, id: item.id || makeId("reward"), active: item.active !== false };
+  const next = { ...state, rewardItems: [clean, ...(state.rewardItems || [])] };
+  save(next);
+  return next;
+}
+
+function updateRewardItem(state, itemId, patch) {
+  const next = {
+    ...state,
+    rewardItems: (state.rewardItems || []).map(i => i.id === itemId ? { ...i, ...patch } : i),
+  };
+  save(next);
+  return next;
+}
+
+function removeRewardItem(state, itemId) {
+  const next = { ...state, rewardItems: (state.rewardItems || []).filter(i => i.id !== itemId) };
+  save(next);
+  return next;
+}
+
+function redeemReward(state, redemption) {
+  const item = (state.rewardItems || []).find(i => i.id === redemption.rewardItemId);
+  if (!item) { alert("奖品不存在 · Reward not found."); return state; }
+  if (item.quantity <= 0) { alert("奖品库存不足 · Out of stock."); return state; }
+  const balance = studentStarBalance(state, redemption.studentId);
+  if (balance < item.starCost) {
+    alert(`星星不足 · Not enough stars. 现有 ${balance} ⭐, 需要 ${item.starCost} ⭐`);
+    return state;
+  }
+  const clean = {
+    ...redemption,
+    id: redemption.id || makeId("redeem"),
+    ts: redemption.ts || Date.now(),
+    rewardNameZh: item.nameZh,
+    rewardNameEn: item.nameEn,
+    starsSpent: item.starCost,
+  };
+  const next = {
+    ...state,
+    rewardItems: state.rewardItems.map(i => i.id === item.id ? { ...i, quantity: i.quantity - 1 } : i),
+    rewardRedemptions: [clean, ...(state.rewardRedemptions || [])],
+  };
+  save(next);
+  return next;
+}
+
+function addFundEvent(state, event) {
+  const clean = {
+    ...event,
+    id: event.id || makeId("fund"),
+    ts: event.ts || Date.now(),
+    amountRm: Number(event.amountRm) || 0,
+  };
+  const next = { ...state, fundEvents: [clean, ...(state.fundEvents || [])] };
+  save(next);
+  return next;
+}
+
+function rewardFundStats(state) {
+  const recycleValueRm = (state.weighIns || []).reduce(
+    (sum, w) => sum + ((Number(w.points) || 0) / 100), 0
+  );
+  const fundEventsRm = (state.fundEvents || []).reduce(
+    (sum, e) => sum + (Number(e.amountRm) || 0), 0
+  );
+  // Only count purchase cost for items actually bought (fundEvents type=purchase),
+  // not the static catalog price.
+  const rewardPurchaseRm = (state.fundEvents || [])
+    .filter(e => e.type === "purchase")
+    .reduce((sum, e) => sum + Math.abs(Number(e.amountRm) || 0), 0);
+  const recycleIncomeRm = recycleValueRm
+    + (state.fundEvents || [])
+      .filter(e => e.type !== "purchase")
+      .reduce((sum, e) => sum + (Number(e.amountRm) || 0), 0);
+  return {
+    recycleValueRm,
+    fundEventsRm,
+    rewardCostRm: rewardPurchaseRm,
+    estimatedBalanceRm: recycleIncomeRm - rewardPurchaseRm,
+  };
+}
+
+function ecoLoopStats(state) {
+  const totals = totalStats(state);
+  const stars = (state.starLedger || []);
+  return {
+    totalRecycledKg: totals.kg,
+    totalRecycleValueRm: totals.points / 100,
+    aiScanCount: (state.aiScans || []).length,
+    starsAwarded: stars.reduce((sum, e) => sum + Math.max(0, Number(e.stars) || 0), 0),
+    starsDeducted: Math.abs(stars.reduce((sum, e) => sum + Math.min(0, Number(e.stars) || 0), 0)),
+    rewardRedemptionCount: (state.rewardRedemptions || []).length,
+    fund: rewardFundStats(state),
+  };
+}
+
+// ─────────────────────────── Catalog (物品图鉴) ───────────────────────────
+
+function addCatalogItem(state, item) {
+  const clean = {
+    ...item,
+    id: item.id || makeId("cat"),
+    parts: Array.isArray(item.parts) ? item.parts : [],
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    starSuggestion: Number(item.starSuggestion) || 1,
+  };
+  const next = { ...state, catalog: [clean, ...(state.catalog || [])] };
+  save(next);
+  return next;
+}
+
+function updateCatalogItem(state, itemId, patch) {
+  const next = {
+    ...state,
+    catalog: (state.catalog || []).map(i => i.id === itemId ? { ...i, ...patch } : i),
+  };
+  save(next);
+  return next;
+}
+
+function removeCatalogItem(state, itemId) {
+  const next = { ...state, catalog: (state.catalog || []).filter(i => i.id !== itemId) };
+  save(next);
+  return next;
+}
+
+function searchCatalog(state, query) {
+  const items = state.catalog || [];
+  const q = String(query || "").toLowerCase().trim();
+  if (!q) return items;
+  return items.filter(i => {
+    const haystack = [
+      i.nameZh, i.nameEn,
+      ...(i.tags || []),
+      ...(i.materials || []),
+      ...(i.parts || []).flatMap(p => [p.partZh, p.partEn]),
+    ].join(" ").toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+function catalogStats(state) {
+  return {
+    total: (state.catalog || []).length,
+    byBin: (state.catalog || []).reduce((acc, i) => {
+      acc[i.binId] = (acc[i.binId] || 0) + 1;
+      return acc;
+    }, {}),
+  };
+}
+
+// Convert an AI scan result into a catalog item (so each AI scan can teach the catalog).
+function aiResultToCatalogItem(analysis, groupId = "other") {
+  const first = (analysis.detected_items || [])[0] || {};
+  const itemId = "cat_ai_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  return {
+    id: itemId,
+    group: groupId,
+    icon: "🤖",
+    nameZh: first.label_zh || "未命名 AI 物品",
+    nameEn: first.label_en || "Unnamed AI item",
+    binId: (first.recommended_parts || [])[0]?.bin_category_id || "unknown",
+    isMixed: !!first.is_mixed_material,
+    materials: first.materials || [],
+    parts: (first.recommended_parts || []).map(p => ({
+      partZh: p.part_zh,
+      partEn: p.part_en,
+      binId: p.bin_category_id,
+      action: p.action,
+    })),
+    starSuggestion: analysis.main_recommendation?.award_star_suggestion || 1,
+    studentMsgZh: analysis.student_message?.zh || "",
+    studentMsgEn: analysis.student_message?.en || "",
+    teacherNoteZh: analysis.teacher_note?.zh || "",
+    teacherNoteEn: analysis.teacher_note?.en || "",
+    safetyFlags: analysis.safety_flags || [],
+    tags: [first.label_zh, first.label_en].filter(Boolean),
+    fromAi: true,
+  };
+}
+
 function exportCSV(state) {
   const rows = [];
   rows.push(["type", "session", "date", "team", "category_or_member", "kg", "rm_per_kg", "value_rm", "brought", "missed_count"]);
@@ -358,7 +664,19 @@ Object.assign(window, {
     setAttendance, attendanceFor, teamMembers,
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     exportCSV,
-    DEFAULT_CATEGORIES, DEFAULT_TEAMS,
+    // AI scan helpers
+    addAiScan, updateAiScanDecision,
+    // Star ledger helpers
+    addStarEvent, removeStarEvent, studentStarBalance, studentStarReport, teamStarStats,
+    // Reward corner helpers
+    addRewardItem, updateRewardItem, removeRewardItem, redeemReward,
+    addFundEvent, rewardFundStats,
+    // Dashboard
+    ecoLoopStats,
+    // Catalog helpers
+    addCatalogItem, updateCatalogItem, removeCatalogItem,
+    searchCatalog, catalogStats, aiResultToCatalogItem,
+    DEFAULT_CATEGORIES, DEFAULT_TEAMS, DEFAULT_STAR_TYPES, DEFAULT_REWARD_ITEMS,
     LEVELS: [
       { lv: 1, zh: "起步", ms: "Mula" },
       { lv: 2, zh: "稳定", ms: "Mantap" },
