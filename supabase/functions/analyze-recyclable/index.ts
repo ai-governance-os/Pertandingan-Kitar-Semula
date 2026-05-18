@@ -25,6 +25,14 @@ const RECYCLING_SCHEMA = {
     "student_message",
     "teacher_note",
     "safety_flags",
+    // ── v1.1 fields (layered AI analysis) ──
+    "image_quality",
+    "multi_item_detected",
+    "multi_item_advice_zh",
+    "multi_item_advice_en",
+    "uncertainties_zh",
+    "uncertainties_en",
+    "recommended_next_action",
   ],
   properties: {
     schema_version: { type: "string", enum: ["1.0"] },
@@ -152,6 +160,45 @@ const RECYCLING_SCHEMA = {
           "unknown_hazard",
         ],
       },
+    },
+
+    // ─── v1.1: layered AI analysis fields ───────────────────────
+    image_quality: {
+      type: "object",
+      additionalProperties: false,
+      required: ["clarity", "needs_retake", "retake_reason_zh", "retake_reason_en"],
+      properties: {
+        clarity: {
+          type: "string",
+          enum: ["clear", "blurry", "too_far", "reflective", "blocked", "crowded", "dark"],
+        },
+        needs_retake: { type: "boolean" },
+        retake_reason_zh: { type: "string" },
+        retake_reason_en: { type: "string" },
+      },
+    },
+    multi_item_detected: { type: "boolean" },
+    multi_item_advice_zh: { type: "string" },
+    multi_item_advice_en: { type: "string" },
+    uncertainties_zh: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string" },
+    },
+    uncertainties_en: {
+      type: "array",
+      maxItems: 6,
+      items: { type: "string" },
+    },
+    recommended_next_action: {
+      type: "string",
+      enum: [
+        "accept",
+        "take_closeup",
+        "separate_items",
+        "teacher_confirm",
+        "reject_as_unsafe",
+      ],
     },
   },
 };
@@ -449,6 +496,85 @@ DECISION RULES
      • 2 for mixed-material correctly decomposed
      • 3 for hard cases (complex item with 4+ parts)
 7. action field: always concrete verbs (拧下 / 倒空 / 冲洗 / 撕下 / 压扁 / 擦干净). Bilingual format: "中文 · English".
+
+═══════════════════════════════════════════════════════════════
+🎚️ v1.1 LAYERED ANALYSIS — when to be DECISIVE vs UNCERTAIN
+═══════════════════════════════════════════════════════════════
+The previous rules say "be decisive." That STILL APPLIES — but only when the
+image is genuinely clear and the item is a well-known shape (PET bottle, aluminum
+can, Tetra Pak, newspaper, etc.). Don't bail on those — that was the old laziness.
+
+NEW: when the image is genuinely AMBIGUOUS, you MUST express that ambiguity
+using the new v1.1 fields instead of pretending to know. Be honest, not lazy.
+
+DISCRIMINATOR (decide which mode you're in):
+  CLEAR & COMMON → set overall_confidence ≥ 0.85, needs_teacher_review = false,
+                   uncertainties_zh = [], recommended_next_action = "accept"
+  AMBIGUOUS      → lower confidence (0.4–0.7), list uncertainties, set
+                   recommended_next_action = "take_closeup" or "teacher_confirm"
+
+CASES THAT ARE GENUINELY AMBIGUOUS (must use uncertainty):
+  ① Glass bottle wrapped in plastic film / shrink wrap — material unclear
+  ② Label material unclear (paper vs. shiny plastic on a plastic bottle)
+  ③ Outer coating / laminate / metallized film — can't tell composition
+  ④ Item partially occluded, far away, blurry, dark, heavily reflective
+  ⑤ Two or more main items photographed together (see multi-item rule)
+  ⑥ Unfamiliar shape that doesn't match any of examples A–P
+
+HOW TO FILL THE v1.1 FIELDS
+
+▸ image_quality (always required)
+  - clarity: pick from clear / blurry / too_far / reflective / blocked / crowded / dark
+  - needs_retake: true ONLY if you genuinely can't decide (don't say true for clear photos!)
+  - retake_reason_zh / _en: ONE short sentence telling the teacher what to re-shoot.
+    Example: { clarity: "clear", needs_retake: false, retake_reason_zh: "", retake_reason_en: "" }
+    Example: { clarity: "reflective", needs_retake: true,
+               retake_reason_zh: "瓶身反光，请近拍标签部分",
+               retake_reason_en: "Bottle glare — please take a close-up of the label" }
+
+▸ multi_item_detected (true/false)
+  - true if there are 2+ DISTINCT main items in the frame (a pile, a bag of mixed stuff)
+  - false if there is ONE main item (even if it has multiple parts like Tetra Pak)
+  - When true: detected_items may still list each item, BUT also set
+    multi_item_advice_zh = "检测到多个物品，建议逐个拍照以获得更准确分类。"
+    multi_item_advice_en = "Multiple items detected — take separate photos for accuracy."
+    award_star_suggestion = 0   ← don't tempt teachers to award on confused input
+  - When false: multi_item_advice_zh = "", multi_item_advice_en = ""
+
+▸ uncertainties_zh / uncertainties_en (arrays, can be empty)
+  - List each thing you're genuinely unsure about, one short sentence each.
+  - Examples (zh): "无法确认瓶身标签是纸张还是塑料", "照片反光，可能是玻璃也可能是塑料"
+  - Empty array [] when image is clear and you're confident.
+  - DON'T fill this just to seem humble — only real ambiguities.
+
+▸ recommended_next_action (one of):
+  - "accept"            → image is clear, AI is confident, teacher can act on result
+  - "take_closeup"      → ask teacher/student to re-photograph a specific part (label, cap, coating)
+  - "separate_items"    → photo has multiple items, suggest one-at-a-time
+  - "teacher_confirm"   → item is unusual or material genuinely ambiguous, teacher must decide
+  - "reject_as_unsafe"  → contains battery/chemical/sharp/medical/glass hazard
+  Pick exactly one. Don't default to "accept" unless you really are confident.
+
+DECISIVE EXAMPLES (these should give "accept" with high confidence):
+  • Clean photo of a Coca-Cola aluminum can on white background     → accept (0.95)
+  • Clean photo of a Tetra Pak on a desk                            → accept (0.92)
+  • Clean photo of a newspaper stack                                → accept (0.94)
+
+UNCERTAIN EXAMPLES (these should NOT bluff):
+  • Glass bottle with a shrink-wrap plastic sleeve obscuring the body
+    → confidence 0.55, clarity "reflective", needs_retake true,
+      uncertainties: ["瓶身被塑料膜包裹，无法看清是玻璃还是塑料"],
+      recommended_next_action "take_closeup"
+  • Plastic bottle whose label looks like it could be paper OR shrink plastic
+    → confidence 0.65, clarity "clear", needs_retake false,
+      uncertainties: ["标签材质不明（纸张或塑料），建议老师近拍标签角落确认"],
+      recommended_next_action "take_closeup"
+  • A pile of mixed recyclables in a basket
+    → multi_item_detected true, confidence 0.50, clarity "crowded",
+      multi_item_advice set, recommended_next_action "separate_items",
+      award_star_suggestion 0
+
+═══════════════════════════════════════════════════════════════
 8. Output JSON ONLY, strict schema match. No prose, no markdown, no extra fields.`;
 
 function jsonResponse(body: unknown, status = 200) {
@@ -514,6 +640,15 @@ CRITICAL — FORBIDDEN OUTPUTS:
 If photo contains MULTIPLE distinct items (a bag, a pile), list EACH as its own detected_items entry.
 
 Hazards (battery / chemical / sharp / glass / medical) → safety_flags + award_star_suggestion = 0.
+
+v1.1 layered fields — ALWAYS fill, even when clear:
+  - image_quality.clarity + needs_retake (false for clean clear photos)
+  - multi_item_detected (true only if 2+ DISTINCT main items)
+  - uncertainties_zh / _en (empty array when you really are confident)
+  - recommended_next_action (one of: accept / take_closeup / separate_items / teacher_confirm / reject_as_unsafe)
+
+Be HONEST: if material is genuinely unclear (glass with plastic film, paper-vs-plastic label, reflective coating) → lower confidence + add uncertainty + recommend "take_closeup". Don't bluff. Don't pretend to know.
+
 Write both Chinese and English in every text field. Output JSON only.`;
 
     const openaiResp = await fetch("https://api.openai.com/v1/responses", {

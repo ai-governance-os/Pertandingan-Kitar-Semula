@@ -1,4 +1,4 @@
-// AI Scan View — teacher-friendly camera/upload interface for recycling classification.
+// AI Scan View — v1.1 layered analysis: normal mode by default, fine-analysis on demand.
 
 function AIScanView(props) {
   if (!props.authed) return <AdminGate authed={false} requireAuth={props.requireAuth}>{null}</AdminGate>;
@@ -16,6 +16,8 @@ function AIScanViewInner({ state, setState }) {
   const [teamId, setTeamId] = useState(state.teams[0]?.id || "");
   const [studentId, setStudentId] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [retriedHigh, setRetriedHigh] = useState(false);
+  const [dailyUsed, setDailyUsed] = useState(() => EcoAI.todayCount());
 
   const cameraRef = useRef(null);
   const uploadRef = useRef(null);
@@ -23,6 +25,7 @@ function AIScanViewInner({ state, setState }) {
   const team = state.teams.find(t => t.id === teamId) || state.teams[0];
   const student = team?.members?.find(m => m.id === studentId);
   const recentScans = useMemo(() => (state.aiScans || []).slice(0, 8), [state.aiScans]);
+  const remaining = Math.max(0, EcoAI.DAILY_LIMIT - dailyUsed);
 
   function pickFile(f) {
     if (!f) return;
@@ -30,6 +33,7 @@ function AIScanViewInner({ state, setState }) {
     setPreview(URL.createObjectURL(f));
     setResult(null);
     setError("");
+    setRetriedHigh(false);
   }
 
   function reset() {
@@ -37,11 +41,12 @@ function AIScanViewInner({ state, setState }) {
     setPreview(null);
     setResult(null);
     setError("");
+    setRetriedHigh(false);
     if (cameraRef.current) cameraRef.current.value = "";
     if (uploadRef.current) uploadRef.current.value = "";
   }
 
-  async function analyze() {
+  async function runAnalysis(mode) {
     if (!file) { setError("请先拍照或选择图片 · Take or choose a photo first."); return; }
     setLoading(true); setError("");
     try {
@@ -49,15 +54,20 @@ function AIScanViewInner({ state, setState }) {
         categories: state.categories.map(c => ({ id: c.id, zh: c.zh, en: c.ms || c.zh })),
         teams: state.teams.map(t => ({ id: t.id, zh: t.zh, en: t.ms || t.zh })),
       };
-      const out = await EcoAI.analyzeImage(file, { schoolContext, detail: "low" });
+      const out = await EcoAI.analyzeImage(file, { schoolContext, mode });
       setResult(out);
+      setDailyUsed(out.dailyUsedAfter ?? EcoAI.todayCount());
       if (out.previewDataUrl) setPreview(out.previewDataUrl);
+      if (mode === "high") setRetriedHigh(true);
     } catch (e) {
       setError(e.message || String(e));
     } finally {
       setLoading(false);
     }
   }
+
+  function analyze() { return runAnalysis("normal"); }
+  function reanalyzeHigh() { return runAnalysis("high"); }
 
   function saveScan(decision) {
     if (!result?.analysis) return;
@@ -72,6 +82,7 @@ function AIScanViewInner({ state, setState }) {
       imageUrl: null,
       aiProvider: result.provider,
       model: result.model,
+      mode: result.mode || "normal",
       analysis: result.analysis,
       teacherDecision: decision,
       correction: null,
@@ -84,11 +95,19 @@ function AIScanViewInner({ state, setState }) {
 
   function awardStarFromResult() {
     if (!result?.analysis) return;
-    if (!student) {
-      alert("请先选择学生 · Please choose a student first.");
+    if (!student) { alert("请先选择学生 · Please choose a student first."); return; }
+
+    const rec = result.analysis.main_recommendation || {};
+    const action = result.analysis.recommended_next_action;
+    if (action === "separate_items") {
+      if (!window.confirm("AI 提示是多物品照片，建议先分开拍。仍要奖励？\nAI says multiple items — award anyway?")) return;
+    }
+    if (action === "reject_as_unsafe") {
+      alert("⚠️ 这是危险物，不应给学生奖励。请老师处理。\nHazardous item — do not award stars.");
       return;
     }
-    const suggested = result.analysis.main_recommendation?.award_star_suggestion ?? 1;
+
+    const suggested = rec.award_star_suggestion ?? 1;
     const input = window.prompt(
       `奖励 ${student.name} 几颗 ⭐ ?\nHow many eco stars for ${student.name}?\n(AI 建议 · suggested: ${suggested})`,
       String(suggested)
@@ -102,7 +121,7 @@ function AIScanViewInner({ state, setState }) {
       id: scanId, ts: Date.now(),
       studentId: student.id, studentName: student.name, teamId: team.id,
       source: "upload", imageStored: false, imageUrl: null,
-      aiProvider: result.provider, model: result.model,
+      aiProvider: result.provider, model: result.model, mode: result.mode || "normal",
       analysis: result.analysis,
       teacherDecision: "approved", correction: null, awardedStars: stars,
     };
@@ -111,8 +130,8 @@ function AIScanViewInner({ state, setState }) {
       ts: Date.now(),
       studentId: student.id, studentName: student.name, teamId: team.id,
       starType: "eco_recycle", stars,
-      reasonZh: result.analysis.main_recommendation?.summary_zh || "AI 环保扫描后奖励",
-      reasonEn: result.analysis.main_recommendation?.summary_en || "Eco star awarded after AI scan",
+      reasonZh: rec.summary_zh || "AI 环保扫描后奖励",
+      reasonEn: rec.summary_en || "Eco star awarded after AI scan",
       evidenceType: "ai_scan", referenceId: scanId, teacherId: "JBC9008",
     };
     let next = EcoData.addAiScan(state, scan);
@@ -123,6 +142,7 @@ function AIScanViewInner({ state, setState }) {
   }
 
   const aiReady = !!window.SUPABASE_CONFIG?.url && !window.SUPABASE_CONFIG.url.includes("PASTE_");
+  const quotaExhausted = remaining <= 0;
 
   return (
     <div className="mobile-view teacher-entry">
@@ -142,6 +162,12 @@ function AIScanViewInner({ state, setState }) {
             See <code>SETUP.md</code>.
           </div>
         )}
+
+        <div className="ai-quota-pill" title="每日 AI 分析上限 · Daily AI quota">
+          📊 今日 AI 用量 · Today: <b>{dailyUsed}</b> / {EcoAI.DAILY_LIMIT}
+          {remaining <= 10 && remaining > 0 && <span className="ai-quota-warn"> · 剩 {remaining} 次</span>}
+          {quotaExhausted && <span className="ai-quota-empty"> · 今日已满 · Quota reached</span>}
+        </div>
 
         <div className="entry-panel ai-context-panel">
           <div className="panel-title"><strong>👥 学生 / 组别 · Student / Team</strong></div>
@@ -193,7 +219,7 @@ function AIScanViewInner({ state, setState }) {
               <button
                 className="chunky-btn ai-big-btn primary"
                 onClick={() => cameraRef.current?.click()}
-                disabled={!aiReady}
+                disabled={!aiReady || quotaExhausted}
               >
                 <span className="ai-big-icon">📸</span>
                 <span>拍照</span>
@@ -202,7 +228,7 @@ function AIScanViewInner({ state, setState }) {
               <button
                 className="chunky-btn ai-big-btn"
                 onClick={() => uploadRef.current?.click()}
-                disabled={!aiReady}
+                disabled={!aiReady || quotaExhausted}
               >
                 <span className="ai-big-icon">🖼️</span>
                 <span>选照片</span>
@@ -219,7 +245,7 @@ function AIScanViewInner({ state, setState }) {
                   <button
                     className="chunky-btn primary ai-big-btn"
                     onClick={analyze}
-                    disabled={loading || !aiReady}
+                    disabled={loading || !aiReady || quotaExhausted}
                   >
                     {loading ? (
                       <>
@@ -231,7 +257,7 @@ function AIScanViewInner({ state, setState }) {
                       <>
                         <span className="ai-big-icon">✨</span>
                         <span>开始 AI 分析</span>
-                        <small>Analyze</small>
+                        <small>Quick · normal mode</small>
                       </>
                     )}
                   </button>
@@ -252,9 +278,13 @@ function AIScanViewInner({ state, setState }) {
           <AIResultCard
             analysis={result.analysis}
             student={student}
+            mode={result.mode}
             onSave={() => saveScan("pending")}
             onApprove={() => saveScan("approved")}
             onAward={awardStarFromResult}
+            onReanalyzeHigh={reanalyzeHigh}
+            canReanalyzeHigh={!retriedHigh && !loading && !quotaExhausted}
+            reanalyzeLoading={loading}
           />
         )}
 
@@ -278,6 +308,7 @@ function AIScanViewInner({ state, setState }) {
                     <div className="ai-history-body">
                       <div className="ai-history-title">
                         {item?.label_zh || "—"} <span style={{opacity:.6}}>· {item?.label_en || ""}</span>
+                        {s.mode === "high" && <span className="ai-mode-pill"> 🔍 精细</span>}
                       </div>
                       <div className="ai-history-meta">
                         {s.studentName || "未指名"} · {s.teamId ? (state.teams.find(t => t.id === s.teamId)?.zh || "") : ""}
@@ -296,28 +327,135 @@ function AIScanViewInner({ state, setState }) {
   );
 }
 
-function AIResultCard({ analysis, student, onSave, onApprove, onAward }) {
+// ─────────────────────────── AI Result Card (v1.1) ───────────────────────────
+
+const NEXT_ACTION_META = {
+  accept:           { icon: "✅", className: "next-accept",   zh: "可采用 AI 建议",                  en: "Accept AI suggestion" },
+  take_closeup:     { icon: "🔍", className: "next-closeup",  zh: "请近拍标签 / 包装膜 / 瓶盖部分", en: "Please take a close-up" },
+  separate_items:   { icon: "📸", className: "next-separate", zh: "检测到多个物品，请逐个拍照",     en: "Multiple items — take separate photos" },
+  teacher_confirm:  { icon: "👩‍🏫", className: "next-teacher", zh: "需要老师确认材料 / 分类",         en: "Teacher review needed" },
+  reject_as_unsafe: { icon: "⚠️", className: "next-unsafe",   zh: "可能是危险物，请老师介入",        en: "Possible hazard — teacher must handle" },
+};
+
+function AIResultCard({
+  analysis,
+  student,
+  mode,
+  onSave,
+  onApprove,
+  onAward,
+  onReanalyzeHigh,
+  canReanalyzeHigh,
+  reanalyzeLoading,
+}) {
   const rec = analysis.main_recommendation || {};
   const conf = Math.round((analysis.overall_confidence || 0) * 100);
   const recyclable = !!analysis.is_recyclable_candidate;
   const needsReview = !!rec.needs_teacher_review;
   const safety = analysis.safety_flags || [];
 
-  const statusClass = needsReview
-    ? "ai-status review"
-    : recyclable
-      ? "ai-status ok"
-      : "ai-status no";
+  // v1.1 fields (may be missing on old Edge Function responses)
+  const imgQ = analysis.image_quality || null;
+  const multi = !!analysis.multi_item_detected;
+  const multiAdvZh = analysis.multi_item_advice_zh || "";
+  const multiAdvEn = analysis.multi_item_advice_en || "";
+  const uncertZh = analysis.uncertainties_zh || [];
+  const uncertEn = analysis.uncertainties_en || [];
+  const nextAction = analysis.recommended_next_action || "accept";
+  const nextMeta = NEXT_ACTION_META[nextAction] || NEXT_ACTION_META.accept;
 
-  const statusText = needsReview
-    ? "❓ 需要老师确认 · Teacher review needed"
-    : recyclable
-      ? "✅ 可回收 · Recyclable"
-      : "❌ 不可回收 · Not recyclable";
+  const statusClass = needsReview ? "ai-status review" : recyclable ? "ai-status ok" : "ai-status no";
+  const statusText  = needsReview ? "❓ 需要老师确认 · Teacher review needed"
+                    : recyclable  ? "✅ 可回收 · Recyclable"
+                                  : "❌ 不可回收 · Not recyclable";
+
+  // Show the fine-analysis button when AI was uncertain or asked for a closeup,
+  // OR when teacher clicked elsewhere (always offer if quota allows).
+  const fineSuggested =
+    conf < 75 ||
+    needsReview ||
+    uncertZh.length > 0 ||
+    nextAction === "take_closeup" ||
+    nextAction === "teacher_confirm" ||
+    (imgQ && imgQ.needs_retake);
+
+  const fineDisabled = !canReanalyzeHigh;
 
   return (
     <div className="entry-panel ai-result-card">
-      <div className={statusClass}>{statusText}<span className="ai-conf">{conf}%</span></div>
+      <div className={statusClass}>
+        {statusText}
+        <span className="ai-conf">{conf}%</span>
+      </div>
+
+      {/* Mode pill — tells teacher whether this came from normal or fine analysis */}
+      <div className="ai-mode-banner">
+        {mode === "high"
+          ? <>🔍 <b>精细分析</b> · Fine analysis result</>
+          : <>⚡ <b>快速分析</b> · Quick analysis result</>}
+      </div>
+
+      {/* Recommended next action — most important UI cue */}
+      {nextAction !== "accept" && (
+        <div className={`ai-next-action ${nextMeta.className}`}>
+          <div className="ai-next-action-head">
+            <span className="ai-next-icon">{nextMeta.icon}</span>
+            <b>{nextMeta.zh}</b>
+          </div>
+          <div className="ai-next-action-en">{nextMeta.en}</div>
+        </div>
+      )}
+
+      {/* Multi-item warning */}
+      {multi && (multiAdvZh || multiAdvEn) && (
+        <div className="ai-multi-banner">
+          📸 {multiAdvZh}
+          <br/><span>{multiAdvEn}</span>
+        </div>
+      )}
+
+      {/* Image quality banner */}
+      {imgQ && imgQ.needs_retake && (imgQ.retake_reason_zh || imgQ.retake_reason_en) && (
+        <div className="ai-imgq-banner">
+          🖼️ <b>图片质量 · Image quality:</b> {imgQ.clarity}<br/>
+          {imgQ.retake_reason_zh}
+          <br/><span>{imgQ.retake_reason_en}</span>
+        </div>
+      )}
+
+      {/* AI uncertainties (honest "I don't know" list) */}
+      {uncertZh.length > 0 && (
+        <div className="ai-uncertain-banner">
+          <div className="ai-uncertain-title">🤔 AI 不确定 · AI is unsure about:</div>
+          <ul>
+            {uncertZh.map((u, i) => (
+              <li key={i}>
+                {u}
+                {uncertEn[i] && <><br/><span style={{opacity:.65}}>{uncertEn[i]}</span></>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Fine-analysis (high detail) re-run button */}
+      {fineSuggested && (
+        <button
+          className={`chunky-btn ai-fine-btn ${fineDisabled ? "disabled" : ""}`}
+          onClick={onReanalyzeHigh}
+          disabled={fineDisabled}
+          title={fineDisabled ? "已用过精细分析，或今日额度已满" : "用更高精度 AI 重新分析"}
+        >
+          {reanalyzeLoading ? "⏳ 精细分析中…" : "🔍 精细分析 · Re-analyze in high detail"}
+          <small>
+            {mode === "high"
+              ? "本图已是精细分析 · Already high detail"
+              : (fineDisabled
+                  ? (canReanalyzeHigh === false ? "(精细分析每图限 1 次)" : "")
+                  : "适合标签 / 包装膜 / 玻璃 / 混合材料 · For labels, films, glass, mixes")}
+          </small>
+        </button>
+      )}
 
       <div className="ai-summary">
         <div className="ai-summary-zh">{rec.summary_zh}</div>
@@ -332,7 +470,12 @@ function AIResultCard({ analysis, student, onSave, onApprove, onAward }) {
 
       {(analysis.detected_items || []).map((item, idx) => (
         <div className="ai-item" key={idx}>
-          <h3>{item.label_zh} <span style={{opacity:.6}}>· {item.label_en}</span></h3>
+          <h3>
+            {item.label_zh} <span style={{opacity:.6}}>· {item.label_en}</span>
+            {typeof item.confidence === "number" && (
+              <span className="ai-item-conf">{Math.round(item.confidence * 100)}%</span>
+            )}
+          </h3>
           {(item.materials || []).length > 0 && (
             <div className="ai-materials">
               <b>材料 · Materials:</b> {(item.materials || []).join(", ")}
