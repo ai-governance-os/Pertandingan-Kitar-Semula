@@ -176,6 +176,39 @@ SCHOOL BIN CATEGORIES (use these exact bin_category_id values)
 - unknown          无法判断
 
 ═══════════════════════════════════════════════════════════════
+🎯 MATERIAL → BIN QUICK LOOKUP — memorize this, apply EVERY time
+═══════════════════════════════════════════════════════════════
+| Visible material                          | Goes to bin     |
+|-------------------------------------------|-----------------|
+| Pure paper (label, page, magazine)        | paper           |
+| Newspaper specifically                    | newspaper       |
+| Cardboard (corrugated, box, egg carton)   | cardboard       |
+| Plastic of any kind (PET, HDPE, PP, lid)  | plastic         |
+| Aluminum (drink can, foil)                | aluminum        |
+| Other metal (tin-plated steel, sardine)   | metal           |
+| Used cooking oil                          | used_oil        |
+| Wet / oily / food-contaminated material   | general_waste   |
+| Foam, styrofoam                           | general_waste   |
+| Snack wrapper laminate (foil + plastic)   | general_waste   |
+| Tissue, paper towel, thermal receipt      | general_waste   |
+| Drinking straws (too small to sort)       | general_waste   |
+| Battery, chemical, sharp, medical, glass  | hazardous       |
+| Phone, cable, electronics, CD             | ewaste          |
+
+🔁 THE "VISIBLE MATERIAL SCAN" — mandatory before writing JSON
+For each item in the photo, you MUST do this scan:
+  STEP 1: List EVERY distinct material you can see
+          (don't guess "mixed material" — name each one: plastic body, paper label, metal cap, etc.)
+  STEP 2: For each material, look up its bin in the table above
+  STEP 3: Each material = ONE separate recommended_parts entry
+          (NEVER combine 2 materials into 1 part. Paper label on plastic bottle = 2 parts.)
+
+ONLY exceptions where 2 materials → 1 part:
+  • Bonded at molecular level (Tetra Pak inner foil, snack wrapper laminate, paper cup inner film)
+  • Too small to physically separate (pen, eraser, straw)
+In these cases, output 1 part as general_waste with explanation.
+
+═══════════════════════════════════════════════════════════════
 🔑 CORE RULE — DECOMPOSE AGGRESSIVELY
 ═══════════════════════════════════════════════════════════════
 If an item has ANY of these visible separable components, you MUST list EACH as its own entry in recommended_parts:
@@ -205,13 +238,23 @@ materials: ["paper", "plastic", "aluminum"]
 summary_zh: "Tetra Pak 果汁盒。拧下塑料盖丢塑料桶，盒身倒空冲洗后压扁丢纸桶。"
 award_star_suggestion: 2
 
-▼ EXAMPLE B — PET clear water bottle (cap + body + label)
+▼ EXAMPLE B-1 — PET drink bottle with PAPER label (Coke, Sprite, Tropicana)
 3 parts:
   1. 瓶盖 cap → plastic bin → "拧下来"
   2. 瓶身 body → plastic bin → "倒空 → 冲洗 → 压扁"
-  3. 收缩塑料标签 shrink label → general_waste → "撕下来（多数是收缩塑料）"
-materials: ["PET plastic", "HDPE cap", "shrink plastic label"]
+  3. 纸标签 paper label → paper bin → "撕下纸标签 → 投入纸张桶"
+materials: ["PET plastic body", "HDPE plastic cap", "paper label"]
 award_star_suggestion: 2
+(KEY: paper label goes to PAPER bin, NOT general_waste. Always check label material first.)
+
+▼ EXAMPLE B-2 — PET water bottle with SHRINK PLASTIC label (mineral water brand)
+3 parts:
+  1. 瓶盖 cap → plastic bin → "拧下来"
+  2. 瓶身 body → plastic bin → "倒空 → 冲洗 → 压扁"
+  3. 收缩塑料标签 shrink plastic label → plastic bin → "撕下来 (是塑料 → 也丢塑料桶)"
+materials: ["PET plastic body", "HDPE plastic cap", "shrink plastic label"]
+award_star_suggestion: 2
+(Even shrink plastic is plastic → plastic bin. Only foil/foam laminates go to general_waste.)
 
 ▼ EXAMPLE C — Used aluminum drink can (single material)
 1 part:
@@ -307,6 +350,33 @@ This is a STUDENT-COMBINED pile, not factory packaging. Treat each as SEPARATE d
   ]
 NEVER bundle these into "one mixed item". The student stuffed them together — your job is to UNDO that.
 
+▼ EXAMPLE N — Paper cup WITH a separate plastic lid (Starbucks-style takeaway cup)
+2 parts:
+  1. 塑料盖 plastic lid → plastic bin → "取下来 → 投入塑料桶"
+  2. 纸杯身 paper cup body → general_waste → "杯身内层有塑料防水膜，多数无法回收 → 一般垃圾"
+materials: ["PP plastic lid", "paper cup with plastic inner film"]
+award_star_suggestion: 2
+(IMPORTANT: even though the cup itself can't be recycled, the LID can. Always separate.)
+
+▼ EXAMPLE O — Glass jar with metal cap and paper label (jam jar, peanut butter jar)
+3 parts:
+  1. 金属盖 metal cap → metal bin → "拧下来"
+  2. 纸标签 paper label → paper bin → "撕下来 (浸水更容易撕)"
+  3. 玻璃罐身 glass body → general_waste → "学校没有玻璃桶，交给老师处理"
+materials: ["glass", "metal cap", "paper label"]
+safety_flags: ["broken_glass"]
+award_star_suggestion: 2
+(3 different materials, 3 different bins. Always check label material — paper not plastic.)
+
+▼ EXAMPLE P — Plastic takeaway container (rice/noodle box) with paper sleeve
+3 parts:
+  1. 透明塑料盖 plastic lid → plastic bin → "取下来"
+  2. 塑料盒身 plastic container → plastic bin → "倒空 → 冲洗"
+  3. 纸套 paper sleeve → paper bin → "撕下来"
+materials: ["PP plastic container", "PET plastic lid", "paper sleeve"]
+award_star_suggestion: 2
+(Two plastic parts can BOTH go to plastic bin; paper part goes separately to paper bin.)
+
 ═══════════════════════════════════════════════════════════════
 🧠 THINKING FRAMEWORK — apply silently before writing JSON
 ═══════════════════════════════════════════════════════════════
@@ -318,7 +388,8 @@ For EACH distinct object in the photo, mentally answer 3 questions:
 Mapping:
   • Q1 lists multiple AND Q2 = yes AND Q3 = yes  → multiple recommended_parts (e.g. Tetra Pak, PET bottle, milk-powder tin, notebook)
   • Q1 lists multiple BUT Q2 = yes AND Q3 = no   → 1 part = general_waste, explain in action (e.g. pen, eraser, straw)
-  • Q1 lists multiple BUT Q2 = no (fused at molecular level) → 1 part, explain (e.g. snack wrapper, paper cup, thermal receipt)
+  • Q1 lists multiple BUT Q2 = no (fused at molecular level) → 1 part, explain (e.g. snack wrapper laminate, plain paper cup with NO removable lid, thermal receipt)
+    [BUT: if the paper cup HAS a separable plastic lid → still 2 parts (lid + body)]
   • Q1 single material → 1 part (e.g. aluminum can, newspaper)
 
 Do NOT output your thinking. Only output the final JSON.
@@ -423,23 +494,24 @@ Deno.serve(async (req) => {
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
     const prompt = `Analyze this photo for a primary-school recycling activity. Return ONLY JSON matching the schema.
 
-APPLY THE THINKING FRAMEWORK from your instructions:
-  1. For each distinct object, identify materials
-  2. Decide if separable in <30s by a child
-  3. Decide if decomposition is practical at school scale
-  4. Output one recommended_parts entry per practically-separable part
+🎯 RUN THE VISIBLE MATERIAL SCAN (MANDATORY):
+  STEP 1: Name every distinct material you see (e.g. "plastic body", "paper label", "metal cap")
+  STEP 2: Map each material to its bin using the MATERIAL→BIN table
+  STEP 3: Output ONE recommended_parts entry per material
 
-CRITICAL — NEVER OUTPUT:
-  - "Mixed material" / "整个物品" / "其他部分" (lazy, forbidden)
-  - "Needs teacher review" for clear common items (be DECISIVE)
+⚠️ COMMON TRAPS — don't fall for these:
+  - Plastic bottle with PAPER label → 3 parts (cap+body→plastic, label→PAPER bin)
+  - Plastic bottle with PLASTIC shrink label → 3 parts (all 3 → plastic bin)
+  - Paper cup with separate plastic lid → 2 parts (lid→plastic, body→general_waste)
+  - Glass jar with metal cap + paper label → 3 parts to 3 different bins
+  - Aluminum can (no label or printed-on) → 1 part to aluminum bin
+  - Tetra Pak → ALWAYS 3 parts (cap→plastic, body→paper, foil→with paper)
 
-If photo contains MULTIPLE distinct items (e.g. a bag of mixed recyclables, a pile),
-list EACH as its own detected_items entry. Do NOT bundle them.
+CRITICAL — FORBIDDEN OUTPUTS:
+  - "Mixed material" / "整个物品" / "其他部分" / "Whole item" (LAZY, FORBIDDEN)
+  - "Needs teacher review" for clear common items (be DECISIVE, confidence ≥ 0.85)
 
-Composite items rule:
-  - Tetra Pak = 3 parts | PET bottle = 3 parts | Toothpaste = 2 parts
-  - Milk-powder tin = 3 parts | Spiral notebook = 3 parts
-  - Snack wrapper / pen / straw = 1 part general_waste (explain why)
+If photo contains MULTIPLE distinct items (a bag, a pile), list EACH as its own detected_items entry.
 
 Hazards (battery / chemical / sharp / glass / medical) → safety_flags + award_star_suggestion = 0.
 Write both Chinese and English in every text field. Output JSON only.`;
