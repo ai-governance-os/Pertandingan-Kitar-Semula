@@ -37,7 +37,7 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
   const ALL_MODES = [
     { id: "status",  icon: "📊", zh: "战况", ms: "Status",  adminOnly: false },
     { id: "rewards", icon: "🎁", zh: "奖品", ms: "Rewards", adminOnly: false },
-    { id: "mobile",  icon: "📝", zh: "录入", ms: "Input",   adminOnly: true  },
+    { id: "mobile",  icon: "📝", zh: "记录", ms: "Input",   adminOnly: true  },
     { id: "ai",      icon: "🤖", zh: "AI",   ms: "AI",      adminOnly: true  },
     { id: "admin",   icon: "⚙️", zh: "管理", ms: "Admin",   adminOnly: true  },
   ];

@@ -91,7 +91,7 @@ function MobileViewInner({ state, setState }) {
         </div>
 
         <div className="mobile-header compact">
-          <h1><span className="zh">老师录入</span></h1>
+          <h1><span className="zh">回收记录</span></h1>
           <p>重量、分数、组员有带/没带</p>
         </div>
 

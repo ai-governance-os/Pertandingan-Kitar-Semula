@@ -204,7 +204,7 @@ function App() {
               options={[
                 { value: "status", label: "战况" },
                 { value: "rewards", label: "奖品" },
-                { value: "mobile", label: "录入" },
+                { value: "mobile", label: "记录" },
                 { value: "ai", label: "AI" },
                 { value: "admin", label: "管理" },
               ]}
