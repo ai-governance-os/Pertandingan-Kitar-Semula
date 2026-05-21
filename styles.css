@@ -382,8 +382,11 @@
   color: var(--ink-soft);
 }
 
-.compact-cat-row {
-  grid-template-columns: 56px 1fr 120px;
+/* Higher specificity (.cat-row.compact-cat-row) so this wins over the
+   later generic .cat-row 6-column rule. Without this the price pill lands
+   in a 1fr column and stretches/clips. */
+.cat-row.compact-cat-row {
+  grid-template-columns: 56px 1fr 150px;
 }
 
 .session-results-grid {
@@ -2141,21 +2144,24 @@ button { font-family: inherit; cursor: pointer; }
 .cat-row .pts-input {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   background: var(--gold);
   border: 2px solid var(--ink);
   border-radius: 99px;
-  padding: 3px 10px;
+  padding: 4px 12px;
   justify-content: center;
+  min-width: 0;
 }
 .cat-row .pts-input input {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 16px;
   text-align: center;
-  width: 40px;
+  width: 64px;
+  min-width: 0;
+  flex-shrink: 0;
 }
-.cat-row .pts-input .unit { font-size: 10px; opacity: 0.6;}
+.cat-row .pts-input .unit { font-size: 11px; opacity: 0.7; white-space: nowrap; }
 .cat-row .co2-input {
   display: flex; align-items: center; gap: 4px;
   background: rgba(111,207,126,0.25);
