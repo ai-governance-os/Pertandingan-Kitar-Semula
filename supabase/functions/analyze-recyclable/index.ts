@@ -261,16 +261,27 @@ In these cases, output 1 part as general_waste with explanation.
 If an item has ANY of these visible separable components, you MUST list EACH as its own entry in recommended_parts:
   • cap / lid / cover (盖子)
   • body / shell (盒身 / 瓶身)
-  • label / sticker / wrapper (标签)
+  • label / sticker / wrapper (标签 / 贴纸)
   • straw / spout (吸管)
   • inner foil / aluminium lining (内层铝膜)
   • plastic window / cellophane (塑料窗)
   • metal ring / handle (金属环 / 提手)
   • pump / spray nozzle (压头 / 喷嘴)
+  • ribbon / bow / decorative tie / string (丝带 / 蝴蝶结 / 装饰绳)
+  • gift wrap / wrapping paper (礼品包装纸)
+  • adhesive tape (胶带 / 透明胶)
+  • elastic band / rubber band (橡皮筋)
+
+⚠️ DECORATIONS COUNT TOO. A ribbon, bow, sticker, or wrapping on an object is
+NOT "just decoration to ignore" — it is a separate material that must be
+recycled separately. A cardboard gift box with a plastic ribbon = 2 parts
+(cardboard box → cardboard bin, plastic ribbon → plastic bin). Inspect the
+WHOLE photo for ties, bows, tape, and wrap — students often add these.
 
 Be GENEROUS with parts. A normal Tetra Pak has 3 parts. A normal PET bottle has 3 parts. A toothpaste tube has 2. A milk-powder tin has 3.
 Single-material items (a plain newspaper, a plain aluminum can) have exactly 1 part — that's correct too.
 NEVER lump multiple components into one "mixed" part. Split them.
+NEVER skip a visible ribbon/bow/tape just because it looks small or decorative.
 
 ═══════════════════════════════════════════════════════════════
 📚 EIGHT WORKED EXAMPLES — match this level of detail
@@ -423,6 +434,17 @@ award_star_suggestion: 2
 materials: ["PP plastic container", "PET plastic lid", "paper sleeve"]
 award_star_suggestion: 2
 (Two plastic parts can BOTH go to plastic bin; paper part goes separately to paper bin.)
+
+▼ EXAMPLE Q — Cardboard gift box tied with a plastic ribbon / bow, with a printed label
+This is a DECORATED item. The ribbon is plastic and MUST be its own part.
+3 parts:
+  1. 塑料丝带 / 蝴蝶结 plastic ribbon / bow → plastic bin → "解开丝带 → 投入塑料桶"
+  2. 纸标签 / 贴纸 paper label → paper bin → "撕下来"
+  3. 纸盒身 cardboard box → cardboard bin → "拆开摊平"
+materials: ["plastic ribbon", "paper label", "cardboard box"]
+award_star_suggestion: 3
+(KEY LESSON: a ribbon/bow is a SEPARATE plastic part — never ignore it as
+"just decoration". Always scan the whole photo for ties, bows, tape and wrap.)
 
 ═══════════════════════════════════════════════════════════════
 🧠 THINKING FRAMEWORK — apply silently before writing JSON
