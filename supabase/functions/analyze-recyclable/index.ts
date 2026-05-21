@@ -269,6 +269,7 @@ If an item has ANY of these visible separable components, you MUST list EACH as 
   • pump / spray nozzle (压头 / 喷嘴)
   • ribbon / bow / decorative tie / string (丝带 / 蝴蝶结 / 装饰绳)
   • gift wrap / wrapping paper (礼品包装纸)
+  • transparent shrink wrap / plastic film / cling wrap (透明收缩膜 / 塑料膜 / 保鲜膜)
   • adhesive tape (胶带 / 透明胶)
   • elastic band / rubber band (橡皮筋)
 
@@ -277,6 +278,19 @@ NOT "just decoration to ignore" — it is a separate material that must be
 recycled separately. A cardboard gift box with a plastic ribbon = 2 parts
 (cardboard box → cardboard bin, plastic ribbon → plastic bin). Inspect the
 WHOLE photo for ties, bows, tape, and wrap — students often add these.
+
+🔍 TRANSPARENT PLASTIC FILM IS EASY TO MISS — actively look for it.
+A clear shrink wrap / plastic film / cling wrap is colourless, so you can
+only detect it by INDIRECT CUES on the object's surface:
+  • shiny / glossy highlights that don't match a matte cardboard surface
+  • wrinkles, creases, or crinkle folds running across the surface
+  • light reflections, glare spots, or a faint plastic sheen
+  • edges of film sticking out past the box corners
+If a cardboard box or product shows ANY of these cues, assume it is wrapped
+in transparent plastic film. List the film as its own part → plastic bin.
+If you genuinely cannot be sure, DO NOT silently ignore it — add it to
+uncertainties_zh/_en (e.g. "纸盒表面有反光皱褶，可能包着透明塑料膜，建议近拍确认")
+and set recommended_next_action = "take_closeup".
 
 Be GENEROUS with parts. A normal Tetra Pak has 3 parts. A normal PET bottle has 3 parts. A toothpaste tube has 2. A milk-powder tin has 3.
 Single-material items (a plain newspaper, a plain aluminum can) have exactly 1 part — that's correct too.
@@ -445,6 +459,21 @@ materials: ["plastic ribbon", "paper label", "cardboard box"]
 award_star_suggestion: 3
 (KEY LESSON: a ribbon/bow is a SEPARATE plastic part — never ignore it as
 "just decoration". Always scan the whole photo for ties, bows, tape and wrap.)
+
+▼ EXAMPLE R — Cardboard shoe box still sealed in TRANSPARENT shrink wrap, with a printed label
+The box surface is shiny and crinkled — that sheen and those wrinkles mean
+there IS a clear plastic film, even though the film itself is colourless.
+3 parts:
+  1. 透明收缩膜 transparent shrink wrap → plastic bin → "撕下塑料膜 → 投入塑料桶"
+  2. 纸标签 paper label → paper bin → "撕下来"
+  3. 纸鞋盒 cardboard shoe box → cardboard bin → "拆开摊平"
+materials: ["transparent plastic film", "paper label", "cardboard box"]
+visible_state: "partially_visible"
+uncertainties_zh: ["如果不确定表面是否有塑料膜，建议近拍盒子边角"]
+award_star_suggestion: 3
+(KEY LESSON: shiny + wrinkled surface on a matte cardboard box = transparent
+plastic film. Detect it from the SHEEN and CREASES, list it as a plastic
+part. If unsure, say so in uncertainties and recommend take_closeup.)
 
 ═══════════════════════════════════════════════════════════════
 🧠 THINKING FRAMEWORK — apply silently before writing JSON
