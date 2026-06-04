@@ -3807,3 +3807,225 @@ button { font-family: inherit; cursor: pointer; }
     width: 100%;
   }
 }
+
+/* Four-tier reward catalogue */
+.reward-tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.reward-tier {
+  border: 2px solid var(--tier-color, rgba(0,0,0,.14));
+  background: var(--tier-tint, white);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 3px 0 rgba(20,18,40,.10);
+  min-width: 0;
+}
+
+.reward-tier-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.reward-tier-head.compact {
+  grid-template-columns: auto 1fr;
+  margin-bottom: 8px;
+}
+
+.reward-tier-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--tier-color, var(--eco-deep));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  box-shadow: 0 3px 0 rgba(20,18,40,.22);
+  flex-shrink: 0;
+}
+
+.reward-tier-head h2 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.05;
+  color: var(--tier-color, var(--ink));
+}
+
+.reward-tier-head span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.reward-tier-range {
+  background: var(--tier-color, var(--eco-deep));
+  color: white;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-weight: 900;
+  font-size: 17px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.reward-tier-range small {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: .85;
+}
+
+.reward-tier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+  gap: 10px;
+}
+
+.tier-reward-card {
+  border-radius: 12px;
+  padding: 10px;
+  gap: 7px;
+  background: rgba(255,255,255,.92);
+  border-color: rgba(20,18,40,.10);
+}
+
+.reward-photo-wrap {
+  width: 100%;
+  aspect-ratio: 1.18;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid rgba(20,18,40,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.reward-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.tier-reward-card .reward-stock {
+  background: rgba(46,196,182,.10);
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+.reward-redeem-modal {
+  max-width: 760px;
+}
+
+.redeem-tier-list {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.redeem-pick.tier-reward-card {
+  width: 100%;
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.redeem-pick.tier-reward-card:not(.disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 rgba(20,18,40,.12);
+}
+
+.reward-admin-tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reward-admin-tier {
+  border: 2px solid var(--tier-color, rgba(0,0,0,.12));
+  background: var(--tier-tint, white);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.reward-admin-tier-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.reward-admin-tier-head b {
+  display: block;
+  color: var(--tier-color, var(--ink));
+  font-size: 17px;
+}
+
+.reward-admin-tier-head span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tier-edit-card {
+  background: rgba(255,255,255,.95);
+}
+
+.reward-edit-photo {
+  width: 72px;
+  height: 62px;
+  border-radius: 12px;
+  border: 2px solid rgba(20,18,40,.10);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--tier-color, var(--eco-deep));
+}
+
+.reward-edit-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.reward-edit-photo.new {
+  border-style: dashed;
+  background: rgba(255,255,255,.72);
+}
+
+@media (max-width: 540px) {
+  .reward-tier-head {
+    grid-template-columns: auto 1fr;
+  }
+  .reward-tier-range {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+  .reward-tier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reward-admin-tier-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

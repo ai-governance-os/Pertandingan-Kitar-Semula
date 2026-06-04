@@ -83,12 +83,32 @@ const STAR_GROUP_LABELS = {
   deduction: { zh: "⚠️ 扣星",     en: "Deduction" },
 };
 
+const DEFAULT_REWARD_CATEGORIES = [
+  { id: "a", level: "A", zh: "A级奖励", en: "A Reward", minStars: 200, maxStars: 300, color: "#E33B2F", tint: "#FFF0D2" },
+  { id: "b", level: "B", zh: "B级奖励", en: "B Reward", minStars: 100, maxStars: 199, color: "#1769C2", tint: "#EAF5FF" },
+  { id: "c", level: "C", zh: "C级奖励", en: "C Reward", minStars: 50,  maxStars: 99,  color: "#25A64A", tint: "#ECF9EA" },
+  { id: "d", level: "D", zh: "D级奖励", en: "D Reward", minStars: 0,   maxStars: 49,  color: "#8038B8", tint: "#F5ECFF" },
+];
+
 const DEFAULT_REWARD_ITEMS = [
-  { id: "reward_pencil", icon: "✏️", nameZh: "铅笔", nameEn: "Pencil", starCost: 10, quantity: 20, purchaseCostRm: 8.00, active: true },
-  { id: "reward_eraser", icon: "🧽", nameZh: "橡皮擦", nameEn: "Eraser", starCost: 8, quantity: 20, purchaseCostRm: 6.00, active: true },
-  { id: "reward_ruler", icon: "📏", nameZh: "尺子", nameEn: "Ruler", starCost: 12, quantity: 15, purchaseCostRm: 7.50, active: true },
-  { id: "reward_notebook", icon: "📓", nameZh: "笔记本", nameEn: "Notebook", starCost: 25, quantity: 10, purchaseCostRm: 15.00, active: true },
-  { id: "reward_sticker", icon: "🌟", nameZh: "贴纸包", nameEn: "Sticker pack", starCost: 5, quantity: 30, purchaseCostRm: 4.00, active: true },
+  { id: "reward_a_bottle", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_bottle.jpg", nameZh: "水瓶", nameEn: "Bottle", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_markers", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_markers.jpg", nameZh: "马克笔", nameEn: "Markers", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_colored_pencils", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_colored_pencils.jpg", nameZh: "颜色笔", nameEn: "Colour pencils", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_premium_toy", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_premium_toy.jpg", nameZh: "特级玩具", nameEn: "Premium toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_pencil_case", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_pencil_case.jpg", nameZh: "笔袋", nameEn: "Pencil case", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_mechanical_pen", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_mechanical_pen.jpg", nameZh: "自动笔", nameEn: "Mechanical pen", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_toy", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_toy.jpg", nameZh: "玩具", nameEn: "Toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_piggy_bank", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_piggy_bank.jpg", nameZh: "扑满", nameEn: "Piggy bank", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_chess", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_chess.jpg", nameZh: "棋类游戏", nameEn: "Board game", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_keychain", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_keychain.jpg", nameZh: "锁匙扣", nameEn: "Keychain", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_eraser", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_eraser.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_toy", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_toy.jpg", nameZh: "小玩具", nameEn: "Small toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_correction_fluid", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_correction_fluid.jpg", nameZh: "涂改液", nameEn: "Correction fluid", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_pencils", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_pencils.jpg", nameZh: "铅笔", nameEn: "Pencils", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_sharpener", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_sharpener.jpg", nameZh: "铅笔削", nameEn: "Sharpener", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_eraser", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_eraser.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_stickers", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_stickers.jpg", nameZh: "贴纸", nameEn: "Stickers", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_ruler", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_ruler.jpg", nameZh: "尺", nameEn: "Ruler", quantity: 10, purchaseCostRm: 0, active: true },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -127,6 +147,51 @@ function seedCatalog() {
     : [];
 }
 
+function mergeRewardCategories(incoming) {
+  const defaults = clone(DEFAULT_REWARD_CATEGORIES);
+  if (!Array.isArray(incoming) || !incoming.length) return defaults;
+  const byId = new Map(incoming.map(c => [c.id, c]));
+  return defaults.map(def => ({ ...def, ...(byId.get(def.id) || {}) }));
+}
+
+function rewardCategoryIdForCost(starCost) {
+  const cost = Number(starCost) || 0;
+  if (cost >= 200) return "a";
+  if (cost >= 100) return "b";
+  if (cost >= 50) return "c";
+  return "d";
+}
+
+function isLegacyDefaultRewardSet(items) {
+  if (!Array.isArray(items) || !items.length) return false;
+  const legacyIds = new Set(["reward_pencil", "reward_eraser", "reward_ruler", "reward_notebook", "reward_sticker"]);
+  return items.every(item => legacyIds.has(item.id) && !item.categoryId && !item.imageUrl);
+}
+
+function normalizeRewardItems(items, categories = DEFAULT_REWARD_CATEGORIES) {
+  const source = isLegacyDefaultRewardSet(items)
+    ? clone(DEFAULT_REWARD_ITEMS)
+    : (Array.isArray(items) && items.length ? items : clone(DEFAULT_REWARD_ITEMS));
+  const categoryIds = new Set(categories.map(c => c.id));
+  return source.map((item, index) => {
+    const categoryId = categoryIds.has(item.categoryId)
+      ? item.categoryId
+      : rewardCategoryIdForCost(item.starCost);
+    return {
+      ...item,
+      id: item.id || makeId("reward"),
+      categoryId,
+      icon: item.icon || (categoryId === "a" ? "🏆" : categoryId === "b" ? "🥈" : categoryId === "c" ? "🥉" : "⭐"),
+      imageUrl: item.imageUrl || "",
+      nameZh: item.nameZh || item.name || `奖品 ${index + 1}`,
+      nameEn: item.nameEn || item.name || `Reward ${index + 1}`,
+      quantity: Math.max(0, Number(item.quantity) || 0),
+      purchaseCostRm: Number(item.purchaseCostRm) || 0,
+      active: item.active !== false,
+    };
+  });
+}
+
 function defaultState() {
   return {
     version: 2,
@@ -142,6 +207,7 @@ function defaultState() {
     aiScans: [],
     starTypes: clone(DEFAULT_STAR_TYPES),
     starLedger: [],
+    rewardCategories: clone(DEFAULT_REWARD_CATEGORIES),
     rewardItems: clone(DEFAULT_REWARD_ITEMS),
     rewardRedemptions: [],
     fundEvents: [],
@@ -202,7 +268,8 @@ function normalizeState(input) {
   // and the `group` field appear for existing users without wiping their saved state.
   state.starTypes = mergeStarTypes(input.starTypes);
   state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
-  state.rewardItems = Array.isArray(input.rewardItems) && input.rewardItems.length ? input.rewardItems : clone(DEFAULT_REWARD_ITEMS);
+  state.rewardCategories = mergeRewardCategories(input.rewardCategories);
+  state.rewardItems = normalizeRewardItems(input.rewardItems, state.rewardCategories);
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
   state.fundEvents = Array.isArray(input.fundEvents) ? input.fundEvents : [];
   state.catalog = Array.isArray(input.catalog) && input.catalog.length ? input.catalog : seedCatalog();
@@ -487,8 +554,28 @@ function teamStarStats(state, teamId) {
 
 // ─────────────────────────── Reward corner ───────────────────────────
 
+function rewardCategory(state, categoryId) {
+  const categories = state.rewardCategories || DEFAULT_REWARD_CATEGORIES;
+  return categories.find(c => c.id === categoryId) || categories[0] || DEFAULT_REWARD_CATEGORIES[0];
+}
+
+function rewardCategoryForItem(state, item) {
+  return rewardCategory(state, item?.categoryId || rewardCategoryIdForCost(item?.starCost));
+}
+
+function rewardCategoryRangeLabel(category) {
+  if (!category) return "0 - 0";
+  return `${Number(category.minStars) || 0} - ${Number(category.maxStars) || 0}`;
+}
+
+function rewardItemCost(state, item) {
+  const category = rewardCategoryForItem(state, item);
+  return Number(category?.minStars) || 0;
+}
+
 function addRewardItem(state, item) {
-  const clean = { ...item, id: item.id || makeId("reward"), active: item.active !== false };
+  const categories = state.rewardCategories || DEFAULT_REWARD_CATEGORIES;
+  const clean = normalizeRewardItems([{ ...item, id: item.id || makeId("reward") }], categories)[0];
   const next = { ...state, rewardItems: [clean, ...(state.rewardItems || [])] };
   save(next);
   return next;
@@ -513,9 +600,11 @@ function redeemReward(state, redemption) {
   const item = (state.rewardItems || []).find(i => i.id === redemption.rewardItemId);
   if (!item) { alert("奖品不存在 · Reward not found."); return state; }
   if (item.quantity <= 0) { alert("奖品库存不足 · Out of stock."); return state; }
+  const category = rewardCategoryForItem(state, item);
+  const cost = rewardItemCost(state, item);
   const balance = studentStarBalance(state, redemption.studentId);
-  if (balance < item.starCost) {
-    alert(`星星不足 · Not enough stars. 现有 ${balance} ⭐, 需要 ${item.starCost} ⭐`);
+  if (balance < cost) {
+    alert(`星星不足 · Not enough stars. 现有 ${balance} ⭐, 需要 ${cost} ⭐`);
     return state;
   }
   const clean = {
@@ -524,7 +613,9 @@ function redeemReward(state, redemption) {
     ts: redemption.ts || Date.now(),
     rewardNameZh: item.nameZh,
     rewardNameEn: item.nameEn,
-    starsSpent: item.starCost,
+    rewardCategoryId: category?.id || item.categoryId || "",
+    rewardCategoryLevel: category?.level || "",
+    starsSpent: cost,
   };
   const next = {
     ...state,
@@ -703,6 +794,7 @@ Object.assign(window, {
     // Star ledger helpers
     addStarEvent, removeStarEvent, studentStarBalance, studentStarReport, teamStarStats,
     // Reward corner helpers
+    rewardCategory, rewardCategoryForItem, rewardCategoryRangeLabel, rewardItemCost,
     addRewardItem, updateRewardItem, removeRewardItem, redeemReward,
     addFundEvent, rewardFundStats,
     // Dashboard
@@ -710,7 +802,7 @@ Object.assign(window, {
     // Catalog helpers
     addCatalogItem, updateCatalogItem, removeCatalogItem,
     searchCatalog, catalogStats, aiResultToCatalogItem,
-    DEFAULT_CATEGORIES, DEFAULT_TEAMS, DEFAULT_STAR_TYPES, DEFAULT_REWARD_ITEMS, STAR_GROUP_LABELS,
+    DEFAULT_CATEGORIES, DEFAULT_TEAMS, DEFAULT_STAR_TYPES, DEFAULT_REWARD_CATEGORIES, DEFAULT_REWARD_ITEMS, STAR_GROUP_LABELS,
     LEVELS: [
       { lv: 1, zh: "起步", ms: "Mula" },
       { lv: 2, zh: "稳定", ms: "Mantap" },
