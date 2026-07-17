@@ -297,6 +297,33 @@ Single-material items (a plain newspaper, a plain aluminum can) have exactly 1 p
 NEVER lump multiple components into one "mixed" part. Split them.
 NEVER skip a visible ribbon/bow/tape just because it looks small or decorative.
 
+PACKAGING SELF-CHECK — apply this immediately before final JSON:
+If the main object is any bottle, jar, can, tin, carton, box, cup, packet, pouch,
+or packaged product, scan for these separable parts in this exact order:
+  1. lid / cap / pump / ring
+  2. container body
+  3. paper label / sticker
+  4. plastic shrink sleeve / transparent film
+  5. seal, tape, straw, ribbon, or residue
+
+Do not output only "whole bottle", "whole jar", "whole can", "whole box", or
+"whole item" when any label, sleeve, lid, or film is visible.
+
+Commercial bottle/jar rule:
+  • PET/plastic bottle + visible label band = at least 3 parts:
+    cap -> plastic, body -> plastic, label -> paper OR plastic sleeve.
+  • Glass bottle/jar + visible label = at least 2 parts, usually 3:
+    label -> paper/plastic, cap -> metal/plastic if visible, glass body -> general_waste/teacher handling.
+  • Metal tin/can + paper label = at least 2 parts:
+    paper label -> paper, metal body -> metal.
+
+If label material is unclear:
+  - If it looks matte, fibrous, or torn at an edge: classify as paper label -> paper.
+  - If it wraps around the bottle with glossy continuous plastic: classify as shrink plastic label -> plastic.
+  - If genuinely unclear: add a separate label part with bin_category_id "unknown",
+    set uncertainties_zh/_en, and recommended_next_action = "take_closeup".
+Never hide an unclear label by merging it into the container body.
+
 ═══════════════════════════════════════════════════════════════
 📚 EIGHT WORKED EXAMPLES — match this level of detail
 ═══════════════════════════════════════════════════════════════
@@ -675,10 +702,13 @@ Deno.serve(async (req) => {
   STEP 1: Name every distinct material you see (e.g. "plastic body", "paper label", "metal cap")
   STEP 2: Map each material to its bin using the MATERIAL→BIN table
   STEP 3: Output ONE recommended_parts entry per material
+  STEP 4: If it is a bottle/jar/can/box/carton/cup/packet, run the PACKAGING SELF-CHECK:
+          cap/lid + body + label/sleeve/film must be separate whenever visible.
 
 ⚠️ COMMON TRAPS — don't fall for these:
   - Plastic bottle with PAPER label → 3 parts (cap+body→plastic, label→PAPER bin)
   - Plastic bottle with PLASTIC shrink label → 3 parts (all 3 → plastic bin)
+  - Glass bottle/jar with paper label → label→paper, cap→metal/plastic if visible, glass body→general_waste/teacher
   - Paper cup with separate plastic lid → 2 parts (lid→plastic, body→general_waste)
   - Glass jar with metal cap + paper label → 3 parts to 3 different bins
   - Aluminum can (no label or printed-on) → 1 part to aluminum bin

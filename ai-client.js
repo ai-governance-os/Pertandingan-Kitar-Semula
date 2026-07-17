@@ -1,8 +1,8 @@
 // EcoAI — frontend client for the Supabase Edge Function `analyze-recyclable`.
 //
 // v1.1 Layered analysis:
-//   - mode: "normal" (default, cheap)   → 1600px wide, q 0.88, detail "low"
-//   - mode: "high"   (teacher-triggered) → 2048px wide, q 0.9,  detail "high"
+//   - mode: "normal" (default)           → 1800px wide, q 0.9,  detail "high"
+//   - mode: "high"   (teacher-triggered) → 2400px wide, q 0.92, detail "high"
 //
 // Daily-limit guard so a runaway tab can't burn the school's budget overnight.
 //
@@ -17,8 +17,10 @@ function todayStamp() {
 }
 
 const MODE_PRESETS = {
-  normal: { maxWidth: 1600, quality: 0.88, detail: "low"  },
-  high:   { maxWidth: 2048, quality: 0.90, detail: "high" },
+  // Labels, caps, shrink sleeves, and glass-vs-plastic cues are small details.
+  // Use high vision detail by default so AI can split mixed packaging reliably.
+  normal: { maxWidth: 1800, quality: 0.90, detail: "high" },
+  high:   { maxWidth: 2400, quality: 0.92, detail: "high" },
 };
 
 const EcoAI = {
