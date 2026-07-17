@@ -526,7 +526,42 @@ function removeStarEvent(state, eventId) {
   return next;
 }
 
-function studentStarBalance(state, studentId) {
+// Timestamp for the 1st of the month (00:00 local time) containing `ts`.
+// Used to auto-reset the visible star balance every month with zero
+// infrastructure: no cron job, no "did we already reset" flag, no button.
+// The moment the calendar rolls into a new month, every balance computed
+// from this cutoff naturally excludes last month's stars — it just works,
+// even if nobody opens the app until the 3rd or the 10th.
+function monthStartTs(ts = Date.now()) {
+  const d = new Date(ts);
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0).getTime();
+}
+
+function currentRewardMonthLabel(ts = Date.now()) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+}
+
+// Monthly balance — this is THE balance shown everywhere in the UI
+// (leaderboard, redemption eligibility, AI scan panel). Resets automatically
+// on the 1st of every month; stars earned or spent before the cutoff simply
+// stop counting. Full history is never deleted — see studentAllTimeStarBalance
+// and the raw starLedger / rewardRedemptions for the permanent record.
+function studentStarBalance(state, studentId, asOfTs = Date.now()) {
+  const cutoff = monthStartTs(asOfTs);
+  const earned = (state.starLedger || [])
+    .filter(e => e.studentId === studentId && (e.ts || 0) >= cutoff)
+    .reduce((sum, e) => sum + (Number(e.stars) || 0), 0);
+  const spent = (state.rewardRedemptions || [])
+    .filter(r => r.studentId === studentId && (r.ts || 0) >= cutoff)
+    .reduce((sum, r) => sum + (Number(r.starsSpent) || 0), 0);
+  return earned - spent;
+}
+
+// All-time balance, ignoring the monthly reset — for admin reporting / CSV
+// export / "since joining" stats. Never shown as the primary redeemable
+// balance because that resets monthly by design.
+function studentAllTimeStarBalance(state, studentId) {
   const earned = (state.starLedger || [])
     .filter(e => e.studentId === studentId)
     .reduce((sum, e) => sum + (Number(e.stars) || 0), 0);
@@ -541,7 +576,11 @@ function studentStarReport(state) {
     t.members.map(m => ({ ...m, teamId: t.id, teamName: t.zh, teamIcon: t.icon }))
   );
   return members
-    .map(m => ({ ...m, balance: studentStarBalance(state, m.id) }))
+    .map(m => ({
+      ...m,
+      balance: studentStarBalance(state, m.id),
+      allTimeBalance: studentAllTimeStarBalance(state, m.id),
+    }))
     .sort((a, b) => b.balance - a.balance || a.name.localeCompare(b.name));
 }
 
@@ -792,7 +831,8 @@ Object.assign(window, {
     // AI scan helpers
     addAiScan, updateAiScanDecision,
     // Star ledger helpers
-    addStarEvent, removeStarEvent, studentStarBalance, studentStarReport, teamStarStats,
+    addStarEvent, removeStarEvent, studentStarBalance, studentAllTimeStarBalance,
+    studentStarReport, teamStarStats, monthStartTs, currentRewardMonthLabel,
     // Reward corner helpers
     rewardCategory, rewardCategoryForItem, rewardCategoryRangeLabel, rewardItemCost,
     addRewardItem, updateRewardItem, removeRewardItem, redeemReward,

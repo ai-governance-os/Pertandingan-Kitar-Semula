@@ -192,7 +192,7 @@ function AIScanViewInner({ state, setState }) {
           </div>
           {student && (
             <div className="ai-student-balance">
-              {student.name} 现有 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
+              {student.name} 本月现有 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
             </div>
           )}
         </div>
@@ -369,9 +369,10 @@ function AIResultCard({
                     : recyclable  ? "✅ 可回收 · Recyclable"
                                   : "❌ 不可回收 · Not recyclable";
 
-  // Show the fine-analysis button when AI was uncertain or asked for a closeup,
-  // OR when teacher clicked elsewhere (always offer if quota allows).
+  // Always offer one teacher-triggered fine pass after the first result.
+  // Over-confident one-piece answers are exactly where teachers need a second look.
   const fineSuggested =
+    mode !== "high" ||
     conf < 75 ||
     needsReview ||
     uncertZh.length > 0 ||

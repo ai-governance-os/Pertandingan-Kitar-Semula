@@ -3462,6 +3462,12 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 14px;
 }
 .leader-team { font-size: 22px; line-height: 1; }
+.leader-name-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
 .leader-name {
   color: var(--ink);
   font-size: 15px;
@@ -3469,6 +3475,25 @@ button { font-family: inherit; cursor: pointer; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.leader-alltime {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reward-month-note {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  background: rgba(46,196,182,.08);
+  border-radius: 10px;
+  padding: 6px 12px;
+  margin-bottom: 12px;
+  display: inline-block;
 }
 .leader-balance {
   background: rgba(255,201,60,.25);

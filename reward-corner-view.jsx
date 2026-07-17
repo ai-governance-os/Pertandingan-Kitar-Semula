@@ -63,8 +63,11 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
         </div>
 
         <div className="entry-panel">
-          <div className="panel-title" style={{marginBottom:10}}>
+          <div className="panel-title" style={{marginBottom:2}}>
             <strong>🏆 学生星星排行 · Star Leaderboard</strong>
+          </div>
+          <div className="reward-month-note">
+            📅 {EcoData.currentRewardMonthLabel()}本月余额 · This month's balance — 每月 1 号自动清零 · Auto-resets on the 1st of every month
           </div>
 
           <div className="team-tabs">
@@ -94,8 +97,11 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
               <div className="leader-row" key={row.id}>
                 <span className="leader-rank">#{i + 1}</span>
                 <span className="leader-team">{row.teamIcon}</span>
-                <span className="leader-name">{row.name}</span>
-                <span className="leader-balance">
+                <span className="leader-name-wrap">
+                  <span className="leader-name">{row.name}</span>
+                  <small className="leader-alltime">历史累计 {row.allTimeBalance} ⭐</small>
+                </span>
+                <span className="leader-balance" title="本月余额 · This month's balance">
                   <b>{row.balance}</b> ⭐
                 </span>
                 {authed && (
@@ -253,7 +259,7 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
         <button type="button" className="login-modal-close" onClick={onCancel} aria-label="Close">×</button>
         <h2 className="star-modal-title">
           {isDeduction ? "− 扣星" : "+ 加星"} · {student.name}
-          <small>{student.teamName} · 现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
+          <small>{student.teamName} · 本月现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
         </h2>
 
         <div className="star-modal-groups">
@@ -328,7 +334,7 @@ function RedeemModal({ state, student, onCancel, onRedeem }) {
         <button type="button" className="login-modal-close" onClick={onCancel} aria-label="Close">×</button>
         <h2 className="star-modal-title">
           🎁 {student.name} 兑换
-          <small>现有 {balance} ⭐</small>
+          <small>本月现有 {balance} ⭐</small>
         </h2>
 
         <div className="reward-tier-list redeem-tier-list">
