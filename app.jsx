@@ -8,7 +8,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 const ADMIN_ID = "JBC9008";
-const ADMIN_PW = "JBC9008";
+const ADMIN_PW = "BL9008";
 const AUTH_KEY = "eco_warrior_authed_v1";
 
 const PUBLIC_MODES = ["status", "rewards"];
