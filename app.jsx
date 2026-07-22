@@ -20,8 +20,10 @@ const ACCOUNTS = [
   { id: "NKPENG", pw: "CH5460",  role: "teacher" },
   { id: "TCMIAN", pw: "CH5810",  role: "teacher" },
 ];
-const AUTH_KEY = "eco_warrior_authed_v1";
-const USER_KEY = "eco_warrior_user_v1";
+// Bumped to v2 to force everyone still signed in under the old shared
+// admin login to log out and re-authenticate with their own account.
+const AUTH_KEY = "eco_warrior_authed_v2";
+const USER_KEY = "eco_warrior_user_v2";
 
 const PUBLIC_MODES = ["status", "rewards"];
 const ADMIN_ONLY_MODES = ["mobile", "ai", "admin"];
