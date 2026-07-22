@@ -5,7 +5,7 @@ function AIScanView(props) {
   return <AIScanViewInner {...props} />;
 }
 
-function AIScanViewInner({ state, setState }) {
+function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
   const { useState, useRef, useMemo } = React;
 
   const [file, setFile] = useState(null);
@@ -132,7 +132,7 @@ function AIScanViewInner({ state, setState }) {
       starType: "eco_recycle", stars,
       reasonZh: rec.summary_zh || "AI 环保扫描后奖励",
       reasonEn: rec.summary_en || "Eco star awarded after AI scan",
-      evidenceType: "ai_scan", referenceId: scanId, teacherId: "JBC9008",
+      evidenceType: "ai_scan", referenceId: scanId, teacherId,
     };
     let next = EcoData.addAiScan(state, scan);
     next = EcoData.addStarEvent(next, event);

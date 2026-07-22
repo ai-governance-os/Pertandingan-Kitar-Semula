@@ -1,6 +1,6 @@
 // Reward Corner - four reward tiers with grouped card ranges and editable stock.
 
-function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) => fn && fn() }) {
+function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) => fn && fn(), teacherId = "unknown" }) {
   const { useState, useMemo } = React;
 
   const [teamFilter, setTeamFilter] = useState("all");
@@ -25,7 +25,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
       studentId: student.id, studentName: student.name, teamId: student.teamId,
       starType: starTypeId, stars,
       reasonZh, reasonEn,
-      evidenceType: "teacher_quickaward", referenceId: null, teacherId: "JBC9008",
+      evidenceType: "teacher_quickaward", referenceId: null, teacherId,
     };
     const next = EcoData.addStarEvent(state, event);
     if (next === state) return false;
@@ -44,7 +44,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
       studentName: student.name,
       teamId: student.teamId,
       rewardItemId,
-      teacherId: "JBC9008",
+      teacherId,
     });
     if (next === state) return false;
     setState(next);

@@ -7,9 +7,21 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "startMode": "status"
 }/*EDITMODE-END*/;
 
-const ADMIN_ID = "JBC9008";
-const ADMIN_PW = "BL9008";
+// Each account logs in with its own ID/password so every star awarded or
+// deducted can be traced back to a real person instead of one shared login.
+const ACCOUNTS = [
+  { id: "ADMIN",  pw: "ECO9008", role: "admin" },
+  { id: "TKHENG", pw: "CH5571",  role: "teacher" },
+  { id: "LLYU",   pw: "CH6274",  role: "teacher" },
+  { id: "LCFONG", pw: "CH5738",  role: "teacher" },
+  { id: "GBWONG", pw: "CH5495",  role: "teacher" },
+  { id: "LBJIAU", pw: "CH5568",  role: "teacher" },
+  { id: "NSLING", pw: "CH5418",  role: "teacher" },
+  { id: "NKPENG", pw: "CH5460",  role: "teacher" },
+  { id: "TCMIAN", pw: "CH5810",  role: "teacher" },
+];
 const AUTH_KEY = "eco_warrior_authed_v1";
+const USER_KEY = "eco_warrior_user_v1";
 
 const PUBLIC_MODES = ["status", "rewards"];
 const ADMIN_ONLY_MODES = ["mobile", "ai", "admin"];
@@ -38,9 +50,12 @@ function LoginModal({ open, onClose, onAuth }) {
 
   function submit(e) {
     e.preventDefault();
-    if (id.trim().toUpperCase() === ADMIN_ID && pw === ADMIN_PW) {
+    const account = ACCOUNTS.find(a => a.id === id.trim().toUpperCase() && a.pw === pw);
+    if (account) {
+      const user = { id: account.id, role: account.role };
       localStorage.setItem(AUTH_KEY, "1");
-      onAuth();
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      onAuth(user);
       onClose();
     } else {
       setErr("账号或密码错误 · ID atau kata laluan salah");
@@ -65,7 +80,7 @@ function LoginModal({ open, onClose, onAuth }) {
         <div className="login-form">
           <div className="login-field">
             <label>账号 · ID</label>
-            <input value={id} onChange={e => setId(e.target.value)} placeholder="JBC9008" autoComplete="username" autoCapitalize="characters" autoFocus />
+            <input value={id} onChange={e => setId(e.target.value)} placeholder="TKHENG" autoComplete="username" autoCapitalize="characters" autoFocus />
           </div>
           <div className="login-field">
             <label>密码 · Kata laluan</label>
@@ -104,8 +119,18 @@ function SyncStatusPill({ mode, dark, errorMsg, onClick }) {
   );
 }
 
+function loadStoredUser() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(USER_KEY) || "null");
+    return raw && raw.id && raw.role ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === "1");
+  const [currentUser, setCurrentUser] = useState(loadStoredUser);
   const [loginOpen, setLoginOpen] = useState(false);
   const [state, setState] = useState(() => EcoData.load());
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
@@ -132,7 +157,9 @@ function App() {
   function logout() {
     if (!window.confirm("登出？\nLog keluar?")) return;
     localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(USER_KEY);
     setAuthed(false);
+    setCurrentUser(null);
     if (ADMIN_ONLY_MODES.includes(mode)) setMode("status");
   }
 
@@ -151,6 +178,8 @@ function App() {
   }
 
   const isDark = false;
+  const isAdmin = currentUser?.role === "admin";
+  const teacherId = currentUser?.id || "unknown";
 
   return (
     <>
@@ -169,7 +198,7 @@ function App() {
 
       {authed ? (
         <button className={`logout-btn ${isDark ? "on-dark" : ""}`} onClick={logout}>
-          👤 老师 · 登出
+          👤 {currentUser?.id || "老师"} · 登出
         </button>
       ) : (
         <button className={`logout-btn login-btn ${isDark ? "on-dark" : ""}`} onClick={() => setLoginOpen(true)}>
@@ -179,9 +208,9 @@ function App() {
 
       {mode === "mobile" && <MobileView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
-      {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
-      {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
-      {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
+      {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
+      {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
+      {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} isAdmin={isAdmin} teacherId={teacherId} />}
 
       {authed && (
         <TweaksPanel title="Tweaks">
@@ -217,7 +246,7 @@ function App() {
       <LoginModal
         open={loginOpen}
         onClose={() => setLoginOpen(false)}
-        onAuth={() => setAuthed(true)}
+        onAuth={(user) => { setAuthed(true); setCurrentUser(user); }}
       />
     </>
   );

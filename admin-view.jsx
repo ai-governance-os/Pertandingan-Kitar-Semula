@@ -7,10 +7,17 @@ function AdminView(props) {
   return <AdminViewInner {...props} />;
 }
 
-function AdminViewInner({ state, setState }) {
+function AdminViewInner({ state, setState, isAdmin = false }) {
   const [confirmReset, setConfirmReset] = useStateA(false);
   const report = useMemoA(() => EcoData.absenceReport(state), [state]);
   const ineligible = report.filter(r => !r.eligible);
+  const starReport = useMemoA(() => EcoData.studentStarReport(state), [state]);
+  const starLedger = state.starLedger || [];
+
+  function undoStarEvent(eventId) {
+    if (!window.confirm("删除这条星星记录？此操作无法撤销。\nDelete this star record? This cannot be undone.")) return;
+    setState(EcoData.removeStarEvent(state, eventId));
+  }
 
   function addSession() {
     const name = window.prompt("新 Session 名称，例如：第二次", `第${state.sessions.length + 1}次`);
@@ -87,6 +94,60 @@ function AdminViewInner({ state, setState }) {
             <StatBox label="不可领奖" sub="2 次没带或以上" value={ineligible.length} unit="人" color="#C8341A" />
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="admin-section">
+            <h2>⭐ 老师星星记录 · Star Ledger (Admin only)</h2>
+            <div className="section-sub">每笔加/扣星都记录了操作老师、时间与原因；只有 Admin 能看到全部记录并撤销。</div>
+            <div className="eligibility-table-wrap">
+              <table className="log-table star-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>老师</th>
+                    <th>学生</th>
+                    <th>数量</th>
+                    <th>原因</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {starLedger.map(e => (
+                    <tr key={e.id} className={e.stars < 0 ? "row-negative" : ""}>
+                      <td>{new Date(e.ts).toLocaleString()}</td>
+                      <td>{e.teacherId || "unknown"}</td>
+                      <td>{e.studentName}</td>
+                      <td><b>{e.stars > 0 ? `+${e.stars}` : e.stars}</b> ⭐</td>
+                      <td>{e.reasonZh || e.reasonEn || "—"}</td>
+                      <td><button className="chunky-btn small-btn" onClick={() => undoStarEvent(e.id)}>撤销</button></td>
+                    </tr>
+                  ))}
+                  {starLedger.length === 0 && (
+                    <tr><td colSpan={6}>暂无记录 · No records yet.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="section-sub" style={{marginTop:16}}>学生星星余额（本月）</div>
+            <div className="eligibility-table-wrap">
+              <table className="log-table star-table">
+                <thead>
+                  <tr><th>组别</th><th>姓名</th><th>余额</th></tr>
+                </thead>
+                <tbody>
+                  {starReport.map(r => (
+                    <tr key={r.id} className={r.balance < 0 ? "row-negative" : ""}>
+                      <td>{r.teamIcon} {r.teamName}</td>
+                      <td>{r.name}</td>
+                      <td><b>{r.balance}</b> ⭐</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="admin-section">
           <h2>Session 管理</h2>
