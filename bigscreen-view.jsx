@@ -148,7 +148,7 @@ function RedListPanel({ members }) {
     <section className="status-panel red-panel">
       <h2>红名单 · 奖品取消名单</h2>
       {members.length === 0 ? (
-        <div className="red-empty">目前没有学生累计两次没带。</div>
+        <div className="red-empty">目前没有学生累计三次没带。</div>
       ) : (
         <div className="red-list">
           {members.map(member => (
