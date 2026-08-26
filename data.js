@@ -470,7 +470,7 @@ function absenceReport(state) {
   const allMembers = state.teams.flatMap(team => team.members.map(m => ({ ...m, teamId: team.id, teamName: team.zh })));
   return allMembers.map(member => {
     const missed = state.sessions.filter(s => attendanceFor(state, s.id, member.id) === false);
-    return { ...member, missedCount: missed.length, missedSessions: missed, eligible: missed.length < 2 };
+    return { ...member, missedCount: missed.length, missedSessions: missed, eligible: missed.length < 3 };
   }).sort((a, b) => b.missedCount - a.missedCount || a.name.localeCompare(b.name));
 }
 

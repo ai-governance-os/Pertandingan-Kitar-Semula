@@ -91,7 +91,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
               />
             ))}
             <StatBox label="总重量" sub="Jumlah berat" value={fmt(total.kg, 2)} unit="kg" color="var(--eco-deep)" />
-            <StatBox label="不可领奖" sub="2 次没带或以上" value={ineligible.length} unit="人" color="#C8341A" />
+            <StatBox label="不可领奖" sub="3 次没带或以上" value={ineligible.length} unit="人" color="#C8341A" />
           </div>
         </div>
 

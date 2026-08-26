@@ -164,7 +164,7 @@ function MobileViewInner({ state, setState }) {
           <div className="panel-title">
             <div>
               <strong>组员记录</strong>
-              <span>累计两次没带，年终奖品取消</span>
+              <span>累计三次没带，年终奖品取消</span>
             </div>
           </div>
 
