@@ -782,6 +782,36 @@
   background: #FFF1ED;
 }
 
+.rule-note {
+  border: 2px dashed #E5755B;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  color: #8A210D;
+  font-weight: 700;
+  font-size: 13px;
+  background: #FFF1ED;
+}
+
+.watch-heading {
+  margin: 18px 0 12px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: #7A5900;
+}
+
+.watch-row {
+  border: 2px solid #E8C34A;
+  background: #FFF6D9;
+}
+
+.watch-row strong,
+.watch-row b,
+.watch-row span,
+.watch-row small {
+  color: #7A5900;
+}
+
 @media (max-width: 640px) {
   .status-header {
     display: block;

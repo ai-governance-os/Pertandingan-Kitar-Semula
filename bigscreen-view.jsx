@@ -18,7 +18,9 @@ function BigScreenView({ state }) {
       .sort((a, b) => b.stats.points - a.stats.points),
     [state, sessionResult]
   );
-  const redList = EcoData.absenceReport(state).filter(member => !member.eligible);
+  const missedMembers = EcoData.absenceReport(state).filter(member => member.missedCount > 0);
+  const redList = missedMembers.filter(member => !member.eligible);
+  const watchList = missedMembers.filter(member => member.eligible);
 
   const leader = sessionResult.winner;
   const scores = state.teams.map(team => sessionResult.stats[team.id].points);
@@ -92,7 +94,7 @@ function BigScreenView({ state }) {
           />
         )}
 
-        {tab === "red" && <RedListPanel members={redList} />}
+        {tab === "red" && <RedListPanel redList={redList} watchList={watchList} />}
       </div>
     </div>
   );
@@ -143,15 +145,19 @@ function StatusList({ title, rows }) {
   );
 }
 
-function RedListPanel({ members }) {
+function RedListPanel({ redList, watchList }) {
   return (
     <section className="status-panel red-panel">
       <h2>红名单 · 奖品取消名单</h2>
-      {members.length === 0 ? (
-        <div className="red-empty">目前没有学生累计三次没带。</div>
-      ) : (
+      <div className="rule-note">📌 规则：累计没带回收物 <b>3 次</b>会被列入红名单，取消个人奖品资格</div>
+
+      {redList.length === 0 && watchList.length === 0 && (
+        <div className="red-empty">目前没有学生有没带记录。</div>
+      )}
+
+      {redList.length > 0 && (
         <div className="red-list">
-          {members.map(member => (
+          {redList.map(member => (
             <div className="red-row" key={member.id}>
               <div>
                 <strong>{member.name}</strong>
@@ -162,6 +168,24 @@ function RedListPanel({ members }) {
             </div>
           ))}
         </div>
+      )}
+
+      {watchList.length > 0 && (
+        <>
+          <h3 className="watch-heading">⚠️ 警戒名单 · 还没取消资格，请留意</h3>
+          <div className="red-list">
+            {watchList.map(member => (
+              <div className="red-row watch-row" key={member.id}>
+                <div>
+                  <strong>{member.name}</strong>
+                  <span>{member.teamName} · 没带 {member.missedCount} 次</span>
+                  <small>{member.missedSessions.map(s => s.name).join("、")}</small>
+                </div>
+                <b>再没带 {3 - member.missedCount} 次取消奖品</b>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
