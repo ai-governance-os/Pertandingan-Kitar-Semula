@@ -31,6 +31,7 @@ const SOURCES = [
   'bigscreen-view.jsx',
   'admin-view.jsx',
   'ai-scan-view.jsx',
+  'pet-view.jsx',
   'reward-corner-view.jsx',
   // entry point — must come last
   'app.jsx',

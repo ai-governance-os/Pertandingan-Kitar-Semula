@@ -216,6 +216,9 @@ function defaultState() {
     rewardRedemptions: [],
     fundEvents: [],
     catalog: seedCatalog(),
+    // Per-student pet overrides only (species swap / nickname). Growth and
+    // hunger are always derived from starLedger, never stored.
+    pets: {},
     settings: { ...DEFAULT_SETTINGS },
     season: { startedAt: Date.now(), name: { zh: "2026 环保回收赛", ms: "Musim Kitar Semula 2026" } },
   };
@@ -277,6 +280,7 @@ function normalizeState(input) {
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
   state.fundEvents = Array.isArray(input.fundEvents) ? input.fundEvents : [];
   state.catalog = Array.isArray(input.catalog) && input.catalog.length ? input.catalog : seedCatalog();
+  state.pets = (input.pets && typeof input.pets === "object") ? input.pets : {};
   state.settings = { ...DEFAULT_SETTINGS, ...(input.settings || {}) };
 
   state.season = input.season || base.season;
@@ -617,6 +621,153 @@ function teamStarStats(state, teamId) {
   return { stars };
 }
 
+// ─────────────────────────── 宠物园 · Eco Pets ───────────────────────────
+//
+// Pets are DERIVED from the star ledger on purpose:
+//   growth (exp) = lifetime stars EARNED — spending stars on a gift never
+//                  shrinks a pet ("auto-feed" rule chosen by the school)
+//   hunger       = days since that student last earned a star
+//
+// Nothing is written per view, so the pet screen adds zero extra load on the
+// single-row cloud sync and can't create write conflicts. The only stored bits
+// are the species override and nickname (state.pets), which change rarely.
+
+const PET_SPECIES = [
+  { id: "lion",   zh: "云狮",   en: "Cloud Lion", stages: ["🥚", "🐣", "🐈", "🦁", "🦁"] },
+  { id: "dragon", zh: "飞龙",   en: "Sky Dragon", stages: ["🥚", "🐣", "🦎", "🐲", "🐉"] },
+  { id: "dino",   zh: "小恐龙", en: "Dino",       stages: ["🥚", "🐣", "🦎", "🦕", "🦖"] },
+  { id: "whale",  zh: "小鲸鱼", en: "Little Whale", stages: ["🥚", "🐟", "🐠", "🐬", "🐳"] },
+  { id: "owl",    zh: "夜猫头鹰", en: "Owl",      stages: ["🥚", "🐣", "🐦", "🦉", "🦉"] },
+  { id: "tree",   zh: "环保小树", en: "Eco Tree", stages: ["🌰", "🌱", "🌿", "🪴", "🌳"] },
+];
+
+// Exp thresholds, calibrated against the school's real ledger (756 star events,
+// 19 students, lifetime totals 0–244, median ~105). Earlier draft values
+// (8/25/60/120) put 42% of the school at max stage on day one, which kills the
+// point of the game — these spread the current roster across all five stages
+// and leave 传说 as a genuine year-long goal nobody has reached yet.
+const PET_STAGES = [
+  { minExp: 0,   zh: "蛋",   en: "Egg" },
+  { minExp: 25,  zh: "幼体", en: "Baby" },
+  { minExp: 70,  zh: "少年", en: "Junior" },
+  { minExp: 150, zh: "成年", en: "Adult" },
+  { minExp: 300, zh: "传说", en: "Legend" },
+];
+
+const PET_HUNGER_LEVELS = [
+  { minDays: 14, key: "starving", zh: "很饿！",   en: "Starving",  icon: "😰" },
+  { minDays: 7,  key: "hungry",   zh: "饿了",     en: "Hungry",    icon: "😟" },
+  { minDays: 3,  key: "peckish",  zh: "有点饿",   en: "Peckish",   icon: "🙂" },
+  { minDays: 0,  key: "full",     zh: "精神饱满", en: "Well fed",  icon: "😊" },
+];
+
+// A student who has never earned a star isn't "well fed" and isn't starving
+// either — the egg simply hasn't hatched yet. Giving that its own state keeps
+// brand-new students from being shown as neglected on day one.
+const PET_HUNGER_UNHATCHED = { minDays: 0, key: "unhatched", zh: "等待孵化", en: "Not hatched yet", icon: "🥚" };
+
+const PET_STARVING_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Stable hash so a student always hatches the same species on every device,
+// with no stored assignment needed.
+function hashString(str) {
+  let h = 0;
+  const s = String(str || "");
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function petSpeciesFor(state, studentId) {
+  const override = state?.pets?.[studentId]?.speciesId;
+  const picked = override && PET_SPECIES.find(s => s.id === override);
+  return picked || PET_SPECIES[hashString(studentId) % PET_SPECIES.length];
+}
+
+function petStageFor(exp) {
+  let index = 0;
+  PET_STAGES.forEach((stage, i) => { if (exp >= stage.minExp) index = i; });
+  return index;
+}
+
+function petHungerFor(days) {
+  if (days === null) return PET_HUNGER_UNHATCHED;
+  return PET_HUNGER_LEVELS.find(l => days >= l.minDays) || PET_HUNGER_LEVELS[PET_HUNGER_LEVELS.length - 1];
+}
+
+function petState(state, studentId, now = Date.now()) {
+  const events = (state.starLedger || []).filter(e => e.studentId === studentId);
+
+  // Lifetime growth: positives feed the pet, deductions do set it back (a
+  // deduction is a real behaviour signal), but never below zero.
+  const exp = Math.max(0, events.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
+
+  // Hunger only looks at stars EARNED, so a deduction doesn't count as a meal.
+  const lastFedTs = events
+    .filter(e => (Number(e.stars) || 0) > 0)
+    .reduce((latest, e) => Math.max(latest, Number(e.ts) || 0), 0);
+  const daysSinceFed = lastFedTs ? Math.floor((now - lastFedTs) / DAY_MS) : null;
+
+  const hunger = petHungerFor(daysSinceFed);
+  const stageIndex = petStageFor(exp);
+
+  // Starving pets LOOK like they regressed one stage — the scare the school
+  // wanted — but exp is untouched, so one new star restores them instantly.
+  const displayStageIndex = hunger.key === "starving" ? Math.max(0, stageIndex - 1) : stageIndex;
+
+  const species = petSpeciesFor(state, studentId);
+  const nextStage = PET_STAGES[stageIndex + 1] || null;
+
+  return {
+    studentId,
+    species,
+    nickname: state?.pets?.[studentId]?.nickname || "",
+    exp,
+    stageIndex,
+    stage: PET_STAGES[stageIndex],
+    displayStageIndex,
+    icon: species.stages[displayStageIndex],
+    isMaxStage: !nextStage,
+    nextStage,
+    expToNext: nextStage ? Math.max(0, nextStage.minExp - exp) : 0,
+    stageProgress: nextStage
+      ? Math.min(1, Math.max(0, (exp - PET_STAGES[stageIndex].minExp) / (nextStage.minExp - PET_STAGES[stageIndex].minExp)))
+      : 1,
+    daysSinceFed,
+    lastFedTs: lastFedTs || null,
+    hunger,
+    isRegressed: hunger.key === "starving" && stageIndex > 0,
+    neverFed: !lastFedTs,
+  };
+}
+
+function petReport(state, now = Date.now()) {
+  const members = state.teams.flatMap(t =>
+    t.members.map(m => ({ ...m, teamId: t.id, teamName: t.zh, teamIcon: t.icon, teamColor: t.primary }))
+  );
+  return members
+    .map(m => ({ ...m, pet: petState(state, m.id, now) }))
+    .sort((a, b) => b.pet.exp - a.pet.exp || a.name.localeCompare(b.name));
+}
+
+function setPetSpecies(state, studentId, speciesId) {
+  const pets = { ...(state.pets || {}) };
+  pets[studentId] = { ...(pets[studentId] || {}), speciesId };
+  const next = { ...state, pets };
+  save(next);
+  return next;
+}
+
+function setPetNickname(state, studentId, nickname) {
+  const pets = { ...(state.pets || {}) };
+  pets[studentId] = { ...(pets[studentId] || {}), nickname: String(nickname || "").slice(0, 20) };
+  const next = { ...state, pets };
+  save(next);
+  return next;
+}
+
 // ─────────────────────────── Reward corner ───────────────────────────
 
 function rewardCategory(state, categoryId) {
@@ -854,6 +1005,9 @@ Object.assign(window, {
     setAttendance, attendanceFor, teamMembers,
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     redListThreshold, setRedListThreshold,
+    // Pets
+    petState, petReport, petSpeciesFor, setPetSpecies, setPetNickname,
+    PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
     exportCSV,
     // AI scan helpers
     addAiScan, updateAiScanDecision,

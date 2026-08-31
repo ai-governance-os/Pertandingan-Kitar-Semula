@@ -36,6 +36,7 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
   // Keep the bar lean — 2 chips for viewers, 5 for admin.
   const ALL_MODES = [
     { id: "status",  icon: "📊", zh: "战况", ms: "Status",  adminOnly: false },
+    { id: "pets",    icon: "🐾", zh: "宠物", ms: "Pets",    adminOnly: false },
     { id: "rewards", icon: "🎁", zh: "奖品", ms: "Rewards", adminOnly: false },
     { id: "mobile",  icon: "📝", zh: "记录", ms: "Input",   adminOnly: true  },
     { id: "ai",      icon: "🤖", zh: "AI",   ms: "AI",      adminOnly: true  },

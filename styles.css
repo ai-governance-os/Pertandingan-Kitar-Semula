@@ -4111,3 +4111,163 @@ button { font-family: inherit; cursor: pointer; }
   .threshold-control { align-items: stretch; }
   .threshold-control .star-stepper { max-width: none; }
 }
+
+/* ================================================== */
+/* 宠物园 · Eco Pets                                   */
+/* ================================================== */
+.pet-frame { background: linear-gradient(180deg, #FFF8EE 0%, #EAF7F1 100%); }
+
+.pet-rule-note {
+  background: rgba(46,196,182,.10);
+  border-left: 4px solid var(--eco-deep);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.pet-rule-note b { color: var(--eco-deep); }
+
+.pet-summary {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.pet-summary-item {
+  flex: 1;
+  background: white;
+  border: 2px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  min-width: 0;
+}
+.pet-summary-item b { display: block; font-size: 22px; color: var(--eco-deep); line-height: 1.1; }
+.pet-summary-item span { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
+.pet-summary-item.warn { border-color: #C68B00; background: rgba(255,201,60,.14); }
+.pet-summary-item.warn b { color: #C8341A; }
+
+/* ── Pet grid ─────────────────────────────────────── */
+.pet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+.pet-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid rgba(0,0,0,.08);
+  border-bottom: 4px solid var(--team-color, var(--eco-deep));
+  cursor: pointer;
+  font-family: var(--font-body);
+  min-width: 0;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.pet-card:hover { transform: translateY(-3px); box-shadow: 0 6px 0 rgba(20,18,40,.10); }
+.pet-card.is-legend { background: linear-gradient(180deg, #FFFDF4 0%, #FFF3D0 100%); border-color: #E6C478; }
+
+.pet-avatar { position: relative; line-height: 1; }
+.pet-emoji { font-size: 46px; line-height: 1; display: block; }
+.pet-mood { position: absolute; right: -8px; bottom: -2px; font-size: 18px; }
+.pet-badge-legend { position: absolute; left: -8px; top: -4px; font-size: 18px; }
+.pet-badge-legend.big { font-size: 30px; left: 0; top: 0; }
+
+.pet-card.hunger-hungry .pet-emoji { filter: grayscale(.35) opacity(.85); }
+.pet-card.hunger-starving .pet-emoji { filter: grayscale(.7) opacity(.7); transform: scale(.88); }
+
+.pet-name {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--ink);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pet-stage-label { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
+.pet-regress-tag {
+  margin-left: 4px;
+  background: #FFE5DC;
+  color: #C8341A;
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 10px;
+}
+.pet-exp { font-size: 11px; font-weight: 800; color: #6B4500; }
+
+.pet-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(0,0,0,.08);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 3px 0 1px;
+}
+.pet-bar.big { height: 12px; margin: 6px 0 10px; }
+.pet-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--eco-green), var(--eco-deep));
+  border-radius: 99px;
+  transition: width .3s ease;
+}
+
+/* ── Pet detail modal ─────────────────────────────── */
+.pet-modal { text-align: center; }
+.pet-modal-hero {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px; height: 150px;
+  margin: 4px auto 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #FFFFFF 0%, #E8F6F0 70%, #D6EEE4 100%);
+  border: 3px solid rgba(46,196,182,.35);
+}
+.pet-modal-emoji { font-size: 84px; line-height: 1; }
+.pet-modal-hero.hunger-hungry .pet-modal-emoji { filter: grayscale(.35) opacity(.85); }
+.pet-modal-hero.hunger-starving .pet-modal-emoji { filter: grayscale(.7) opacity(.7); transform: scale(.9); }
+
+.pet-modal-stats {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+.pet-stat {
+  flex: 1;
+  background: rgba(0,0,0,.04);
+  border-radius: 12px;
+  padding: 8px 6px;
+  min-width: 0;
+}
+.pet-stat b { display: block; font-size: 20px; color: var(--eco-deep); line-height: 1.2; }
+.pet-stat span { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
+
+.pet-progress-block { margin: 10px 0; }
+.pet-next-note { font-size: 14px; font-weight: 700; color: var(--ink); }
+.pet-next-note b { color: var(--eco-deep); }
+.pet-next-note span { font-size: 12px; font-weight: 500; opacity: .65; }
+
+.pet-hunger-note {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 10px;
+  background: rgba(46,196,182,.10);
+  color: var(--ink-soft);
+}
+.pet-hunger-note.hungry { background: rgba(255,201,60,.20); color: #6B4500; }
+.pet-hunger-note.starving { background: rgba(200,52,26,.10); color: #6B2410; }
+.pet-regress-note { margin-top: 8px; font-size: 12px; line-height: 1.5; font-weight: 600; }
+
+.pet-admin-row { display: flex; gap: 8px; margin-top: 14px; }
+.pet-admin-row .chunky-btn { flex: 1; }
