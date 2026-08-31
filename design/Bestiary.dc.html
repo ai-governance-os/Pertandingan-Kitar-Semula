@@ -1,0 +1,287 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@400;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Nunito", system-ui, sans-serif; }
+    a { color: #C97A2E; } a:hover { color: #9A5A1C; }
+    .beast { position: relative; border-radius: 20px; padding: 14px 12px 12px; background: linear-gradient(180deg, #FFFDF6 0%, #F7F1E4 100%); border: 2.5px solid #E4DAC6; box-shadow: 0 4px 0 rgba(120,104,78,.18); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .aura { position: absolute; left: 50%; top: 58px; width: 150px; height: 150px; transform: translate(-50%,-50%); border-radius: 50%; filter: blur(2px); }
+    .bname { font-family: "ZCOOL KuaiLe", "Nunito", sans-serif; font-size: 19px; color: #2B2418; line-height: 1.1; }
+    .ben { font-size: 10.5px; font-weight: 800; letter-spacing: .8px; color: #A2937C; text-transform: uppercase; }
+    .btrait { font-size: 11.5px; font-weight: 700; color: #6B5A45; text-align: center; line-height: 1.45; }
+  </style>
+</helmet>
+
+<div style="width: 900px; height: 1310px; background: linear-gradient(180deg, #FFFBF2 0%, #F4EEE1 100%); padding: 32px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <div style="font-family: 'ZCOOL KuaiLe', 'Nunito', sans-serif; font-size: 34px; color: #2B2418;">神兽图鉴</div>
+      <div style="font-size: 13px; font-weight: 800; letter-spacing: 1.4px; color: #A2937C;">MYTHIC BESTIARY</div>
+    </div>
+    <div style="font-size: 14px; line-height: 1.6; color: #4A4033; max-width: 720px;">
+      每位学生领养 <b>一只专属神兽</b>，全校不重复 —— 不是普通的牛羊猫狗。神兽由学生 ID 决定，孵化后终生跟着他。
+      每只有自己的<b>剪影、灵光颜色、性格</b>；星星喂养后进化，外形会更华丽（角变长、尾焰变多、灵光更亮）。
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px;">
+
+    <!-- 1 麒麟 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,196,92,.55) 0%, rgba(255,196,92,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M46 34c-6-10-4-18 2-22 2 8 6 10 10 14z" fill="#E9A23B"/>
+        <path d="M74 34c6-10 4-18-2-22-2 8-6 10-10 14z" fill="#E9A23B"/>
+        <ellipse cx="60" cy="84" rx="26" ry="22" fill="#F6C97A"/>
+        <circle cx="60" cy="54" r="24" fill="#FBD89A"/>
+        <path d="M38 46c4-12 14-18 22-18" stroke="#FFF3D2" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M84 76c12-6 18 4 14 14-10-2-13-7-14-14z" fill="#FF9A4D"/>
+        <path d="M88 66c10-4 14 2 12 9-8-1-11-4-12-9z" fill="#FFC46A"/>
+        <ellipse cx="52" cy="54" rx="4" ry="5" fill="#4A3418"/><ellipse cx="68" cy="54" rx="4" ry="5" fill="#4A3418"/>
+        <circle cx="53.4" cy="52" r="1.5" fill="#fff"/><circle cx="69.4" cy="52" r="1.5" fill="#fff"/>
+      </svg>
+      <div class="bname">麒麟</div><div class="ben">Qilin</div>
+      <div class="btrait">金焰鬃 · 守序<br>灵光：暖金</div>
+    </div>
+
+    <!-- 2 凤凰 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,120,120,.45) 0%, rgba(255,150,90,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="24" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M84 92c16-14 22-38 16-54-10 14-20 26-30 34z" fill="#F2645C"/>
+        <path d="M90 96c14-8 20-26 18-40-8 12-16 20-24 26z" fill="#FF9A5C"/>
+        <ellipse cx="58" cy="84" rx="24" ry="21" fill="#FF8C6A"/>
+        <circle cx="56" cy="54" r="22" fill="#FFB07A"/>
+        <path d="M46 34c2-12 8-16 12-18-2 8 0 12 2 16z" fill="#FFD36A"/>
+        <path d="M56 30c4-10 10-13 14-14-4 7-4 11-4 15z" fill="#FF7A5C"/>
+        <path d="M36 46c4-10 12-16 18-16" stroke="#FFF0D6" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="49" cy="54" rx="4" ry="5" fill="#5A2A1E"/><ellipse cx="64" cy="54" rx="4" ry="5" fill="#5A2A1E"/>
+        <circle cx="50.4" cy="52" r="1.5" fill="#fff"/><circle cx="65.4" cy="52" r="1.5" fill="#fff"/>
+        <path d="M72 58l10 4-10 4z" fill="#FFC94A"/>
+      </svg>
+      <div class="bname">凤凰</div><div class="ben">Phoenix</div>
+      <div class="btrait">尾羽三色 · 骄傲<br>灵光：珊瑚红</div>
+    </div>
+
+    <!-- 3 九尾狐 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(190,140,255,.42) 0%, rgba(190,140,255,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M84 94c14-6 20-22 18-34-8 10-16 18-24 22z" fill="#C9A6F0"/>
+        <path d="M88 98c14-2 20-16 20-28-8 8-16 14-24 18z" fill="#B98DEA"/>
+        <path d="M80 98c12-10 16-26 12-36-6 12-12 20-20 26z" fill="#DCC4F7"/>
+        <ellipse cx="58" cy="86" rx="24" ry="20" fill="#E7D6FA"/>
+        <circle cx="56" cy="56" r="22" fill="#F1E6FD"/>
+        <path d="M40 40l-4-16 16 8z" fill="#C9A6F0"/><path d="M72 40l4-16-16 8z" fill="#C9A6F0"/>
+        <path d="M38 48c4-10 12-15 18-15" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="49" cy="56" rx="4" ry="5" fill="#4A3A6B"/><ellipse cx="64" cy="56" rx="4" ry="5" fill="#4A3A6B"/>
+        <circle cx="50.4" cy="54" r="1.5" fill="#fff"/><circle cx="65.4" cy="54" r="1.5" fill="#fff"/>
+        <path d="M52 66h8l-4 5z" fill="#8A6BB5"/>
+      </svg>
+      <div class="bname">九尾狐</div><div class="ben">Nine-Tail</div>
+      <div class="btrait">尾数随进化增加<br>灵光：紫罗兰</div>
+    </div>
+
+    <!-- 4 应龙 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(90,200,255,.45) 0%, rgba(90,200,255,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M30 74c-14-8-20-24-16-34 10 10 20 16 28 20z" fill="#5FC8E8"/>
+        <path d="M90 74c14-8 20-24 16-34-10 10-20 16-28 20z" fill="#5FC8E8"/>
+        <ellipse cx="60" cy="86" rx="25" ry="21" fill="#7FD8EE"/>
+        <circle cx="60" cy="56" r="22" fill="#A6E7F7"/>
+        <path d="M46 36c-2-12 0-16 2-18 2 8 4 12 8 16z" fill="#3FA8D0"/>
+        <path d="M74 36c2-12 0-16-2-18-2 8-4 12-8 16z" fill="#3FA8D0"/>
+        <path d="M42 48c4-10 12-15 18-15" stroke="#F0FDFF" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="52" cy="56" rx="4" ry="5" fill="#1E4658"/><ellipse cx="68" cy="56" rx="4" ry="5" fill="#1E4658"/>
+        <circle cx="53.4" cy="54" r="1.5" fill="#fff"/><circle cx="69.4" cy="54" r="1.5" fill="#fff"/>
+        <path d="M54 68q6 5 12 0" stroke="#2E7A96" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="bname">应龙</div><div class="ben">Winged Dragon</div>
+      <div class="btrait">双翼 · 雷雨守护<br>灵光：天青</div>
+    </div>
+
+    <!-- 5 白泽 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,255,255,.75) 0%, rgba(220,235,255,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.18)"/>
+        <ellipse cx="60" cy="86" rx="25" ry="21" fill="#F2F5FA"/>
+        <circle cx="60" cy="56" r="23" fill="#FBFCFE"/>
+        <path d="M60 30l-3-18 6 0z" fill="#CFE0F2"/>
+        <path d="M44 44c4-10 12-14 16-14" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="50" cy="56" rx="3.6" ry="4.6" fill="#3E4A5E"/><ellipse cx="70" cy="56" rx="3.6" ry="4.6" fill="#3E4A5E"/>
+        <ellipse cx="60" cy="46" rx="3.6" ry="4.6" fill="#3E4A5E"/>
+        <circle cx="51.2" cy="54" r="1.4" fill="#fff"/><circle cx="71.2" cy="54" r="1.4" fill="#fff"/><circle cx="61.2" cy="44" r="1.4" fill="#fff"/>
+        <path d="M54 68q6 4 12 0" stroke="#8393A8" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M52 96q8-6 16 0" stroke="#D7E2F0" stroke-width="3" fill="none"/>
+      </svg>
+      <div class="bname">白泽</div><div class="ben">Baize</div>
+      <div class="btrait">三眼 · 通晓万物<br>灵光：珍珠白</div>
+    </div>
+
+    <!-- 6 灵龟 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(90,220,170,.42) 0%, rgba(90,220,170,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="28" ry="6" fill="rgba(90,70,40,.22)"/>
+        <ellipse cx="60" cy="82" rx="34" ry="26" fill="#3E8F6E"/>
+        <ellipse cx="60" cy="78" rx="30" ry="22" fill="#5CBB90"/>
+        <path d="M46 70l10-6 10 6-4 12h-12z" fill="#8FE0B8" opacity=".9"/>
+        <path d="M34 78l8-4 4 10-6 8z" fill="#7ED3AA" opacity=".8"/>
+        <path d="M86 78l-8-4-4 10 6 8z" fill="#7ED3AA" opacity=".8"/>
+        <circle cx="60" cy="46" r="17" fill="#93E3BA"/>
+        <ellipse cx="53" cy="46" rx="3.4" ry="4.2" fill="#22503C"/><ellipse cx="67" cy="46" rx="3.4" ry="4.2" fill="#22503C"/>
+        <circle cx="54.2" cy="44.4" r="1.3" fill="#fff"/><circle cx="68.2" cy="44.4" r="1.3" fill="#fff"/>
+        <path d="M55 55q5 3 10 0" stroke="#2E6B50" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="bname">灵龟</div><div class="ben">Spirit Turtle</div>
+      <div class="btrait">龟甲发光符文<br>灵光：翡翠绿</div>
+    </div>
+
+    <!-- 7 星鹿 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(140,170,255,.45) 0%, rgba(140,170,255,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="24" ry="6" fill="rgba(90,70,40,.22)"/>
+        <ellipse cx="60" cy="88" rx="22" ry="19" fill="#9FB6EE"/>
+        <circle cx="60" cy="58" r="21" fill="#C3D2F8"/>
+        <path d="M48 38l-8-16 4-2 8 12z" fill="#8FA8E4"/><path d="M40 26l-10-4 2-4 10 4z" fill="#8FA8E4"/>
+        <path d="M72 38l8-16-4-2-8 12z" fill="#8FA8E4"/><path d="M80 26l10-4-2-4-10 4z" fill="#8FA8E4"/>
+        <circle cx="30" cy="20" r="3" fill="#FFF6C4"/><circle cx="92" cy="20" r="3" fill="#FFF6C4"/><circle cx="60" cy="14" r="2.4" fill="#FFF6C4"/>
+        <path d="M44 48c4-9 11-13 16-13" stroke="#F2F6FF" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="52" cy="58" rx="3.8" ry="4.8" fill="#2E3A5E"/><ellipse cx="68" cy="58" rx="3.8" ry="4.8" fill="#2E3A5E"/>
+        <circle cx="53.2" cy="56" r="1.4" fill="#fff"/><circle cx="69.2" cy="56" r="1.4" fill="#fff"/>
+        <ellipse cx="60" cy="68" rx="4" ry="3" fill="#6B78A8"/>
+      </svg>
+      <div class="bname">星鹿</div><div class="ben">Star Deer</div>
+      <div class="btrait">鹿角挂星 · 夜行<br>灵光：星蓝</div>
+    </div>
+
+    <!-- 8 云豹 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,225,150,.45) 0%, rgba(255,225,150,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M84 90c16 2 22 12 18 18-10 2-16-6-18-18z" fill="#F0F4FA"/>
+        <ellipse cx="58" cy="86" rx="25" ry="21" fill="#F7D98E"/>
+        <circle cx="58" cy="56" r="22" fill="#FCE9B6"/>
+        <circle cx="46" cy="84" r="3.4" fill="#C99A4E" opacity=".8"/><circle cx="66" cy="90" r="3" fill="#C99A4E" opacity=".8"/>
+        <circle cx="56" cy="78" r="2.6" fill="#C99A4E" opacity=".8"/>
+        <path d="M42 36l-4-14 14 8z" fill="#E8C171"/><path d="M74 36l4-14-14 8z" fill="#E8C171"/>
+        <path d="M40 48c4-10 12-15 18-15" stroke="#FFFBEA" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="50" cy="56" rx="4" ry="5" fill="#5A4522"/><ellipse cx="66" cy="56" rx="4" ry="5" fill="#5A4522"/>
+        <circle cx="51.4" cy="54" r="1.5" fill="#fff"/><circle cx="67.4" cy="54" r="1.5" fill="#fff"/>
+        <path d="M54 66h8l-4 5z" fill="#B08A44"/>
+      </svg>
+      <div class="bname">云豹</div><div class="ben">Cloud Leopard</div>
+      <div class="btrait">踏云而行 · 最快<br>灵光：暖沙</div>
+    </div>
+
+    <!-- 9 海麟 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(80,190,220,.45) 0%, rgba(80,190,220,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="26" ry="6" fill="rgba(90,70,40,.2)"/>
+        <path d="M86 88c16-4 22-16 20-24-10 6-18 12-24 16z" fill="#57C6DC"/>
+        <ellipse cx="58" cy="86" rx="25" ry="21" fill="#6FD3E5"/>
+        <circle cx="58" cy="56" r="22" fill="#9DE6F2"/>
+        <path d="M58 30q-6-14 2-20 4 10 4 18z" fill="#3FA7C4"/>
+        <path d="M40 46c4-10 12-15 18-15" stroke="#EAFCFF" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="50" cy="56" rx="4" ry="5" fill="#1C4E5E"/><ellipse cx="66" cy="56" rx="4" ry="5" fill="#1C4E5E"/>
+        <circle cx="51.4" cy="54" r="1.5" fill="#fff"/><circle cx="67.4" cy="54" r="1.5" fill="#fff"/>
+        <path d="M52 68q6 4 12 0" stroke="#2C7E96" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <circle cx="34" cy="70" r="3" fill="#CFF6FF" opacity=".9"/><circle cx="28" cy="60" r="2" fill="#CFF6FF" opacity=".8"/>
+      </svg>
+      <div class="bname">海麟</div><div class="ben">Sea Kirin</div>
+      <div class="btrait">水泡随行 · 池边<br>灵光：湖蓝</div>
+    </div>
+
+    <!-- 10 貔貅 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,180,90,.45) 0%, rgba(255,180,90,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="27" ry="6" fill="rgba(90,70,40,.22)"/>
+        <ellipse cx="60" cy="86" rx="27" ry="22" fill="#E8B06A"/>
+        <circle cx="60" cy="54" r="25" fill="#F6CE92"/>
+        <path d="M60 26l-4-16 8 0z" fill="#B9793A"/>
+        <path d="M38 44c-8-6-10-14-8-18 6 6 10 10 14 12z" fill="#D89A52"/>
+        <path d="M82 44c8-6 10-14 8-18-6 6-10 10-14 12z" fill="#D89A52"/>
+        <path d="M40 46c4-10 12-16 18-16" stroke="#FFF4DE" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <ellipse cx="51" cy="54" rx="4.2" ry="5.2" fill="#4A3418"/><ellipse cx="69" cy="54" rx="4.2" ry="5.2" fill="#4A3418"/>
+        <circle cx="52.4" cy="52" r="1.6" fill="#fff"/><circle cx="70.4" cy="52" r="1.6" fill="#fff"/>
+        <path d="M52 66q8 6 16 0" stroke="#8A5B24" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+        <circle cx="86" cy="92" r="6" fill="#FFD86A"/><circle cx="86" cy="92" r="2.4" fill="#E0A63C"/>
+      </svg>
+      <div class="bname">貔貅</div><div class="ben">Pixiu</div>
+      <div class="btrait">独角 · 招财<br>灵光：琥珀</div>
+    </div>
+
+    <!-- 11 雷鸟 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(255,230,110,.5) 0%, rgba(255,230,110,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="24" ry="6" fill="rgba(90,70,40,.22)"/>
+        <path d="M32 78c-14-4-20-16-18-24 10 8 20 14 26 16z" fill="#F3D45C"/>
+        <path d="M88 78c14-4 20-16 18-24-10 8-20 14-26 16z" fill="#F3D45C"/>
+        <ellipse cx="60" cy="86" rx="23" ry="20" fill="#F7E08A"/>
+        <circle cx="60" cy="56" r="21" fill="#FCEFAE"/>
+        <path d="M60 30l-8-16 6 2 6-6 2 12z" fill="#F0B93C"/>
+        <path d="M42 48c4-10 12-14 17-14" stroke="#FFFCE8" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="52" cy="56" rx="3.8" ry="4.8" fill="#5A4A18"/><ellipse cx="68" cy="56" rx="3.8" ry="4.8" fill="#5A4A18"/>
+        <circle cx="53.2" cy="54" r="1.4" fill="#fff"/><circle cx="69.2" cy="54" r="1.4" fill="#fff"/>
+        <path d="M56 66l8 3-8 3z" fill="#E8A82C"/>
+      </svg>
+      <div class="bname">雷鸟</div><div class="ben">Thunderbird</div>
+      <div class="btrait">冠羽带电 · 最吵<br>灵光：闪电黄</div>
+    </div>
+
+    <!-- 12 竹灵 -->
+    <div class="beast">
+      <div class="aura" style="background: radial-gradient(circle, rgba(150,220,120,.45) 0%, rgba(150,220,120,0) 70%);"></div>
+      <svg viewBox="0 0 120 120" width="128" height="128" style="position: relative;">
+        <ellipse cx="60" cy="108" rx="24" ry="6" fill="rgba(90,70,40,.22)"/>
+        <ellipse cx="60" cy="88" rx="23" ry="20" fill="#8FCF6A"/>
+        <circle cx="60" cy="58" r="21" fill="#B2E28E"/>
+        <path d="M52 34q-14-6-16-18 14 2 18 12z" fill="#5FA845"/>
+        <path d="M68 34q14-6 16-18-14 2-18 12z" fill="#79C25A"/>
+        <path d="M44 48c4-9 11-13 16-13" stroke="#F0FFE4" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="52" cy="58" rx="3.8" ry="4.8" fill="#2E4A20"/><ellipse cx="68" cy="58" rx="3.8" ry="4.8" fill="#2E4A20"/>
+        <circle cx="53.2" cy="56" r="1.4" fill="#fff"/><circle cx="69.2" cy="56" r="1.4" fill="#fff"/>
+        <path d="M55 68q5 4 10 0" stroke="#4A7A34" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+        <circle cx="36" cy="74" r="2.6" fill="#DFF6C8"/><circle cx="84" cy="70" r="2.2" fill="#DFF6C8"/>
+      </svg>
+      <div class="bname">竹灵</div><div class="ben">Bamboo Spirit</div>
+      <div class="btrait">最安静 · 爱池边<br>灵光：嫩竹绿</div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 14px; align-items: stretch;">
+    <div style="flex-grow: 1; background: rgba(255,255,255,.7); border: 2.5px dashed #D8CBB2; border-radius: 18px; padding: 14px 18px;">
+      <div style="font-size: 14px; font-weight: 800; color: #2B2418; margin-bottom: 6px;">还需要 7 只才够全校 19 人一人一只</div>
+      <div style="font-size: 12.5px; line-height: 1.6; color: #6B5A45;">
+        候补名单（等你点头我再画）：<b>朱雀 · 玄武 · 白虎 · 青龙 · 狮鹫 · 雪貂灵 · 火鼠</b>。
+        新生入学时从没被领养的神兽里分配，全校永不重复。
+      </div>
+    </div>
+    <div style="width: 250px; background: linear-gradient(180deg, #FFF7E4, #FBEBC8); border: 2.5px solid #E4CF9E; border-radius: 18px; padding: 14px 16px;">
+      <div style="font-size: 13.5px; font-weight: 800; color: #6B4A12; margin-bottom: 6px;">进化会变华丽</div>
+      <div style="font-size: 12px; line-height: 1.6; color: #7A5F28;">蛋 → 幼兽 → 少年 → 成年 → 传说<br>角变长、尾焰变多、灵光变亮，<b>传说</b>阶段脚下浮起光环。</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

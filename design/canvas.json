@@ -1,0 +1,16 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html",      "x": 0,    "y": 0,    "w": 1460, "h": 920,  "title": "主视觉 · 晨曦神兽乐园" },
+    { "file": "Bestiary.dc.html",  "x": 1580, "y": 0,    "w": 920,  "h": 1330, "title": "神兽图鉴 · 一人一只" },
+    { "file": "MoodDawn.dc.html",  "x": 0,    "y": 1450, "w": 470,  "h": 640,  "title": "方向 A · 晨曦林间" },
+    { "file": "MoodDusk.dc.html",  "x": 550,  "y": 1450, "w": 470,  "h": 640,  "title": "方向 B · 黄昏花海" },
+    { "file": "MoodNight.dc.html", "x": 1100, "y": 1450, "w": 470,  "h": 640,  "title": "方向 C · 星夜萤火" },
+    { "file": "StyleGuide.dc.html","x": 0,    "y": 2210, "w": 920,  "h": 1270, "title": "3D 实作规格" }
+  ],
+  "annotations": [
+    { "id": "pick-a-mood", "x": 0, "y": 1280, "w": 520, "text": "三个氛围方向 —— 挑一个告诉我，我就照它把 App 里的 3D 乐园整个改掉。" },
+    { "id": "beast-note", "x": 1580, "y": -180, "w": 470, "text": "神兽图鉴：每位学生一只专属神兽，全校不重复。目前画了 12 只，19 人还差 7 只。" },
+    { "id": "camera-note", "x": 1010, "y": 2210, "w": 470, "text": "你说的「不要一直转圈」写进规格了：改成固定构图 + 几乎察觉不到的微漂移，手指拖才转。" }
+  ],
+  "launch": { "view": "canvas" }
+}
