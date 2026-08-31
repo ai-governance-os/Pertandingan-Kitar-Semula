@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>宠物乐园 3D 原型 · Eco Pet Park</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#BFE9F5;
+    font-family:"Nunito","Microsoft YaHei",system-ui,sans-serif; }
+  #scene { position:fixed; inset:0; }
+
+  /* Name tags are HTML overlaid on the 3D canvas — crisper text than in-scene
+     sprites, and they can use the app's real fonts. */
+  #tags { position:fixed; inset:0; pointer-events:none; overflow:hidden; }
+  .tag {
+    position:absolute; transform:translate(-50%,-100%);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    white-space:nowrap; transition:opacity .2s;
+  }
+  .tag-name {
+    background:rgba(255,255,255,.92); color:#1A1830;
+    border:2px solid rgba(0,0,0,.10); border-bottom-width:3px;
+    border-radius:999px; padding:2px 10px;
+    font-size:13px; font-weight:800; line-height:1.3;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  .tag-name .stage { opacity:.55; font-weight:700; font-size:11px; margin-left:4px; }
+  .tag-mood { font-size:16px; line-height:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+  .tag.legend .tag-name { background:linear-gradient(180deg,#FFF7DF,#FFE9AE); border-color:#E6C478; }
+  .tag.starving .tag-name { background:#FFE5DC; border-color:#C8341A; color:#6B2410; }
+
+  /* UI chrome kept deliberately close to the real app's look */
+  .hud { position:fixed; left:12px; top:12px; display:flex; flex-direction:column; gap:8px; }
+  .hud-card {
+    background:rgba(255,248,238,.94); border:2px solid rgba(0,0,0,.10);
+    border-radius:16px; padding:10px 14px; box-shadow:0 4px 0 rgba(20,18,40,.12);
+  }
+  .hud-title { font-size:15px; font-weight:800; color:#1A1830; }
+  .hud-sub { font-size:11px; color:#4A4763; margin-top:2px; }
+  .hud-stats { display:flex; gap:10px; margin-top:6px; }
+  .hud-stat { text-align:center; }
+  .hud-stat b { display:block; font-size:16px; color:#167B72; line-height:1.1; }
+  .hud-stat span { font-size:10px; color:#4A4763; font-weight:700; }
+
+  .controls { position:fixed; right:12px; top:12px; display:flex; gap:6px; }
+  .ctrl-btn {
+    background:rgba(255,248,238,.94); border:2px solid rgba(0,0,0,.10);
+    border-radius:12px; padding:8px 12px; font-size:13px; font-weight:800;
+    color:#1A1830; cursor:pointer; box-shadow:0 3px 0 rgba(20,18,40,.12);
+    font-family:inherit;
+  }
+  .ctrl-btn.active { background:linear-gradient(180deg,#6FCF7E,#3A9D5D); color:#fff; border-color:#2C7A46; }
+
+  .hint { position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+    background:rgba(26,24,48,.72); color:#fff; font-size:12px; font-weight:700;
+    padding:7px 14px; border-radius:999px; }
+
+  #card {
+    position:fixed; left:50%; bottom:56px; transform:translateX(-50%) translateY(20px);
+    width:min(340px,calc(100vw - 24px));
+    background:rgba(255,248,238,.97); border:2px solid rgba(0,0,0,.12);
+    border-radius:20px; padding:14px 16px; box-shadow:0 10px 30px rgba(20,18,40,.25);
+    opacity:0; pointer-events:none; transition:all .2s ease;
+  }
+  #card.show { opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+  #card h3 { font-size:17px; color:#1A1830; }
+  #card .sub { font-size:12px; color:#4A4763; margin:2px 0 8px; }
+  #card .bar { height:10px; background:rgba(0,0,0,.08); border-radius:999px; overflow:hidden; }
+  #card .fill { height:100%; background:linear-gradient(90deg,#6FCF7E,#3A9D5D); border-radius:999px; }
+  #card .next { font-size:12px; font-weight:700; color:#167B72; margin-top:6px; }
+  #card .close { position:absolute; right:10px; top:6px; border:0; background:none;
+    font-size:22px; color:#4A4763; cursor:pointer; }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="tags"></div>
+
+<div class="hud">
+  <div class="hud-card">
+    <div class="hud-title">🐾 宠物乐园 · Eco Pet Park</div>
+    <div class="hud-sub">3D 原型 · 用学校真实星星数据</div>
+    <div class="hud-stats">
+      <div class="hud-stat"><b id="s-total">0</b><span>只宠物</span></div>
+      <div class="hud-stat"><b id="s-legend">0</b><span>传说 ✨</span></div>
+      <div class="hud-stat"><b id="s-hungry">0</b><span>肚子饿 😟</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="ctrl-btn active" id="btn-rotate">🎥 自动转</button>
+  <button class="ctrl-btn" id="btn-names">🏷️ 名字</button>
+</div>
+
+<div id="card">
+  <button class="close" id="card-close">×</button>
+  <h3 id="card-name">—</h3>
+  <div class="sub" id="card-sub">—</div>
+  <div class="bar"><div class="fill" id="card-fill" style="width:0%"></div></div>
+  <div class="next" id="card-next">—</div>
+</div>
+
+<div class="hint">🖱️ 拖动转视角 · 滚轮缩放 · 点宠物看详情</div>
+
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────
+// Demo roster. In the real app this comes from EcoData.petReport(state):
+// exp = lifetime stars earned, stage/hunger derived from the star ledger.
+// Numbers below are the school's actual lifetime totals so the scene shows a
+// realistic mix of stages rather than a made-up one.
+// ─────────────────────────────────────────────────────────────
+const STAGES = [
+  { min:0,   zh:"蛋"   }, { min:25,  zh:"幼体" }, { min:70,  zh:"少年" },
+  { min:150, zh:"成年" }, { min:300, zh:"传说" },
+];
+const SPECIES = {
+  lion:   { zh:"云狮",     body:0xF5B841, accent:0x9A5B2E, ear:"round", tail:true,  wings:false, horn:false },
+  dragon: { zh:"飞龙",     body:0x3FBF9B, accent:0xE8557A, ear:"horn",  tail:true,  wings:true,  horn:true  },
+  dino:   { zh:"小恐龙",   body:0x7FC65B, accent:0x4E8C36, ear:"none",  tail:true,  wings:false, horn:false },
+  whale:  { zh:"小鲸鱼",   body:0x5AA9E6, accent:0x2E6FA3, ear:"none",  tail:true,  wings:false, horn:false },
+  owl:    { zh:"夜猫头鹰", body:0xC49A6C, accent:0x7A5A3A, ear:"tuft",  tail:false, wings:true,  horn:false },
+  tree:   { zh:"环保小树", body:0x6BBF59, accent:0x8B5E3C, ear:"none",  tail:false, wings:false, horn:false },
+};
+const ROSTER = [
+  ["郑静娥",244,"lion",1],   ["刘宇哲",170,"dino",1],   ["赵凱泽",160,"tree",4],
+  ["王欣美",152,"lion",0],   ["刘妍彤",144,"whale",2],  ["李栎颖",142,"whale",1],
+  ["刘丽情",127,"dragon",3], ["王欣依",127,"whale",0],  ["陈月營",113,"tree",6],
+  ["刘欣瑜",105,"whale",1],  ["陈晋贤",100,"lion",2],   ["曾昱勋",84,"dragon",16],
+  ["郑祖建",64,"owl",3],     ["刘丽恩",61,"owl",9],     ["郑琳仙",60,"owl",1],
+  ["李冠德",21,"dino",5],    ["赖萱宁",4,"tree",2],     ["李唆竑",0,"owl",null],
+  ["郑静儿",0,"lion",null],
+];
+function stageIndex(exp){ let i=0; STAGES.forEach((s,n)=>{ if(exp>=s.min) i=n; }); return i; }
+function hungerOf(days){
+  if(days===null) return {key:"unhatched", icon:"🥚"};
+  if(days>=14) return {key:"starving", icon:"😰"};
+  if(days>=7)  return {key:"hungry",   icon:"😟"};
+  if(days>=3)  return {key:"peckish",  icon:"🙂"};
+  return {key:"full", icon:"😊"};
+}
+
+// ─────────────────────────── scene setup ───────────────────────────
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xBFE9F5);
+scene.fog = new THREE.Fog(0xBFE9F5, 38, 70);
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+let camAngle = 0.6, camDist = 26, camHeight = 13;
+
+scene.add(new THREE.HemisphereLight(0xFFFBEF, 0x8FBF7A, 0.85));
+const sun = new THREE.DirectionalLight(0xFFF3D6, 0.85);
+sun.position.set(14, 22, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024,1024);
+sun.shadow.camera.left = -26; sun.shadow.camera.right = 26;
+sun.shadow.camera.top = 26;  sun.shadow.camera.bottom = -26;
+scene.add(sun);
+
+// ground + park furniture
+const PARK_R = 17;
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(PARK_R + 3, 64),
+  new THREE.MeshLambertMaterial({ color:0x8FD46A })
+);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true;
+scene.add(ground);
+
+const path = new THREE.Mesh(
+  new THREE.RingGeometry(9.2, 11.2, 64),
+  new THREE.MeshLambertMaterial({ color:0xE8D9A8 })
+);
+path.rotation.x = -Math.PI/2; path.position.y = 0.02; path.receiveShadow = true;
+scene.add(path);
+
+const pond = new THREE.Mesh(
+  new THREE.CircleGeometry(3.4, 40),
+  new THREE.MeshLambertMaterial({ color:0x66C6E8 })
+);
+pond.rotation.x = -Math.PI/2; pond.position.set(-11, 0.03, 7);
+scene.add(pond);
+
+function makeTree(x, z, scale=1){
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28,0.36,1.7,8),
+    new THREE.MeshLambertMaterial({color:0x8B5E3C}));
+  trunk.position.y = 0.85; trunk.castShadow = true;
+  const leaf = new THREE.Mesh(
+    new THREE.ConeGeometry(1.5, 2.6, 9),
+    new THREE.MeshLambertMaterial({color:0x4FA845}));
+  leaf.position.y = 2.7; leaf.castShadow = true;
+  const leaf2 = new THREE.Mesh(
+    new THREE.ConeGeometry(1.15, 2.0, 9),
+    new THREE.MeshLambertMaterial({color:0x63C158}));
+  leaf2.position.y = 3.7; leaf2.castShadow = true;
+  g.add(trunk, leaf, leaf2);
+  g.position.set(x, 0, z); g.scale.setScalar(scale);
+  scene.add(g);
+}
+[[-14,-8,1.1],[13,-10,1],[16,4,.9],[-16,2,1],[8,13,1.05],[-6,-15,.95],[2,-16,1]]
+  .forEach(([x,z,s]) => makeTree(x,z,s));
+
+// simple fence ring so the park reads as an enclosed playground
+const fenceMat = new THREE.MeshLambertMaterial({color:0xF3E2C0});
+for (let i=0;i<44;i++){
+  const a = (i/44)*Math.PI*2;
+  const post = new THREE.Mesh(new THREE.BoxGeometry(0.22,1.1,0.22), fenceMat);
+  post.position.set(Math.cos(a)*(PARK_R+1.6), 0.55, Math.sin(a)*(PARK_R+1.6));
+  post.castShadow = true;
+  scene.add(post);
+}
+
+// ─────────────────────────── pet builder ───────────────────────────
+// Procedural low-poly critters: no model files to download, so the whole
+// scene stays light enough for the school's entry-level phones.
+function buildPet(spec, stage){
+  const s = SPECIES[spec];
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({ color:s.body });
+  const accMat  = new THREE.MeshLambertMaterial({ color:s.accent });
+  const darkMat = new THREE.MeshLambertMaterial({ color:0x2B2B33 });
+
+  if (stage === 0) { // egg
+    const egg = new THREE.Mesh(new THREE.SphereGeometry(0.55,16,16), new THREE.MeshLambertMaterial({color:0xFFF3DA}));
+    egg.scale.y = 1.3; egg.position.y = 0.7; egg.castShadow = true;
+    const spot = new THREE.Mesh(new THREE.SphereGeometry(0.14,10,10), accMat);
+    spot.position.set(0.3,0.85,0.35);
+    g.add(egg, spot);
+    g.userData.isEgg = true;
+    return g;
+  }
+
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.62,18,16), bodyMat);
+  body.scale.set(1, 0.92, 1.25); body.position.y = 0.72; body.castShadow = true;
+  g.add(body);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.46,18,16), bodyMat);
+  head.position.set(0, 1.22, 0.55); head.castShadow = true;
+  g.add(head);
+
+  // muzzle / beak
+  const snout = new THREE.Mesh(new THREE.SphereGeometry(0.2,12,12),
+    new THREE.MeshLambertMaterial({color: spec==="owl" ? 0xF0B24B : 0xFFF0DC}));
+  snout.position.set(0,1.13,0.92); snout.scale.z = 1.2;
+  g.add(snout);
+
+  // eyes
+  [-0.18, 0.18].forEach(x => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.075,10,10), darkMat);
+    eye.position.set(x, 1.32, 0.88);
+    g.add(eye);
+    const shine = new THREE.Mesh(new THREE.SphereGeometry(0.026,8,8),
+      new THREE.MeshBasicMaterial({color:0xffffff}));
+    shine.position.set(x+0.03, 1.35, 0.94);
+    g.add(shine);
+  });
+
+  // ears / horns / tufts
+  if (s.ear === "round") {
+    [-0.3,0.3].forEach(x => {
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.17,10,10), accMat);
+      ear.position.set(x, 1.55, 0.45); ear.scale.z = 0.5; ear.castShadow = true;
+      g.add(ear);
+    });
+    // mane for lions
+    if (spec === "lion") {
+      const mane = new THREE.Mesh(new THREE.TorusGeometry(0.5,0.18,8,18), accMat);
+      mane.position.set(0,1.22,0.5); mane.castShadow = true;
+      g.add(mane);
+    }
+  } else if (s.ear === "horn") {
+    [-0.2,0.2].forEach(x => {
+      const horn = new THREE.Mesh(new THREE.ConeGeometry(0.09,0.34,8), accMat);
+      horn.position.set(x,1.62,0.45); horn.castShadow = true;
+      g.add(horn);
+    });
+  } else if (s.ear === "tuft") {
+    [-0.26,0.26].forEach(x => {
+      const t = new THREE.Mesh(new THREE.ConeGeometry(0.12,0.3,7), accMat);
+      t.position.set(x,1.58,0.5);
+      g.add(t);
+    });
+  }
+
+  if (s.wings) {
+    [-1,1].forEach(dir => {
+      const w = new THREE.Mesh(new THREE.SphereGeometry(0.3,10,10), accMat);
+      w.position.set(dir*0.62, 0.85, 0.05); w.scale.set(0.35,0.75,1);
+      w.castShadow = true;
+      w.userData.flap = dir;
+      g.add(w);
+    });
+  }
+
+  if (s.tail) {
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.16,0.6,8), accMat);
+    tail.position.set(0,0.78,-0.85); tail.rotation.x = -Math.PI/2.4;
+    tail.castShadow = true;
+    g.add(tail);
+  }
+
+  // legs
+  [[-0.26,0.42],[0.26,0.42],[-0.26,-0.3],[0.26,-0.3]].forEach(([x,z]) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,0.42,7), accMat);
+    leg.position.set(x,0.21,z); leg.castShadow = true;
+    g.add(leg);
+  });
+
+  // legendary crown
+  if (stage === 4) {
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.36,0.22,8),
+      new THREE.MeshLambertMaterial({color:0xF6C453}));
+    crown.position.set(0,1.72,0.5); crown.castShadow = true;
+    g.add(crown);
+  }
+  return g;
+}
+
+// ─────────────────────────── populate park ───────────────────────────
+const pets = [];
+ROSTER.forEach(([name, exp, spec, days], i) => {
+  const st = stageIndex(exp);
+  const hunger = hungerOf(days);
+  const grp = buildPet(spec, st);
+
+  // bigger pet = further along its evolution
+  const scale = 0.62 + st * 0.2;
+  grp.scale.setScalar(scale);
+
+  const a = (i / ROSTER.length) * Math.PI * 2 + Math.random();
+  const r = 4 + Math.random() * 10;
+  grp.position.set(Math.cos(a)*r, 0, Math.sin(a)*r);
+
+  // hungry pets look dull and move slowly; starving ones sit still
+  if (hunger.key === "hungry" || hunger.key === "starving") {
+    grp.traverse(o => {
+      if (o.isMesh && o.material && o.material.color) {
+        o.material = o.material.clone();
+        o.material.color.lerp(new THREE.Color(0x9AA0A6), hunger.key === "starving" ? 0.55 : 0.3);
+      }
+    });
+  }
+
+  scene.add(grp);
+
+  const tag = document.createElement('div');
+  tag.className = 'tag' + (st===4 ? ' legend' : '') + (hunger.key==='starving' ? ' starving' : '');
+  tag.innerHTML = `<span class="tag-mood">${hunger.icon}</span>
+    <span class="tag-name">${name}<span class="stage">${STAGES[st].zh}</span></span>`;
+  document.getElementById('tags').appendChild(tag);
+
+  pets.push({
+    name, exp, spec, days, stage:st, hunger, group:grp, tag, scale,
+    speed: hunger.key==='starving' || st===0 ? 0 : 0.45 + Math.random()*0.5,
+    target: null, phase: Math.random()*Math.PI*2,
+  });
+});
+
+document.getElementById('s-total').textContent = pets.length;
+document.getElementById('s-legend').textContent = pets.filter(p=>p.stage===4).length;
+document.getElementById('s-hungry').textContent =
+  pets.filter(p=>p.hunger.key==='hungry'||p.hunger.key==='starving').length;
+
+function newTarget(p){
+  const a = Math.random()*Math.PI*2, r = 3 + Math.random()*12;
+  p.target = new THREE.Vector3(Math.cos(a)*r, 0, Math.sin(a)*r);
+}
+pets.forEach(newTarget);
+
+// ─────────────────────────── interaction ───────────────────────────
+let autoRotate = true, showNames = true, dragging = false, lastX = 0;
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+
+document.getElementById('btn-rotate').onclick = e => {
+  autoRotate = !autoRotate; e.target.classList.toggle('active', autoRotate);
+};
+document.getElementById('btn-names').onclick = e => {
+  showNames = !showNames;
+  document.getElementById('tags').style.display = showNames ? '' : 'none';
+  e.target.classList.toggle('active', showNames);
+};
+document.getElementById('card-close').onclick = () =>
+  document.getElementById('card').classList.remove('show');
+
+canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; });
+addEventListener('pointerup', e => {
+  if (dragging && Math.abs(e.clientX - lastX) < 4) pick(e);
+  dragging = false;
+});
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  camAngle -= (e.clientX - lastX) * 0.006; lastX = e.clientX; autoRotate = false;
+  document.getElementById('btn-rotate').classList.remove('active');
+});
+addEventListener('wheel', e => {
+  camDist = Math.max(12, Math.min(42, camDist + e.deltaY*0.02));
+}, {passive:true});
+
+function pick(e){
+  mouse.x = (e.clientX/innerWidth)*2 - 1;
+  mouse.y = -(e.clientY/innerHeight)*2 + 1;
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(pets.map(p=>p.group), true);
+  if (!hits.length) return;
+  let obj = hits[0].object;
+  while (obj.parent && !pets.find(p=>p.group===obj)) obj = obj.parent;
+  const p = pets.find(x=>x.group===obj);
+  if (!p) return;
+  const next = STAGES[p.stage+1];
+  const cur = STAGES[p.stage];
+  const pct = next ? Math.min(100, Math.round((p.exp-cur.min)/(next.min-cur.min)*100)) : 100;
+  document.getElementById('card-name').textContent = `${p.name} 的${SPECIES[p.spec].zh}`;
+  document.getElementById('card-sub').textContent =
+    `${cur.zh} · ${p.exp} ⭐ · ${p.days===null?'还没孵化':p.days+' 天没有新星星'} ${p.hunger.icon}`;
+  document.getElementById('card-fill').style.width = pct + '%';
+  document.getElementById('card-next').textContent = next
+    ? `再赚 ${next.min - p.exp} ⭐ 就进化成「${next.zh}」`
+    : '🏆 已经是最终形态！';
+  document.getElementById('card').classList.add('show');
+}
+
+// ─────────────────────────── loop ───────────────────────────
+const tmp = new THREE.Vector3();
+let t = 0;
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = 0.016; t += dt;
+  if (autoRotate) camAngle += dt*0.12;
+
+  camera.position.set(Math.cos(camAngle)*camDist, camHeight, Math.sin(camAngle)*camDist);
+  camera.lookAt(0, 1.5, 0);
+
+  pets.forEach(p => {
+    if (p.speed > 0) {
+      const d = tmp.copy(p.target).sub(p.group.position);
+      d.y = 0;
+      if (d.length() < 0.5) newTarget(p);
+      else {
+        d.normalize();
+        p.group.position.addScaledVector(d, p.speed * dt * 2.2);
+        // face travel direction, then bob like a little hop
+        p.group.rotation.y = Math.atan2(d.x, d.z);
+        p.phase += dt * 7;
+        p.group.position.y = Math.abs(Math.sin(p.phase)) * 0.12 * p.scale;
+      }
+    } else {
+      // idle breathing for eggs and starving pets
+      p.group.position.y = Math.sin(t*1.6 + p.phase) * 0.03;
+    }
+
+    // wing flap
+    p.group.traverse(o => {
+      if (o.userData && o.userData.flap) {
+        o.rotation.z = o.userData.flap * (0.25 + Math.sin(t*6 + p.phase)*0.25);
+      }
+    });
+
+    // project 3D position → screen for the HTML name tag
+    tmp.copy(p.group.position);
+    tmp.y += 2.0 * p.scale + 0.4;
+    tmp.project(camera);
+    const x = (tmp.x*0.5+0.5)*innerWidth, y = (-tmp.y*0.5+0.5)*innerHeight;
+    p.tag.style.left = x + 'px';
+    p.tag.style.top  = y + 'px';
+    p.tag.style.opacity = tmp.z < 1 ? 1 : 0;
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
