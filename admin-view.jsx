@@ -11,6 +11,22 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
   const [confirmReset, setConfirmReset] = useStateA(false);
   const report = useMemoA(() => EcoData.absenceReport(state), [state]);
   const ineligible = report.filter(r => !r.eligible);
+  const threshold = EcoData.redListThreshold(state);
+
+  function changeThreshold(next) {
+    const value = Math.max(1, Math.round(Number(next) || 1));
+    if (value === threshold) return;
+    // Eligibility is derived live, so this re-labels every student instantly.
+    const affected = report.filter(r => (r.missedCount >= threshold) !== (r.missedCount >= value)).length;
+    if (affected > 0) {
+      const ok = window.confirm(
+        `改成「没带 ${value} 次取消奖品」后，有 ${affected} 位学生的资格会立刻改变。确定？\n` +
+        `Changing the threshold to ${value} will immediately change eligibility for ${affected} student(s). Continue?`
+      );
+      if (!ok) return;
+    }
+    setState(EcoData.setRedListThreshold(state, value));
+  }
   const starReport = useMemoA(() => EcoData.studentStarReport(state), [state]);
   const starLedger = state.starLedger || [];
 
@@ -91,7 +107,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
               />
             ))}
             <StatBox label="总重量" sub="Jumlah berat" value={fmt(total.kg, 2)} unit="kg" color="var(--eco-deep)" />
-            <StatBox label="不可领奖" sub="3 次没带或以上" value={ineligible.length} unit="人" color="#C8341A" />
+            <StatBox label="不可领奖" sub={`${threshold} 次没带或以上`} value={ineligible.length} unit="人" color="#C8341A" />
           </div>
         </div>
 
@@ -217,6 +233,31 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
 
         <div className="admin-section">
           <h2>组员名单与年终资格</h2>
+
+          <div className="threshold-box">
+            <div className="threshold-label">
+              <strong>🚩 红名单门槛 · Red-list threshold</strong>
+              <small>累计没带 <b>{threshold}</b> 次 → 取消个人奖品资格</small>
+            </div>
+            {isAdmin ? (
+              <div className="threshold-control">
+                <div className="star-stepper">
+                  <button type="button" onClick={() => changeThreshold(threshold - 1)} disabled={threshold <= 1}>−</button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={threshold}
+                    onChange={e => changeThreshold(e.target.value)}
+                  />
+                  <button type="button" onClick={() => changeThreshold(threshold + 1)}>+</button>
+                </div>
+                <small className="threshold-hint">改动立即生效，会重新计算所有学生的资格</small>
+              </div>
+            ) : (
+              <small className="threshold-hint">只有 Admin 账号可以修改这个门槛</small>
+            )}
+          </div>
+
           <div className="eligibility-table-wrap">
             <table className="log-table eligibility-table">
               <thead>

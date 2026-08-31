@@ -116,6 +116,10 @@ const DEFAULT_SETTINGS = {
   aiLocale: "zh_en",
   storePhotos: false,
   teacherReviewRequiredBelowConfidence: 0.75,
+  // How many missed sessions before a student loses personal-prize eligibility
+  // (the red list). Admin-adjustable from the 管理 page; changing it re-evaluates
+  // every student immediately since eligibility is always derived, never stored.
+  redListThreshold: 3,
 };
 
 function mergeStarTypes(incoming) {
@@ -466,11 +470,33 @@ function totalStats(state) {
   return { kg, points, count: state.weighIns.length };
 }
 
+// Missed-session count that costs a student their personal prize. Read from
+// settings so admins can tune it; clamped to >= 1 so the UI can never create a
+// nonsensical "0 misses = already disqualified" state.
+function redListThreshold(state) {
+  const raw = Number(state?.settings?.redListThreshold);
+  return Number.isFinite(raw) && raw >= 1 ? Math.round(raw) : DEFAULT_SETTINGS.redListThreshold;
+}
+
+function setRedListThreshold(state, value) {
+  const next = Math.max(1, Math.round(Number(value) || 1));
+  const updated = { ...state, settings: { ...(state.settings || {}), redListThreshold: next } };
+  save(updated);
+  return updated;
+}
+
 function absenceReport(state) {
+  const threshold = redListThreshold(state);
   const allMembers = state.teams.flatMap(team => team.members.map(m => ({ ...m, teamId: team.id, teamName: team.zh })));
   return allMembers.map(member => {
     const missed = state.sessions.filter(s => attendanceFor(state, s.id, member.id) === false);
-    return { ...member, missedCount: missed.length, missedSessions: missed, eligible: missed.length < 3 };
+    return {
+      ...member,
+      missedCount: missed.length,
+      missedSessions: missed,
+      eligible: missed.length < threshold,
+      missesLeft: Math.max(0, threshold - missed.length),
+    };
   }).sort((a, b) => b.missedCount - a.missedCount || a.name.localeCompare(b.name));
 }
 
@@ -827,6 +853,7 @@ Object.assign(window, {
     updateCategories, updateWeighIn, getWeight,
     setAttendance, attendanceFor, teamMembers,
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
+    redListThreshold, setRedListThreshold,
     exportCSV,
     // AI scan helpers
     addAiScan, updateAiScanDecision,

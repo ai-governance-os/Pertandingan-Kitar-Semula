@@ -94,7 +94,7 @@ function BigScreenView({ state }) {
           />
         )}
 
-        {tab === "red" && <RedListPanel redList={redList} watchList={watchList} />}
+        {tab === "red" && <RedListPanel redList={redList} watchList={watchList} threshold={EcoData.redListThreshold(state)} />}
       </div>
     </div>
   );
@@ -145,11 +145,11 @@ function StatusList({ title, rows }) {
   );
 }
 
-function RedListPanel({ redList, watchList }) {
+function RedListPanel({ redList, watchList, threshold = 3 }) {
   return (
     <section className="status-panel red-panel">
       <h2>红名单 · 奖品取消名单</h2>
-      <div className="rule-note">📌 规则：累计没带回收物 <b>3 次</b>会被列入红名单，取消个人奖品资格</div>
+      <div className="rule-note">📌 规则：累计没带回收物 <b>{threshold} 次</b>会被列入红名单，取消个人奖品资格</div>
 
       {redList.length === 0 && watchList.length === 0 && (
         <div className="red-empty">目前没有学生有没带记录。</div>
@@ -181,7 +181,7 @@ function RedListPanel({ redList, watchList }) {
                   <span>{member.teamName} · 没带 {member.missedCount} 次</span>
                   <small>{member.missedSessions.map(s => s.name).join("、")}</small>
                 </div>
-                <b>再没带 {3 - member.missedCount} 次取消奖品</b>
+                <b>再没带 {member.missesLeft ?? (threshold - member.missedCount)} 次取消奖品</b>
               </div>
             ))}
           </div>
