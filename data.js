@@ -632,13 +632,22 @@ function teamStarStats(state, teamId) {
 // single-row cloud sync and can't create write conflicts. The only stored bits
 // are the species override and nickname (state.pets), which change rarely.
 
+// Twelve mythic beasts, one per student and never repeated across the school —
+// the school asked for 神兽, not farm animals. The stage emoji are only used by
+// the fallback card list; the 3D park draws each beast from PET_LOOKS.
 const PET_SPECIES = [
-  { id: "lion",   zh: "云狮",   en: "Cloud Lion", stages: ["🥚", "🐣", "🐈", "🦁", "🦁"] },
-  { id: "dragon", zh: "飞龙",   en: "Sky Dragon", stages: ["🥚", "🐣", "🦎", "🐲", "🐉"] },
-  { id: "dino",   zh: "小恐龙", en: "Dino",       stages: ["🥚", "🐣", "🦎", "🦕", "🦖"] },
-  { id: "whale",  zh: "小鲸鱼", en: "Little Whale", stages: ["🥚", "🐟", "🐠", "🐬", "🐳"] },
-  { id: "owl",    zh: "夜猫头鹰", en: "Owl",      stages: ["🥚", "🐣", "🐦", "🦉", "🦉"] },
-  { id: "tree",   zh: "环保小树", en: "Eco Tree", stages: ["🌰", "🌱", "🌿", "🪴", "🌳"] },
+  { id: "qilin",     zh: "麒麟",   en: "Qilin",         aura: "#FFC45C", stages: ["🥚", "🐣", "🦌", "🦄", "✨"] },
+  { id: "phoenix",   zh: "凤凰",   en: "Phoenix",       aura: "#FF7A6A", stages: ["🥚", "🐣", "🐤", "🦅", "🔥"] },
+  { id: "ninetail",  zh: "九尾狐", en: "Nine-Tail Fox", aura: "#BE8CFF", stages: ["🥚", "🐣", "🦊", "🦊", "🌙"] },
+  { id: "yinglong",  zh: "应龙",   en: "Winged Dragon", aura: "#5AC8FF", stages: ["🥚", "🐣", "🦎", "🐲", "🐉"] },
+  { id: "baize",     zh: "白泽",   en: "Baize",         aura: "#E8F0FF", stages: ["🥚", "🐣", "🐐", "🦬", "📖"] },
+  { id: "lingui",    zh: "灵龟",   en: "Spirit Turtle", aura: "#5ADCAA", stages: ["🥚", "🐣", "🐢", "🐢", "🛡️"] },
+  { id: "stardeer",  zh: "星鹿",   en: "Star Deer",     aura: "#8CAAFF", stages: ["🥚", "🐣", "🦌", "🦌", "🌟"] },
+  { id: "cloudpard", zh: "云豹",   en: "Cloud Leopard", aura: "#FFE196", stages: ["🥚", "🐣", "🐆", "🐆", "☁️"] },
+  { id: "seakirin",  zh: "海麟",   en: "Sea Kirin",     aura: "#50BEDC", stages: ["🥚", "🐟", "🐠", "🐬", "🌊"] },
+  { id: "pixiu",     zh: "貔貅",   en: "Pixiu",         aura: "#FFB45A", stages: ["🥚", "🐣", "🐕", "🦁", "💰"] },
+  { id: "thunder",   zh: "雷鸟",   en: "Thunderbird",   aura: "#FFE66E", stages: ["🥚", "🐣", "🐦", "🦅", "⚡"] },
+  { id: "bamboo",    zh: "竹灵",   en: "Bamboo Spirit", aura: "#96DC78", stages: ["🌰", "🌱", "🌿", "🎋", "🌳"] },
 ];
 
 // Exp thresholds, calibrated against the school's real ledger (756 star events,
