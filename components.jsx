@@ -35,12 +35,12 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
   // Public modes shown to everyone; admin modes only appear after login.
   // Keep the bar lean — 2 chips for viewers, 5 for admin.
   const ALL_MODES = [
-    { id: "status",  icon: "📊", zh: "战况", ms: "Status",  adminOnly: false },
-    { id: "pets",    icon: "🐾", zh: "宠物", ms: "Pets",    adminOnly: false },
-    { id: "rewards", icon: "🎁", zh: "奖品", ms: "Rewards", adminOnly: false },
-    { id: "mobile",  icon: "📝", zh: "记录", ms: "Input",   adminOnly: true  },
-    { id: "ai",      icon: "🤖", zh: "AI",   ms: "AI",      adminOnly: true  },
-    { id: "admin",   icon: "⚙️", zh: "管理", ms: "Admin",   adminOnly: true  },
+    { id: "status",  icon: "leaderboard",      zh: "战况", ms: "Status",  adminOnly: false },
+    { id: "pets",    icon: "pets",             zh: "宠物", ms: "Pets",    adminOnly: false },
+    { id: "rewards", icon: "redeem",           zh: "奖品", ms: "Rewards", adminOnly: false },
+    { id: "mobile",  icon: "edit_note",        zh: "记录", ms: "Input",   adminOnly: true  },
+    { id: "ai",      icon: "document_scanner", zh: "AI",   ms: "AI",      adminOnly: true  },
+    { id: "admin",   icon: "settings",         zh: "管理", ms: "Admin",   adminOnly: true  },
   ];
   const modes = ALL_MODES.filter(m => authed || !m.adminOnly);
   return (
@@ -51,8 +51,8 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
           className={mode === m.id ? "active" : ""}
           onClick={() => setMode(m.id)}
         >
-          <span className="mode-icon">{m.icon}</span>
-          <span>{m.zh}</span>
+          <span className="material-symbols-rounded mode-icon" aria-hidden="true">{m.icon}</span>
+          <span className="mode-label">{m.zh}</span>
         </button>
       ))}
     </div>

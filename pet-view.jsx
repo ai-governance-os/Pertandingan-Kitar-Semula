@@ -81,6 +81,120 @@ const PET_LOOKS = {
 const PET_STAGE_SCALE = [0.5, 0.85, 1.2, 1.65, 2.1, 2.6];
 const LEGEND_STAGE = 5;
 
+// ───────────────────── Cinematic shared park ─────────────────────
+// The new park keeps the existing data model, but renders every species from a
+// dedicated film-quality raster asset.  That lets low-memory phones show all
+// nineteen students in one living world without downloading a second 3D engine.
+const CINEMATIC_PET_ASSET_BASE = "assets/pet-park/beasts";
+const CINEMATIC_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg.png`;
+const CINEMATIC_CRACKED_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg-cracked.png`;
+const CINEMATIC_PET_ASSETS = {
+  qilin: `${CINEMATIC_PET_ASSET_BASE}/qilin.png`,
+  phoenix: `${CINEMATIC_PET_ASSET_BASE}/phoenix.png`,
+  ninetail: `${CINEMATIC_PET_ASSET_BASE}/ninetail.png`,
+  yinglong: `${CINEMATIC_PET_ASSET_BASE}/yinglong.png`,
+  baize: `${CINEMATIC_PET_ASSET_BASE}/baize.png`,
+  lingui: `${CINEMATIC_PET_ASSET_BASE}/lingui.png`,
+  stardeer: `${CINEMATIC_PET_ASSET_BASE}/stardeer.png`,
+  cloudpard: `${CINEMATIC_PET_ASSET_BASE}/cloudpard.png`,
+  seakirin: `${CINEMATIC_PET_ASSET_BASE}/seakirin.png`,
+  pixiu: `${CINEMATIC_PET_ASSET_BASE}/pixiu.png`,
+  thunder: `${CINEMATIC_PET_ASSET_BASE}/thunder.png`,
+  bamboo: `${CINEMATIC_PET_ASSET_BASE}/bamboo.png`,
+  zhuque: `${CINEMATIC_PET_ASSET_BASE}/zhuque.png`,
+  xuanwu: `${CINEMATIC_PET_ASSET_BASE}/xuanwu.png`,
+  baihu: `${CINEMATIC_PET_ASSET_BASE}/baihu.png`,
+  qinglong: `${CINEMATIC_PET_ASSET_BASE}/qinglong.png`,
+  griffin: `${CINEMATIC_PET_ASSET_BASE}/griffin.png`,
+  snowferret: `${CINEMATIC_PET_ASSET_BASE}/snowferret.png`,
+  firemouse: `${CINEMATIC_PET_ASSET_BASE}/firemouse.png`,
+};
+
+// Species-specific anchors create a real composition instead of a sorted ring.
+// Percentages are relative to the wide sanctuary world, so the same layout can
+// be panned naturally on a phone.
+const CINEMATIC_PET_LAYOUT = {
+  phoenix:    { x: 12, y: 22, w: 188, route: "glide",   depth: 22 },
+  qinglong:   { x: 42, y: 20, w: 214, route: "serpent", depth: 24 },
+  bamboo:     { x: 66, y: 22, w: 166, route: "sway",    depth: 25 },
+  pixiu:      { x: 75, y: 31, w: 172, route: "prowl",   depth: 33 },
+  cloudpard:  { x: 87, y: 39, w: 166, route: "prowl",   depth: 40 },
+  ninetail:   { x: 10, y: 42, w: 170, route: "slink",   depth: 42 },
+  griffin:    { x: 25, y: 43, w: 176, route: "glide",   depth: 43 },
+  stardeer:   { x: 37, y: 42, w: 158, route: "graze",   depth: 44 },
+  thunder:    { x: 50, y: 40, w: 170, route: "glide",   depth: 45 },
+  baize:      { x: 63, y: 43, w: 166, route: "graze",   depth: 46 },
+  seakirin:   { x: 77, y: 55, w: 190, route: "serpent", depth: 57 },
+  baihu:      { x: 90, y: 56, w: 190, route: "prowl",   depth: 58 },
+  xuanwu:     { x: 12, y: 69, w: 206, route: "amble",   depth: 69 },
+  zhuque:     { x: 27, y: 66, w: 164, route: "glide",   depth: 67 },
+  lingui:     { x: 42, y: 68, w: 180, route: "amble",   depth: 70 },
+  snowferret: { x: 59, y: 70, w: 154, route: "slink",   depth: 72 },
+  qilin:      { x: 69, y: 64, w: 198, route: "graze",   depth: 74 },
+  firemouse:  { x: 84, y: 76, w: 126, route: "dart",    depth: 78 },
+  yinglong:   { x: 51, y: 57, w: 206, route: "serpent", depth: 62 },
+};
+
+const CINEMATIC_REACTIONS = {
+  phoenix: "振翅卷起一圈暖光",
+  qinglong: "低下头，轻轻眨了眨眼",
+  bamboo: "抖落几片发光竹叶",
+  pixiu: "歪头嗅了嗅你的星光",
+  cloudpard: "收起利爪，尾巴绕成了小圈",
+  ninetail: "九条尾巴像扇子一样展开",
+  griffin: "俯身行了一个小小的礼",
+  stardeer: "用鹿角点亮了脚边的苔藓",
+  thunder: "收起雷光，开心地抖了抖羽毛",
+  baize: "安静地贴近镜头，认出了你",
+  seakirin: "甩起水花，绕着你游了一圈",
+  baihu: "趴低身子，慢慢眨了一下眼",
+  xuanwu: "收拢星翼，低头用额羽碰了碰你",
+  zhuque: "尾羽开成一朵温暖的火花",
+  lingui: "收起威严的独角，乖乖蹭了蹭你的手",
+  snowferret: "蹭近镜头，尾巴开心地摇动",
+  qilin: "俯下鹿角，温柔地回应你",
+  firemouse: "跳了两步，尾焰变成小心形",
+  yinglong: "盘起长尾，靠近听你的声音",
+};
+
+const CINEMATIC_HUNGER_ICONS = {
+  full: "sentiment_very_satisfied",
+  peckish: "sentiment_satisfied",
+  hungry: "sentiment_dissatisfied",
+  starving: "sentiment_very_dissatisfied",
+  unhatched: "hourglass_top",
+};
+
+function cinematicPetAsset(row) {
+  return CINEMATIC_PET_ASSETS[row?.pet?.species?.id] || CINEMATIC_PET_ASSETS.qilin;
+}
+
+const CINEMATIC_STAGE_VISUALS = [
+  { key: "egg",      width: 88,  previewHeight: 42, asset: () => CINEMATIC_EGG_ASSET },
+  { key: "hatching", width: 106, previewHeight: 52, asset: () => CINEMATIC_CRACKED_EGG_ASSET },
+  { key: "cub",      scale: .50, previewHeight: 62, asset: cinematicPetAsset },
+  { key: "junior",   scale: .72, previewHeight: 80, asset: cinematicPetAsset },
+  { key: "adult",    scale: .96, previewHeight: 100, asset: cinematicPetAsset },
+  { key: "legend",   scale: 1.25, previewHeight: 122, asset: cinematicPetAsset },
+];
+
+const CINEMATIC_EGG_HUES = {
+  qilin: 8, phoenix: 326, ninetail: 78, yinglong: 6, baize: 184,
+  lingui: 342, stardeer: 42, cloudpard: 292, seakirin: 18, pixiu: 314,
+  thunder: 250, bamboo: 348, zhuque: 320, xuanwu: 26, baihu: 168,
+  qinglong: 0, griffin: 300, snowferret: 145, firemouse: 312,
+};
+
+function cinematicStageAsset(row, stageIndex = row?.pet?.displayStageIndex || 0) {
+  const stage = CINEMATIC_STAGE_VISUALS[stageIndex] || CINEMATIC_STAGE_VISUALS[0];
+  return stage.asset(row);
+}
+
+function cinematicStageWidth(row, layout) {
+  const stage = CINEMATIC_STAGE_VISUALS[row.pet.displayStageIndex] || CINEMATIC_STAGE_VISUALS[0];
+  return stage.width || Math.round(layout.w * stage.scale);
+}
+
 // ─────────────────────────── 3D park ───────────────────────────
 
 function PetPark3D({ report, onPick }) {
@@ -398,7 +512,7 @@ function PetPark3D({ report, onPick }) {
             add(coneGeo, o % 2 ? accM : bodyM, [o * 0.16, 0.86 + Math.abs(o) * 0.04, -0.95],
                 [0.11, 0.75 - Math.abs(o) * 0.09, 0.11], [-1.3, 0, o * 0.26]));
         } else if (L.tail === "coil") {
-          // 玄武 — the serpent coiled at the shell's rim, head raised
+          // 鲲鹏 — legacy fallback geometry, not used by the cinematic park
           [0, 1, 2].forEach(i =>
             add(ballGeo, accM, [Math.sin(i * 1.7) * 0.34, 0.5 + i * 0.16, -0.72 - i * 0.05], [0.17, 0.15, 0.17]));
           add(ballGeo, accM, [0.3, 1.0, -0.66], [0.16, 0.13, 0.2]);
@@ -845,101 +959,218 @@ function PetPark3D({ report, onPick }) {
   );
 }
 
-function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => fn && fn() }) {
-  const { useState, useMemo } = React;
+function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick }) {
+  const { useEffect, useRef, useState } = React;
+  const scrollerRef = useRef(null);
+  const reactionTimerRef = useRef(null);
+  const [activeId, setActiveId] = useState(null);
+  const [reaction, setReaction] = useState("");
+  const [rosterOpen, setRosterOpen] = useState(false);
 
-  const [teamFilter, setTeamFilter] = useState("all");
-  const [selectedId, setSelectedId] = useState(null);
-  // Default to the park, but only where WebGL actually exists.
-  const [viewMode, setViewMode] = useState(() => (webglSupported() ? "park" : "grid"));
+  useEffect(() => {
+    const centerWorld = () => {
+      const el = scrollerRef.current;
+      if (!el) return;
+      el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+      el.scrollTop = Math.max(0, (el.scrollHeight - el.clientHeight) / 2);
+    };
+    const frame = requestAnimationFrame(centerWorld);
+    window.addEventListener("resize", centerWorld);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", centerWorld);
+    };
+  }, []);
 
-  const report = useMemo(() => EcoData.petReport(state), [state]);
-  const filtered = teamFilter === "all" ? report : report.filter(r => r.teamId === teamFilter);
-  const selected = selectedId ? report.find(r => r.id === selectedId) : null;
+  useEffect(() => () => clearTimeout(reactionTimerRef.current), []);
 
-  const hungryCount = report.filter(r => r.pet.hunger.key === "hungry" || r.pet.hunger.key === "starving").length;
-  const legendCount = report.filter(r => r.pet.isMaxStage).length;
+  function interact(row) {
+    const speciesId = row.pet.species.id;
+    setRosterOpen(false);
+    setActiveId(row.id);
+    const ownerName = row.name.split(" ").slice(-1)[0];
+    const response = row.pet.displayStageIndex === 0
+      ? "神兽蛋轻轻晃了三下，蛋壳亮起一颗小心心"
+      : row.pet.displayStageIndex === 1
+        ? "神兽蛋从裂缝里偷偷眨了眨光"
+        : `${row.pet.species.zh}${CINEMATIC_REACTIONS[speciesId] || "转过身来回应你"}`;
+    setReaction(`${ownerName}的${response}`);
+    clearTimeout(reactionTimerRef.current);
+    reactionTimerRef.current = setTimeout(() => {
+      setActiveId(null);
+      setReaction("");
+      onPick(row.id);
+    }, 1250);
+  }
 
   return (
-    <div className="mobile-view teacher-entry">
-      <div className="mobile-frame teacher-frame pet-frame">
-        <div style={{display:'flex', justifyContent:'center', marginBottom:10}}>
-          <SchoolStamp size={64} />
+    <section className="cinematic-park" aria-label="十九位学生共享的神兽乐园">
+      <div
+        className="cinematic-park-scroller"
+        ref={scrollerRef}
+        aria-label="拖动浏览整座神兽乐园"
+      >
+        <div className="cinematic-park-world">
+          <img
+            className="cinematic-park-background"
+            src="assets/pet-park/cinematic-park-bg.png"
+            alt="晨曦中的神兽乐园，十九枚神兽蛋在同一个世界等待孵化"
+            draggable="false"
+          />
+          {report.map((row, index) => {
+            const speciesId = row.pet.species.id;
+            const layout = CINEMATIC_PET_LAYOUT[speciesId] || { x: 50, y: 50, w: 168, route: "amble", depth: 50 };
+            const isActive = activeId === row.id;
+            const isDimmed = teamFilter !== "all" && row.teamId !== teamFilter;
+            const ownerName = row.name.split(" ").slice(-1)[0];
+            const displayStage = row.pet.displayStageIndex;
+            return (
+              <button
+                key={row.id}
+                type="button"
+                className={`cinematic-beast stage-${displayStage} route-${layout.route} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} hunger-${row.pet.hunger.key}`}
+                style={{
+                  left: `${layout.x}%`,
+                  top: `${layout.y}%`,
+                  width: `${cinematicStageWidth(row, layout)}px`,
+                  zIndex: layout.depth,
+                  '--wander-delay': `${-(index * 1.37).toFixed(2)}s`,
+                  '--wander-duration': `${(16 + (index % 7) * 2.3).toFixed(1)}s`,
+                  '--pet-aura': row.pet.species.aura,
+                  '--team-color': row.teamColor,
+                  '--egg-hue': `${CINEMATIC_EGG_HUES[speciesId] || 0}deg`,
+                }}
+                onClick={() => interact(row)}
+                aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。点按互动`}
+              >
+                <img
+                  className="cinematic-beast-art"
+                  src={cinematicStageAsset(row)}
+                  alt=""
+                  draggable="false"
+                  loading="eager"
+                />
+                <span className="cinematic-owner-tag">
+                  <span className="cinematic-team-dot" aria-hidden="true" />
+                  <b>{row.name}</b>
+                  <span>{row.pet.nickname || row.pet.species.zh} · {row.pet.stage.zh}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <div className="mobile-header compact">
-          <h1>🐾 宠物园 <span style={{opacity:.6, fontSize:'0.7em'}}>· Eco Pets</span></h1>
-          <p>做环保、拿星星 → 宠物就会长大 · Earn stars, your pet grows</p>
-        </div>
-
-        <div className="pet-rule-note">
-          🥚 <b>每个月 1 号，全部变回蛋</b>，重新开始养 —— 这个月拿到的星星决定它长多大。
-          10 ⭐ 破蛋 · 30 幼兽 · 70 少年 · 90 成年 · 120 传说。
-          被扣星星会缩小，<b>换礼物不会</b>。太久没有新星星，还会饿哦！
-        </div>
-
-        <div className="pet-summary">
-          <div className="pet-summary-item">
-            <b>{report.length}</b><span>只宠物</span>
-          </div>
-          <div className="pet-summary-item">
-            <b>{legendCount}</b><span>传说 ✨</span>
-          </div>
-          <div className={`pet-summary-item ${hungryCount > 0 ? "warn" : ""}`}>
-            <b>{hungryCount}</b><span>肚子饿 😟</span>
-          </div>
-        </div>
-
-        <div className="team-tabs">
-          <button
-            className={`team-tab ${teamFilter === "all" ? "active" : ""}`}
-            onClick={() => setTeamFilter("all")}
-          >
-            全部 · All ({report.length})
-          </button>
-          {state.teams.map(t => (
-            <button
-              key={t.id}
-              className={`team-tab ${teamFilter === t.id ? "active" : ""}`}
-              onClick={() => setTeamFilter(t.id)}
-              style={{borderColor: teamFilter === t.id ? t.primary : undefined}}
-            >
-              {t.icon} {t.zh} ({report.filter(r => r.teamId === t.id).length})
-            </button>
-          ))}
-        </div>
-
-        <div className="pet-view-toggle">
-          <button
-            className={`team-tab ${viewMode === "park" ? "active" : ""}`}
-            onClick={() => setViewMode("park")}
-            disabled={!webglSupported()}
-            title={webglSupported() ? "" : "这台设备不支持 3D · This device can't run 3D"}
-          >
-            🎡 乐园 · Park
-          </button>
-          <button
-            className={`team-tab ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => setViewMode("grid")}
-          >
-            📋 列表 · List
-          </button>
-        </div>
-
-        {viewMode === "park" ? (
-          filtered.length > 0
-            ? <PetPark3D report={filtered} onPick={setSelectedId} />
-            : <div className="ai-history-empty">还没有学生记录 · No students.</div>
-        ) : (
-          <div className="pet-grid">
-            {filtered.map(row => (
-              <PetCard key={row.id} row={row} onClick={() => setSelectedId(row.id)} />
-            ))}
-            {filtered.length === 0 && (
-              <div className="ai-history-empty" style={{gridColumn:'1 / -1'}}>还没有学生记录 · No students.</div>
-            )}
-          </div>
-        )}
       </div>
+
+      <header className="cinematic-park-title">
+        <span className="material-symbols-rounded" aria-hidden="true">landscape</span>
+        <div>
+          <h1>神兽乐园</h1>
+          <p>十九位守护者 · 十九种神兽血脉 · 同一座乐园</p>
+        </div>
+      </header>
+
+      <div className="cinematic-park-filters" aria-label="队伍筛选">
+        <button
+          type="button"
+          className={teamFilter === "all" ? "active" : ""}
+          onClick={() => setTeamFilter("all")}
+        >
+          全园 <b>{report.length} / {report.length}</b>
+        </button>
+        {teams.map(team => (
+          <button
+            key={team.id}
+            type="button"
+            className={teamFilter === team.id ? "active" : ""}
+            onClick={() => setTeamFilter(teamFilter === team.id ? "all" : team.id)}
+            style={{'--team-filter': team.primary}}
+          >
+            <span className="cinematic-filter-dot" aria-hidden="true" />
+            {team.zh}
+          </button>
+        ))}
+      </div>
+
+      <div className="cinematic-park-guide">
+        <span className="material-symbols-rounded" aria-hidden="true">pan_tool_alt</span>
+        <span>拖动浏览</span>
+        <i aria-hidden="true" />
+        <span className="material-symbols-rounded" aria-hidden="true">touch_app</span>
+        <span>点伙伴互动</span>
+      </div>
+
+      <div className="cinematic-view-switch" role="group" aria-label="乐园显示方式">
+        <button type="button" className={!rosterOpen ? "active" : ""} onClick={() => setRosterOpen(false)}>
+          <span className="material-symbols-rounded" aria-hidden="true">forest</span>
+          乐园
+        </button>
+        <button type="button" className={rosterOpen ? "active" : ""} onClick={() => setRosterOpen(true)} aria-expanded={rosterOpen}>
+          <span className="material-symbols-rounded" aria-hidden="true">view_list</span>
+          名册
+        </button>
+      </div>
+
+      {rosterOpen && (
+        <aside className="cinematic-roster" aria-label="十九位学生的神兽名册">
+          <div className="cinematic-roster-head">
+            <div>
+              <span>共享名册</span>
+              <b>十九位守护者都在这里</b>
+            </div>
+            <button type="button" onClick={() => setRosterOpen(false)} aria-label="关闭名册">
+              <span className="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <div className="cinematic-roster-list">
+            {report.map(row => (
+              <button key={row.id} type="button" onClick={() => interact(row)}>
+                <img
+                  className={`stage-${row.pet.displayStageIndex}`}
+                  src={cinematicStageAsset(row)}
+                  alt=""
+                  loading="lazy"
+                  style={{'--egg-hue': `${CINEMATIC_EGG_HUES[row.pet.species.id] || 0}deg`}}
+                />
+                <span>
+                  <b>{row.name}</b>
+                  <small>{row.pet.species.zh} · {row.pet.stage.zh}</small>
+                </span>
+                <em>{row.pet.exp} ⭐</em>
+              </button>
+            ))}
+          </div>
+        </aside>
+      )}
+
+      <div className={`cinematic-reaction ${reaction ? "show" : ""}`} role="status" aria-live="polite">
+        <span className="material-symbols-rounded" aria-hidden="true">auto_awesome</span>
+        {reaction}
+      </div>
+    </section>
+  );
+}
+
+function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => fn && fn() }) {
+  const { useEffect, useMemo, useState } = React;
+  const [teamFilter, setTeamFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState(null);
+  const report = useMemo(() => EcoData.petReport(state), [state]);
+  const selected = selectedId ? report.find(row => row.id === selectedId) : null;
+
+  useEffect(() => {
+    document.body.classList.add("pet-cinema-active");
+    return () => document.body.classList.remove("pet-cinema-active");
+  }, []);
+
+  return (
+    <div className="cinematic-pet-view">
+      <CinematicSharedPark
+        report={report}
+        teams={state.teams}
+        teamFilter={teamFilter}
+        setTeamFilter={setTeamFilter}
+        onPick={setSelectedId}
+      />
 
       {selected && (
         <PetDetailModal
@@ -964,9 +1195,14 @@ function PetCard({ row, onClick }) {
       style={{'--team-color': row.teamColor}}
     >
       <div className="pet-avatar">
-        <span className="pet-emoji">{p.icon}</span>
-        {p.isMaxStage && <span className="pet-badge-legend">✨</span>}
-        <span className="pet-mood">{p.hunger.icon}</span>
+        <img
+          className={`pet-card-art stage-${p.displayStageIndex}`}
+          src={cinematicStageAsset(row)}
+          alt=""
+          style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+        />
+        {p.isMaxStage && <span className="pet-badge-legend material-symbols-rounded">auto_awesome</span>}
+        <span className="pet-mood material-symbols-rounded">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</span>
       </div>
       <div className="pet-name">
         {p.nickname || row.name.split(" ").slice(-1)[0]}
@@ -985,10 +1221,11 @@ function PetCard({ row, onClick }) {
 
 function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) {
   const p = row.pet;
+  const showingLegendGoal = p.stageIndex < LEGEND_STAGE;
 
   function changeSpecies() {
     if (!requireAuth()) return;
-    const names = EcoData.PET_SPECIES.map((s, i) => `${i + 1}. ${s.stages[3]} ${s.zh}`).join("\n");
+    const names = EcoData.PET_SPECIES.map((s, i) => `${i + 1}. ${s.zh}`).join("\n");
     const answer = window.prompt(
       `帮 ${row.name} 换一只宠物？输入编号：\nPick a species for ${row.name}:\n\n${names}`,
       String(EcoData.PET_SPECIES.findIndex(s => s.id === p.species.id) + 1)
@@ -1019,16 +1256,40 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
   return (
     <div className="login-modal-backdrop" onClick={onClose}>
       <div className="star-modal pet-modal" onClick={e => e.stopPropagation()}>
-        <button type="button" className="login-modal-close" onClick={onClose} aria-label="Close">×</button>
+        <button type="button" className="login-modal-close" onClick={onClose} aria-label="关闭详情">
+          <span className="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
 
-        <div className={`pet-modal-hero hunger-${p.hunger.key}`}>
-          <span className="pet-modal-emoji">{p.icon}</span>
-          {p.isMaxStage && <span className="pet-badge-legend big">✨</span>}
+        <div className={`pet-modal-hero hunger-${p.hunger.key} ${showingLegendGoal ? "is-legend-goal" : ""}`}>
+          <img
+            className={`pet-modal-art ${showingLegendGoal ? "goal-art" : `stage-${p.displayStageIndex}`}`}
+            src={showingLegendGoal ? cinematicPetAsset(row) : cinematicStageAsset(row)}
+            alt={showingLegendGoal ? `${row.name} 的${p.species.zh}，120星传说最高形态` : `${p.species.zh}当前形态`}
+            style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+          />
+          {showingLegendGoal ? (
+            <>
+              <span className="pet-legend-goal-chip">
+                <span className="material-symbols-rounded" aria-hidden="true">auto_awesome</span>
+                最高进化版 · 120 ⭐
+              </span>
+              <span className="pet-current-state-chip">
+                <img
+                  src={cinematicStageAsset(row)}
+                  alt=""
+                  style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+                />
+                <span><b>现在</b><small>{p.exp} ⭐ · {p.stage.zh}</small></span>
+              </span>
+            </>
+          ) : (
+            <span className="pet-badge-legend big material-symbols-rounded">auto_awesome</span>
+          )}
         </div>
 
         <h2 className="star-modal-title" style={{textAlign:'center'}}>
           {p.nickname || `${row.name} 的宠物`}
-          <small>{row.teamIcon} {row.teamName} · {p.species.zh} · {p.stage.zh}</small>
+          <small><span className="material-symbols-rounded" aria-hidden="true">groups</span> {row.teamName} · {p.species.zh} · {p.stage.zh}</small>
         </h2>
 
         <div className="pet-modal-stats">
@@ -1036,12 +1297,40 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
             <b>{p.exp}</b><span>本月 ⭐</span>
           </div>
           <div className="pet-stat">
-            <b>{p.hunger.icon}</b><span>{p.hunger.zh}</span>
+            <b className="material-symbols-rounded">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</b><span>{p.hunger.zh}</span>
           </div>
           <div className="pet-stat">
             <b>{p.stageIndex + 1}/{EcoData.PET_STAGES.length}</b><span>进化阶段</span>
           </div>
         </div>
+
+        <section className="pet-evolution-preview" aria-label={`${p.species.zh}六阶段进化预览`}>
+          <div className="pet-evolution-heading">
+            <div>
+              <span>未来形态预览</span>
+              <b>六阶段 · 大小与神性逐级觉醒</b>
+            </div>
+            <em>实验版</em>
+          </div>
+          <div className="pet-evolution-track">
+            {EcoData.PET_STAGES.map((stage, index) => {
+              const visual = CINEMATIC_STAGE_VISUALS[index];
+              return (
+                <div key={stage.en} className={`pet-evolution-stage stage-${index} ${index === p.stageIndex ? "current" : ""}`}>
+                  <div className="pet-evolution-artbox" style={{height: `${visual.previewHeight}px`}}>
+                    <img
+                      src={cinematicStageAsset(row, index)}
+                      alt=""
+                      style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+                    />
+                  </div>
+                  <b>{stage.zh}</b>
+                  <span>{stage.minExp} ⭐</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         <div className="pet-progress-block">
           {p.isMaxStage ? (
@@ -1060,7 +1349,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
         </div>
 
         <div className={`pet-hunger-note ${p.hunger.key}`}>
-          {p.hunger.icon} {hungerHint}
+          <span className="material-symbols-rounded" aria-hidden="true">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</span> {hungerHint}
           {p.isRegressed && (
             <div className="pet-regress-note">
               ⚠️ 太久没吃，宠物虚弱了，外表退回上一阶段。<br/>
@@ -1071,8 +1360,8 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         {authed && (
           <div className="pet-admin-row">
-            <button className="chunky-btn small-btn" onClick={changeSpecies}>🔄 换宠物</button>
-            <button className="chunky-btn small-btn" onClick={rename}>✏️ 改名字</button>
+            <button className="chunky-btn small-btn" onClick={changeSpecies}><span className="material-symbols-rounded">swap_horiz</span>换宠物</button>
+            <button className="chunky-btn small-btn" onClick={rename}><span className="material-symbols-rounded">edit</span>改名字</button>
           </div>
         )}
       </div>
