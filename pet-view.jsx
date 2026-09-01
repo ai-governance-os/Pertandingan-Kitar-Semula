@@ -466,11 +466,14 @@ function PetPark3D({ report, onPick }) {
       }
 
       // Portrait canvases (phones) see a much narrower slice of the world at a
-      // given camera distance, so both the ring of beasts and the camera pull
-      // in/back to keep the whole park in frame.
+      // given camera distance. The park fits a narrow frame by packing the
+      // beasts tighter, NOT by pulling the camera back — a teacher testing on
+      // an actual phone asked for the same close, big framing as desktop; on
+      // a touchscreen that's fine now that pinch-to-zoom (below) gives every
+      // student a way to back out and see the whole ring themselves.
       const startRect = host.getBoundingClientRect();
       const startAspect = startRect.height > 0 ? startRect.width / startRect.height : 1.4;
-      const spreadScale = startAspect < 1 ? 0.7 : startAspect < 1.15 ? 0.85 : 1;
+      const spreadScale = startAspect < 0.75 ? 0.55 : startAspect < 1.15 ? 0.8 : 1;
 
       // Each beast gets its OWN patch of grass and stays on it. The old version
       // had them wandering, which made the park restless and made it hard to
@@ -574,21 +577,56 @@ function PetPark3D({ report, onPick }) {
       let dragging = false, lastX = 0, moved = 0;
       const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
 
-      const onDown = e => { dragging = true; moved = 0; lastX = (e.touches ? e.touches[0] : e).clientX; };
+      // Two-finger pinch to zoom. The mouse wheel handler below only ever
+      // fired on desktop — 'wheel' events don't happen from a touchscreen —
+      // so a phone had NO way to adjust the distance at all. Every active
+      // touch/pointer is tracked by id; a second one arriving switches from
+      // rotate to pinch, using the change in finger-to-finger distance.
+      const activePointers = new Map();
+      let pinchStartDist = 0, pinchStartUserDist = 0;
+
+      function pinchDistance() {
+        const pts = [...activePointers.values()];
+        return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      }
+
+      const onDown = e => {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (activePointers.size === 2) {
+          dragging = false;
+          pinchStartDist = pinchDistance();
+          pinchStartUserDist = userDist;
+        } else if (activePointers.size === 1) {
+          dragging = true;
+          moved = 0;
+          lastX = e.clientX;
+        }
+      };
       const onMove = e => {
-        if (!dragging) return;
-        const x = (e.touches ? e.touches[0] : e).clientX;
-        moved += Math.abs(x - lastX);
-        userAngle -= (x - lastX) * 0.006;
-        lastX = x;
+        if (!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
         idleSince = 0;
+        if (activePointers.size === 2) {
+          e.preventDefault();
+          const scale = pinchDistance() / Math.max(1, pinchStartDist);
+          // Fingers spreading apart (scale > 1) zooms IN — camera distance
+          // shrinks — which is the direction people expect from every photo
+          // app's pinch gesture.
+          userDist = Math.max(-14, Math.min(10, pinchStartUserDist - (scale - 1) * 22));
+        } else if (dragging && activePointers.size === 1) {
+          const x = e.clientX;
+          moved += Math.abs(x - lastX);
+          userAngle -= (x - lastX) * 0.006;
+          lastX = x;
+        }
       };
       const onUp = e => {
-        if (dragging && moved < 6) {
-          const pt = e.changedTouches ? e.changedTouches[0] : e;
+        const wasSingleTap = activePointers.size === 1 && dragging && moved < 6;
+        activePointers.delete(e.pointerId);
+        if (wasSingleTap) {
           const rect = canvas.getBoundingClientRect();
-          pointer.x = ((pt.clientX - rect.left) / rect.width) * 2 - 1;
-          pointer.y = -((pt.clientY - rect.top) / rect.height) * 2 + 1;
+          pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+          pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
           ray.setFromCamera(pointer, camera);
           const hits = ray.intersectObjects(pets.map(p => p.group), true);
           if (hits.length) {
@@ -607,7 +645,15 @@ function PetPark3D({ report, onPick }) {
             }
           }
         }
-        dragging = false;
+        // A finger lifting out of a pinch resumes single-finger rotate from
+        // whichever pointer is still down, rather than jumping or stopping.
+        if (activePointers.size === 1) {
+          dragging = true;
+          moved = 999; // the remaining finger didn't "tap" — it was mid-pinch
+          lastX = [...activePointers.values()][0].x;
+        } else if (activePointers.size === 0) {
+          dragging = false;
+        }
       };
       const onWheel = e => {
         userDist = Math.max(-14, Math.min(10, userDist + e.deltaY * 0.02));
@@ -615,13 +661,15 @@ function PetPark3D({ report, onPick }) {
       };
 
       canvas.addEventListener("pointerdown", onDown);
-      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
       canvas.addEventListener("wheel", onWheel, { passive: true });
       cleanupFns.push(() => {
         canvas.removeEventListener("pointerdown", onDown);
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
         canvas.removeEventListener("wheel", onWheel);
       });
 
@@ -635,11 +683,11 @@ function PetPark3D({ report, onPick }) {
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        // Visible half-width at the look-at point is d * tan(fov/2) * aspect.
-        // Below the desktop aspect that shrinks fast, so scale the distance by
-        // how much narrower the frame is — capped, or a phone ends up so far
-        // back the beasts are specks.
-        fitScale = Math.min(1.7, Math.max(1, 1.35 / (w / h)));
+        // Only a MILD pull-back — the tight cap keeps phones close to the
+        // desktop framing on purpose (spreadScale above does the real work
+        // of fitting a narrow frame). A previous version capped this at
+        // 1.7x, which read as "far away and small" on an actual phone.
+        fitScale = Math.min(1.15, Math.max(1, 1.05 / (w / h)));
       }
       resize();
       requestAnimationFrame(resize);
