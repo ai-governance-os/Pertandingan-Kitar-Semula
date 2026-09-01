@@ -87,27 +87,27 @@ const LEGEND_STAGE = 5;
 // nineteen students in one living world without downloading a second 3D engine.
 const CINEMATIC_PET_ASSET_BASE = "assets/pet-park/beasts";
 const CINEMATIC_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg.png`;
-const CINEMATIC_HATCHING_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg-hatching.png`;
+const CINEMATIC_HATCHING_SHELL_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg-shell-open-v2.png`;
 const CINEMATIC_PET_ASSETS = {
   qilin: `${CINEMATIC_PET_ASSET_BASE}/qilin.png`,
-  phoenix: `${CINEMATIC_PET_ASSET_BASE}/phoenix.png`,
+  phoenix: `${CINEMATIC_PET_ASSET_BASE}/phoenix-v2.png`,
   ninetail: `${CINEMATIC_PET_ASSET_BASE}/ninetail.png`,
   yinglong: `${CINEMATIC_PET_ASSET_BASE}/yinglong.png`,
-  baize: `${CINEMATIC_PET_ASSET_BASE}/baize.png`,
-  lingui: `${CINEMATIC_PET_ASSET_BASE}/lingui.png`,
+  baize: `${CINEMATIC_PET_ASSET_BASE}/baize-v2.png`,
+  lingui: `${CINEMATIC_PET_ASSET_BASE}/lingui-v2.png`,
   stardeer: `${CINEMATIC_PET_ASSET_BASE}/stardeer.png`,
-  cloudpard: `${CINEMATIC_PET_ASSET_BASE}/cloudpard.png`,
-  seakirin: `${CINEMATIC_PET_ASSET_BASE}/seakirin.png`,
-  pixiu: `${CINEMATIC_PET_ASSET_BASE}/pixiu.png`,
+  cloudpard: `${CINEMATIC_PET_ASSET_BASE}/cloudpard-v2.png`,
+  seakirin: `${CINEMATIC_PET_ASSET_BASE}/seakirin-v2.png`,
+  pixiu: `${CINEMATIC_PET_ASSET_BASE}/pixiu-v2.png`,
   thunder: `${CINEMATIC_PET_ASSET_BASE}/thunder.png`,
-  bamboo: `${CINEMATIC_PET_ASSET_BASE}/bamboo.png`,
+  bamboo: `${CINEMATIC_PET_ASSET_BASE}/bamboo-v2.png`,
   zhuque: `${CINEMATIC_PET_ASSET_BASE}/zhuque.png`,
   xuanwu: `${CINEMATIC_PET_ASSET_BASE}/xuanwu.png`,
   baihu: `${CINEMATIC_PET_ASSET_BASE}/baihu.png`,
   qinglong: `${CINEMATIC_PET_ASSET_BASE}/qinglong.png`,
   griffin: `${CINEMATIC_PET_ASSET_BASE}/griffin.png`,
   snowferret: `${CINEMATIC_PET_ASSET_BASE}/snowferret.png`,
-  firemouse: `${CINEMATIC_PET_ASSET_BASE}/firemouse.png`,
+  firemouse: `${CINEMATIC_PET_ASSET_BASE}/firemouse-v2.png`,
 };
 
 // Species-specific anchors create a real composition instead of a sorted ring.
@@ -171,7 +171,7 @@ function cinematicPetAsset(row) {
 
 const CINEMATIC_STAGE_VISUALS = [
   { key: "egg",      width: 88,  previewHeight: 42, asset: () => CINEMATIC_EGG_ASSET },
-  { key: "hatching", width: 106, previewHeight: 58, asset: () => CINEMATIC_HATCHING_EGG_ASSET },
+  { key: "hatching", width: 106, previewHeight: 58, asset: cinematicPetAsset },
   { key: "cub",      scale: .50, previewHeight: 62, asset: cinematicPetAsset },
   { key: "junior",   scale: .72, previewHeight: 80, asset: cinematicPetAsset },
   { key: "adult",    scale: .96, previewHeight: 100, asset: cinematicPetAsset },
@@ -225,6 +225,55 @@ const CINEMATIC_EGG_HUES = {
 function cinematicStageAsset(row, stageIndex = row?.pet?.displayStageIndex || 0) {
   const stage = CINEMATIC_STAGE_VISUALS[stageIndex] || CINEMATIC_STAGE_VISUALS[0];
   return stage.asset(row);
+}
+
+function CinematicStageArt({
+  row,
+  stageIndex = row?.pet?.displayStageIndex || 0,
+  className = "",
+  alt = "",
+  style = {},
+  loading,
+  draggable = false,
+}) {
+  const classes = `${className} stage-${stageIndex}`.trim();
+  if (stageIndex !== 1) {
+    return (
+      <img
+        className={classes}
+        src={cinematicStageAsset(row, stageIndex)}
+        alt={alt}
+        style={style}
+        loading={loading}
+        draggable={draggable}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`cinematic-hatchling-composite ${classes}`.trim()}
+      style={style}
+      role={alt ? "img" : undefined}
+      aria-label={alt || undefined}
+      aria-hidden={alt ? undefined : true}
+    >
+      <img
+        className="cinematic-hatchling-creature"
+        src={cinematicPetAsset(row)}
+        alt=""
+        loading={loading}
+        draggable={draggable}
+      />
+      <img
+        className="cinematic-hatchling-shell"
+        src={CINEMATIC_HATCHING_SHELL_ASSET}
+        alt=""
+        loading={loading}
+        draggable={draggable}
+      />
+    </span>
+  );
 }
 
 function cinematicStageWidth(row, layout) {
@@ -1023,13 +1072,14 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
 
   function interact(row) {
     const speciesId = row.pet.species.id;
+    const hasHatched = row.pet.displayStageIndex >= 2;
     setRosterOpen(false);
     setActiveId(row.id);
     const ownerName = row.name.split(" ").slice(-1)[0];
     const response = row.pet.displayStageIndex === 0
       ? "神兽蛋轻轻晃了三下，蛋壳亮起一颗小心心"
       : row.pet.displayStageIndex === 1
-        ? "神兽蛋从裂缝里偷偷眨了眨光"
+        ? `${row.pet.species.zh}从蛋壳里探出小小上半身，开心地认出了你`
         : `${row.pet.species.zh}${CINEMATIC_REACTIONS[speciesId] || "转过身来回应你"}`;
     setReaction(`${ownerName}的${response}`);
     clearTimeout(reactionTimerRef.current);
@@ -1037,7 +1087,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
       setActiveId(null);
       setReaction("");
       onPick(row.id);
-    }, 1250);
+    }, hasHatched ? 3000 : 1600);
   }
 
   return (
@@ -1069,7 +1119,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
               <button
                 key={row.id}
                 type="button"
-                className={`cinematic-beast stage-${displayStage} route-${layout.route} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} hunger-${row.pet.hunger.key}`}
+                className={`cinematic-beast stage-${displayStage} route-${layout.route} performance-${speciesId} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} hunger-${row.pet.hunger.key}`}
                 style={{
                   '--park-x': `${layout.x}%`,
                   '--park-y': `${layout.y}%`,
@@ -1092,9 +1142,9 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
                 aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。点按互动`}
               >
                 <span className="cinematic-beast-body">
-                  <img
+                  <CinematicStageArt
+                    row={row}
                     className="cinematic-beast-art"
-                    src={cinematicStageAsset(row)}
                     alt=""
                     draggable="false"
                     loading="eager"
@@ -1176,9 +1226,9 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
           <div className="cinematic-roster-list">
             {report.map(row => (
               <button key={row.id} type="button" onClick={() => interact(row)}>
-                <img
-                  className={`stage-${row.pet.displayStageIndex}`}
-                  src={cinematicStageAsset(row)}
+                <CinematicStageArt
+                  row={row}
+                  className="cinematic-roster-art"
                   alt=""
                   loading="lazy"
                   style={{'--egg-hue': `${CINEMATIC_EGG_HUES[row.pet.species.id] || 0}deg`}}
@@ -1247,9 +1297,9 @@ function PetCard({ row, onClick }) {
       style={{'--team-color': row.teamColor}}
     >
       <div className="pet-avatar">
-        <img
-          className={`pet-card-art stage-${p.displayStageIndex}`}
-          src={cinematicStageAsset(row)}
+        <CinematicStageArt
+          row={row}
+          className="pet-card-art"
           alt=""
           style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
         />
@@ -1315,12 +1365,21 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
         </div>
 
         <div className={`pet-modal-hero hunger-${p.hunger.key} ${showingLegendGoal ? "is-legend-goal" : ""}`}>
-          <img
-            className={`pet-modal-art ${showingLegendGoal ? "goal-art" : `stage-${p.displayStageIndex}`}`}
-            src={showingLegendGoal ? cinematicPetAsset(row) : cinematicStageAsset(row)}
-            alt={showingLegendGoal ? `${row.name} 的${p.species.zh}，120星传说最高形态` : `${p.species.zh}当前形态`}
-            style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
-          />
+          {showingLegendGoal ? (
+            <img
+              className="pet-modal-art goal-art"
+              src={cinematicPetAsset(row)}
+              alt={`${row.name} 的${p.species.zh}，120星传说最高形态`}
+              style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+            />
+          ) : (
+            <CinematicStageArt
+              row={row}
+              className="pet-modal-art"
+              alt={`${p.species.zh}当前形态`}
+              style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
+            />
+          )}
           {showingLegendGoal ? (
             <>
               <span className="pet-legend-goal-chip">
@@ -1328,8 +1387,9 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
                 最高进化版 · 120 ⭐
               </span>
               <span className="pet-current-state-chip">
-                <img
-                  src={cinematicStageAsset(row)}
+                <CinematicStageArt
+                  row={row}
+                  className="pet-current-state-art"
                   alt=""
                   style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
                 />
@@ -1372,8 +1432,10 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
               return (
                 <div key={stage.en} className={`pet-evolution-stage stage-${index} ${index === p.stageIndex ? "current" : ""}`}>
                   <div className="pet-evolution-artbox" style={{height: `${visual.previewHeight}px`}}>
-                    <img
-                      src={cinematicStageAsset(row, index)}
+                    <CinematicStageArt
+                      row={row}
+                      stageIndex={index}
+                      className="pet-evolution-art"
                       alt=""
                       style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
                     />
