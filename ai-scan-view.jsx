@@ -173,10 +173,10 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
           <div className="panel-title"><strong>👥 学生 / 组别 · Student / Team</strong></div>
           <div className="ai-context-row">
             <label className="ai-context-field">
-              <span>组别 · Team</span>
+              <span className="ai-team-field-label"><TeamBadge team={team} size={26} /> 组别 · Team</span>
               <select value={teamId} onChange={e => { setTeamId(e.target.value); setStudentId(""); }}>
                 {state.teams.map(t => (
-                  <option key={t.id} value={t.id}>{t.icon} {t.zh}</option>
+                  <option key={t.id} value={t.id}>{t.zh}</option>
                 ))}
               </select>
             </label>

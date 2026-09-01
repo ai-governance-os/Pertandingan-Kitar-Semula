@@ -38,7 +38,10 @@ function BigScreenView({ state }) {
             <h1>环保小兵 · 战况</h1>
             <p>{session.name} · {session.date || "未设日期"}</p>
           </div>
-          <div className="status-pill">{leader ? `${leader.zh} 领先` : "暂时平手"}</div>
+          <div className="status-pill">
+            {leader && <TeamBadge team={leader} size={24} />}
+            {leader ? `${leader.zh} 领先` : "暂时平手"}
+          </div>
         </header>
 
         <section className="status-score-grid">
@@ -54,7 +57,7 @@ function BigScreenView({ state }) {
 
         <div className="lead-summary">
           {leader ? (
-            <span>本次领先：<strong>{leader.zh}</strong> +{fmtRM(lead)}</span>
+            <span><TeamBadge team={leader} size={26} /> 本次领先：<strong>{leader.zh}</strong> +{fmtRM(lead)}</span>
           ) : (
             <span>本次比赛暂时平手</span>
           )}
@@ -74,7 +77,8 @@ function BigScreenView({ state }) {
             rows={currentRanking.map((row, index) => ({
               id: row.team.id,
               rank: index + 1,
-              main: `${row.team.icon} ${row.team.zh}`,
+              main: row.team.zh,
+              badgeSrc: row.team.badgeSrc,
               sub: `${fmt(row.stats.kg, 2)} kg`,
               value: fmtRM(row.stats.points),
             }))}
@@ -87,7 +91,8 @@ function BigScreenView({ state }) {
             rows={seasonTotals.map((row, index) => ({
               id: row.team.id,
               rank: index + 1,
-              main: `${row.team.icon} ${row.team.zh}`,
+              main: row.team.zh,
+              badgeSrc: row.team.badgeSrc,
               sub: `组长：${row.team.leader}`,
               value: fmtRM(row.stats.points),
             }))}
@@ -104,7 +109,7 @@ function TeamStatusCard({ team, sessionStats, seasonStats }) {
   return (
     <article className={`status-team-card ${team.id}`}>
       <div className="status-team-top">
-        <span className="status-team-icon">{team.icon}</span>
+        <TeamBadge team={team} size={52} className="status-team-icon" />
         <div>
           <h2>{team.zh}</h2>
           <p>{team.leader}</p>
@@ -133,9 +138,12 @@ function StatusList({ title, rows }) {
         {rows.map(row => (
           <div className="status-row" key={row.id}>
             <span className="status-rank">{row.rank}</span>
-            <div>
-              <strong>{row.main}</strong>
-              <small>{row.sub}</small>
+            <div className="status-row-team">
+              <TeamBadge src={row.badgeSrc} name={row.main} size={38} />
+              <div>
+                <strong>{row.main}</strong>
+                <small>{row.sub}</small>
+              </div>
             </div>
             <b>{row.value}</b>
           </div>
@@ -159,6 +167,7 @@ function RedListPanel({ redList, watchList, threshold = 3 }) {
         <div className="red-list">
           {redList.map(member => (
             <div className="red-row" key={member.id}>
+              <TeamBadge src={member.teamBadgeSrc} name={member.teamName} size={38} />
               <div>
                 <strong>{member.name}</strong>
                 <span>{member.teamName} · 没带 {member.missedCount} 次</span>
@@ -176,6 +185,7 @@ function RedListPanel({ redList, watchList, threshold = 3 }) {
           <div className="red-list">
             {watchList.map(member => (
               <div className="red-row watch-row" key={member.id}>
+                <TeamBadge src={member.teamBadgeSrc} name={member.teamName} size={38} />
                 <div>
                   <strong>{member.name}</strong>
                   <span>{member.teamName} · 没带 {member.missedCount} 次</span>

@@ -1100,7 +1100,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
                     loading="eager"
                   />
                   <span className="cinematic-owner-tag">
-                    <span className="cinematic-team-dot" aria-hidden="true" />
+                    <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={20} className="cinematic-team-badge" />
                     <b>{row.name}</b>
                     <span>{row.pet.nickname || row.pet.species.zh} · {row.pet.stage.zh}</span>
                   </span>
@@ -1135,7 +1135,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
             onClick={() => setTeamFilter(teamFilter === team.id ? "all" : team.id)}
             style={{'--team-filter': team.primary}}
           >
-            <span className="cinematic-filter-dot" aria-hidden="true" />
+            <TeamBadge team={team} size={26} className="cinematic-filter-badge" />
             {team.zh}
           </button>
         ))}
@@ -1260,7 +1260,7 @@ function PetCard({ row, onClick }) {
         {p.nickname || row.name.split(" ").slice(-1)[0]}
       </div>
       <div className="pet-stage-label">
-        {row.teamIcon} {p.stage.zh}
+        <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={22} /> {p.stage.zh}
         {p.isRegressed && <span className="pet-regress-tag">虚弱</span>}
       </div>
       <div className="pet-bar">
@@ -1343,7 +1343,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <h2 className="star-modal-title" style={{textAlign:'center'}}>
           {p.nickname || `${row.name} 的宠物`}
-          <small><span className="material-symbols-rounded" aria-hidden="true">groups</span> {row.teamName} · {p.species.zh} · {p.stage.zh}</small>
+          <small className="pet-detail-team"><TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={26} /> {row.teamName} · {p.species.zh} · {p.stage.zh}</small>
         </h2>
 
         <div className="pet-modal-stats">

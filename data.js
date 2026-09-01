@@ -21,6 +21,7 @@ const DEFAULT_TEAMS = [
     zh: "云狮组",
     ms: "Kumpulan Singa Awan",
     icon: "🦁",
+    badgeSrc: "assets/team-badges/cloud-lion.png",
     primary: "#2EC4B6",
     glow: "#88E5FF",
     leader: "Queenie Lee Li Ying 李栎颖",
@@ -41,6 +42,7 @@ const DEFAULT_TEAMS = [
     zh: "飞龙组",
     ms: "Kumpulan Naga Terbang",
     icon: "🐲",
+    badgeSrc: "assets/team-badges/flying-dragon.png",
     primary: "#FF6B35",
     glow: "#FFC93C",
     leader: "Ong Xing Mei 王欣美",
@@ -491,7 +493,12 @@ function setRedListThreshold(state, value) {
 
 function absenceReport(state) {
   const threshold = redListThreshold(state);
-  const allMembers = state.teams.flatMap(team => team.members.map(m => ({ ...m, teamId: team.id, teamName: team.zh })));
+  const allMembers = state.teams.flatMap(team => team.members.map(m => ({
+    ...m,
+    teamId: team.id,
+    teamName: team.zh,
+    teamBadgeSrc: team.badgeSrc,
+  })));
   return allMembers.map(member => {
     const missed = state.sessions.filter(s => attendanceFor(state, s.id, member.id) === false);
     return {
@@ -603,7 +610,13 @@ function studentAllTimeStarBalance(state, studentId) {
 
 function studentStarReport(state) {
   const members = state.teams.flatMap(t =>
-    t.members.map(m => ({ ...m, teamId: t.id, teamName: t.zh, teamIcon: t.icon }))
+    t.members.map(m => ({
+      ...m,
+      teamId: t.id,
+      teamName: t.zh,
+      teamIcon: t.icon,
+      teamBadgeSrc: t.badgeSrc,
+    }))
   );
   return members
     .map(m => ({
@@ -803,7 +816,14 @@ function petState(state, studentId, now = Date.now()) {
 
 function petReport(state, now = Date.now()) {
   const members = state.teams.flatMap(t =>
-    t.members.map(m => ({ ...m, teamId: t.id, teamName: t.zh, teamIcon: t.icon, teamColor: t.primary }))
+    t.members.map(m => ({
+      ...m,
+      teamId: t.id,
+      teamName: t.zh,
+      teamIcon: t.icon,
+      teamBadgeSrc: t.badgeSrc,
+      teamColor: t.primary,
+    }))
   );
   return members
     .map(m => ({ ...m, pet: petState(state, m.id, now) }))

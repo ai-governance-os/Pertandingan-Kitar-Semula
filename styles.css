@@ -131,7 +131,6 @@
 
 .session-team-card .team-mini {
   grid-row: span 2;
-  font-size: 30px;
 }
 
 .session-team-card b {
@@ -169,6 +168,25 @@
   font-family: var(--font-display);
   font-size: 20px;
 }
+
+.panel-team-title,
+.table-team-cell,
+.result-team-name,
+.ai-team-field-label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+}
+
+.student-team-line,
+.pet-detail-team {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+}
+
+.result-team-name { min-width: 0; }
+.pet-detail-team { justify-content: center; }
 
 .panel-title span {
   display: block;
@@ -524,6 +542,9 @@
 
 .status-pill {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   border: 2px solid var(--ink);
   border-radius: 999px;
   padding: 8px 12px;
@@ -565,7 +586,6 @@
 }
 
 .status-team-icon {
-  font-size: 42px;
   line-height: 1;
 }
 
@@ -641,6 +661,13 @@
   box-shadow: 0 4px 0 rgba(20,18,40,0.2);
 }
 
+.lead-summary > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
 .lead-summary strong {
   color: var(--gold);
 }
@@ -710,6 +737,13 @@
   padding: 12px;
 }
 
+.status-row-team {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .status-rank {
   width: 34px;
   height: 34px;
@@ -742,7 +776,7 @@
 
 .red-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
   border: 2px solid #E5755B;
@@ -1117,6 +1151,28 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 2px 0 rgba(0,0,0,0.2);
 }
 .mode-switcher .mode-icon { font-size: 16px; }
+
+/* Shared team identity — cinematic cloud lion / flying dragon badges */
+.team-badge {
+  width: var(--team-badge-size, 32px);
+  height: var(--team-badge-size, 32px);
+  flex: 0 0 var(--team-badge-size, 32px);
+  display: inline-block;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  border: 1px solid rgba(239,213,145,.72);
+  background: #061713;
+  box-shadow: 0 2px 8px rgba(4,18,15,.25), inset 0 0 0 1px rgba(255,255,255,.1);
+  vertical-align: middle;
+}
+.team-badge-fallback {
+  display: inline-grid;
+  place-items: center;
+  color: #F4D995;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
 
 /* ================================================== */
 /* SHARED — chunky game elements                       */
@@ -3449,6 +3505,10 @@ button { font-family: inherit; cursor: pointer; }
   margin-bottom: 14px;
 }
 .team-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   padding: 8px 14px;
   border-radius: 12px;
   border: 2px solid rgba(0,0,0,.1);
@@ -4193,7 +4253,14 @@ button { font-family: inherit; cursor: pointer; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pet-stage-label { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
+.pet-stage-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
 .pet-regress-tag {
   margin-left: 4px;
   background: #FFE5DC;
@@ -4579,13 +4646,10 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 }
 .cinematic-owner-tag b { font-size: 10px; line-height: 1.1; font-weight: 800; white-space: nowrap; }
 .cinematic-owner-tag > span:last-child { grid-column: 2; font-size: 10px; line-height: 1.1; opacity: .68; }
-.cinematic-team-dot {
+.cinematic-team-badge {
   grid-row: 1 / span 2;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--team-color);
-  box-shadow: 0 0 10px var(--team-color);
+  border-color: rgba(244,217,149,.72);
+  box-shadow: 0 0 12px var(--team-color), 0 3px 8px rgba(0,0,0,.28);
 }
 
 .cinematic-park-title,
@@ -4652,7 +4716,10 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 }
 .cinematic-park-filters button b { font-size: 12px; color: #F4D995; }
 .cinematic-park-filters button.active b { color: #10201A; }
-.cinematic-filter-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--team-filter, #B8D9C7); box-shadow: 0 0 10px var(--team-filter, #B8D9C7); }
+.cinematic-filter-badge {
+  border-color: rgba(244,217,149,.58);
+  box-shadow: 0 0 10px var(--team-filter, #B8D9C7);
+}
 
 .cinematic-park-guide {
   position: absolute;
@@ -5070,14 +5137,13 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
     width: 116px;
     min-width: 116px;
     max-width: 116px;
-    grid-template-columns: 6px minmax(0, 1fr);
+    grid-template-columns: 20px minmax(0, 1fr);
     column-gap: 4px;
     padding: 4px 5px;
     border-radius: 11px;
   }
   .cinematic-owner-tag b { font-size: 8px; line-height: 1.05; white-space: normal; text-align: left; }
   .cinematic-owner-tag > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 7px; }
-  .cinematic-team-dot { width: 6px; height: 6px; }
   .cinematic-park-guide { display: none; }
   .cinematic-view-switch { right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); }
   .cinematic-reaction { bottom: max(124px, calc(112px + env(safe-area-inset-bottom))); border-radius: 16px; text-align: center; }

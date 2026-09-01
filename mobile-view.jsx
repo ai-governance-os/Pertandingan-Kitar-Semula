@@ -114,7 +114,7 @@ function MobileViewInner({ state, setState }) {
                 className={`session-team-card ${t.id} ${team.id === t.id ? "active" : ""}`}
                 onClick={() => setTeamId(t.id)}
               >
-                <span className="team-mini">{t.icon}</span>
+                <TeamBadge team={t} size={38} className="team-mini" />
                 <span>{t.zh}</span>
                 <b>{fmtRM(stats.points)}</b>
               </button>
@@ -125,7 +125,7 @@ function MobileViewInner({ state, setState }) {
         <div className="entry-panel">
           <div className="panel-title">
             <div>
-              <strong>{team.icon} {team.zh}</strong>
+              <strong className="panel-team-title"><TeamBadge team={team} size={34} /> {team.zh}</strong>
               <span>组长：{team.leader}</span>
             </div>
             <div className="total-badge">{fmt(selectedStats.kg, 2)} kg · {fmtRM(selectedStats.points)}</div>

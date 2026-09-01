@@ -31,6 +31,35 @@ function SchoolStamp({ size = 60, light = false }) {
   );
 }
 
+function TeamBadge({ team, src, name, size = 32, className = "", alt = "" }) {
+  const badgeSrc = src || team?.badgeSrc;
+  const label = name || team?.zh || "队伍";
+  if (!badgeSrc) {
+    return (
+      <span
+        className={`team-badge team-badge-fallback ${className}`.trim()}
+        style={{'--team-badge-size': `${size}px`}}
+        aria-hidden={alt ? undefined : true}
+        aria-label={alt || undefined}
+      >
+        {label.slice(0, 1)}
+      </span>
+    );
+  }
+  return (
+    <img
+      className={`team-badge ${className}`.trim()}
+      src={badgeSrc}
+      alt={alt}
+      width={size}
+      height={size}
+      style={{'--team-badge-size': `${size}px`}}
+      draggable="false"
+      decoding="async"
+    />
+  );
+}
+
 function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
   // Public modes shown to everyone; admin modes only appear after login.
   // Keep the bar lean — 2 chips for viewers, 5 for admin.
@@ -132,6 +161,6 @@ function AdminGate({ authed, requireAuth, children }) {
 }
 
 Object.assign(window, {
-  BL, BLinline, SchoolStamp, ModeSwitcher, Confetti, fmt, fmtRM, relTime,
+  BL, BLinline, SchoolStamp, TeamBadge, ModeSwitcher, Confetti, fmt, fmtRM, relTime,
   ViewerHint, AdminGate,
 });

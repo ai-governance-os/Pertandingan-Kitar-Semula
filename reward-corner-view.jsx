@@ -86,7 +86,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
                   onClick={() => setTeamFilter(t.id)}
                   style={{borderColor: teamFilter === t.id ? t.primary : undefined}}
                 >
-                  {t.icon} {t.zh} ({count})
+                  <TeamBadge team={t} size={26} /> {t.zh} ({count})
                 </button>
               );
             })}
@@ -96,7 +96,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
             {filteredReport.map((row, i) => (
               <div className="leader-row" key={row.id}>
                 <span className="leader-rank">#{i + 1}</span>
-                <span className="leader-team">{row.teamIcon}</span>
+                <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={28} className="leader-team" />
                 <span className="leader-name-wrap">
                   <span className="leader-name">{row.name}</span>
                   <small className="leader-alltime">历史累计 {row.allTimeBalance} ⭐</small>
@@ -259,7 +259,7 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
         <button type="button" className="login-modal-close" onClick={onCancel} aria-label="Close">×</button>
         <h2 className="star-modal-title">
           {isDeduction ? "− 扣星" : "+ 加星"} · {student.name}
-          <small>{student.teamName} · 本月现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
+          <small className="student-team-line"><TeamBadge src={student.teamBadgeSrc} name={student.teamName} size={24} /> {student.teamName} · 本月现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
         </h2>
 
         <div className="star-modal-groups">

@@ -154,7 +154,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
                 <tbody>
                   {starReport.map(r => (
                     <tr key={r.id} className={r.balance < 0 ? "row-negative" : ""}>
-                      <td>{r.teamIcon} {r.teamName}</td>
+                      <td><span className="table-team-cell"><TeamBadge src={r.teamBadgeSrc} name={r.teamName} size={28} /> {r.teamName}</span></td>
                       <td>{r.name}</td>
                       <td><b>{r.balance}</b> ⭐</td>
                     </tr>
@@ -219,7 +219,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
                   <div className="result-lines">
                     {state.teams.map(t => (
                       <div key={t.id}>
-                        <span>{t.icon} {t.zh}</span>
+                        <span className="result-team-name"><TeamBadge team={t} size={24} /> {t.zh}</span>
                         <b>{fmtRM(res.stats[t.id].points)}</b>
                       </div>
                     ))}
@@ -271,7 +271,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
               <tbody>
                 {report.map(member => (
                   <tr key={member.id} className={!member.eligible ? "bad-row" : ""}>
-                    <td>{member.teamName}</td>
+                    <td><span className="table-team-cell"><TeamBadge src={member.teamBadgeSrc} name={member.teamName} size={28} /> {member.teamName}</span></td>
                     <td>{member.name}</td>
                     <td style={{textAlign:'center'}}>{member.missedCount}</td>
                     <td>{member.eligible ? "可领奖" : "取消个人奖品"}</td>
