@@ -1,7 +1,7 @@
 {
   "artboards": [
     { "file": "Main.dc.html",      "x": 0,    "y": 0,    "w": 1460, "h": 920,  "title": "主视觉 · 晨曦神兽乐园" },
-    { "file": "Bestiary.dc.html",  "x": 1580, "y": 0,    "w": 920,  "h": 1330, "title": "神兽图鉴 · 一人一只" },
+    { "file": "Bestiary.dc.html",  "x": 1580, "y": 0,    "w": 920,  "h": 1670, "title": "神兽图鉴 · 一人一只" },
     { "file": "MoodDawn.dc.html",  "x": 0,    "y": 1450, "w": 470,  "h": 640,  "title": "方向 A · 晨曦林间" },
     { "file": "MoodDusk.dc.html",  "x": 550,  "y": 1450, "w": 470,  "h": 640,  "title": "方向 B · 黄昏花海" },
     { "file": "MoodNight.dc.html", "x": 1100, "y": 1450, "w": 470,  "h": 640,  "title": "方向 C · 星夜萤火" },
