@@ -636,25 +636,25 @@ function teamStarStats(state, teamId) {
 // the school asked for 神兽, not farm animals. The stage emoji are only used by
 // the fallback card list; the 3D park draws each beast from PET_LOOKS.
 const PET_SPECIES = [
-  { id: "qilin",     zh: "麒麟",   en: "Qilin",         aura: "#FFC45C", stages: ["🥚", "🐣", "🦌", "🦄", "✨"] },
-  { id: "phoenix",   zh: "凤凰",   en: "Phoenix",       aura: "#FF7A6A", stages: ["🥚", "🐣", "🐤", "🦅", "🔥"] },
-  { id: "ninetail",  zh: "九尾狐", en: "Nine-Tail Fox", aura: "#BE8CFF", stages: ["🥚", "🐣", "🦊", "🦊", "🌙"] },
-  { id: "yinglong",  zh: "应龙",   en: "Winged Dragon", aura: "#5AC8FF", stages: ["🥚", "🐣", "🦎", "🐲", "🐉"] },
-  { id: "baize",     zh: "白泽",   en: "Baize",         aura: "#E8F0FF", stages: ["🥚", "🐣", "🐐", "🦬", "📖"] },
-  { id: "lingui",    zh: "灵龟",   en: "Spirit Turtle", aura: "#5ADCAA", stages: ["🥚", "🐣", "🐢", "🐢", "🛡️"] },
-  { id: "stardeer",  zh: "星鹿",   en: "Star Deer",     aura: "#8CAAFF", stages: ["🥚", "🐣", "🦌", "🦌", "🌟"] },
-  { id: "cloudpard", zh: "云豹",   en: "Cloud Leopard", aura: "#FFE196", stages: ["🥚", "🐣", "🐆", "🐆", "☁️"] },
-  { id: "seakirin",  zh: "海麟",   en: "Sea Kirin",     aura: "#50BEDC", stages: ["🥚", "🐟", "🐠", "🐬", "🌊"] },
-  { id: "pixiu",     zh: "貔貅",   en: "Pixiu",         aura: "#FFB45A", stages: ["🥚", "🐣", "🐕", "🦁", "💰"] },
-  { id: "thunder",   zh: "雷鸟",   en: "Thunderbird",   aura: "#FFE66E", stages: ["🥚", "🐣", "🐦", "🦅", "⚡"] },
-  { id: "bamboo",    zh: "竹灵",   en: "Bamboo Spirit", aura: "#96DC78", stages: ["🌰", "🌱", "🌿", "🎋", "🌳"] },
-  { id: "zhuque",     zh: "朱雀",   en: "Vermilion Bird", aura: "#FF5A48", stages: ["🥚", "🐣", "🐦", "🦚", "☀️"] },
-  { id: "xuanwu",     zh: "玄武",   en: "Black Tortoise", aura: "#6FA8CC", stages: ["🥚", "🐣", "🐢", "🐍", "🌑"] },
-  { id: "baihu",      zh: "白虎",   en: "White Tiger",    aura: "#DCE9FF", stages: ["🥚", "🐣", "🐈", "🐅", "⚔️"] },
-  { id: "qinglong",   zh: "青龙",   en: "Azure Dragon",   aura: "#46E0B4", stages: ["🥚", "🐣", "🦎", "🐍", "🍃"] },
-  { id: "griffin",    zh: "狮鹫",   en: "Griffin",        aura: "#FFD98A", stages: ["🥚", "🐣", "🦅", "🦁", "🏅"] },
-  { id: "snowferret", zh: "雪貂灵", en: "Snow Ferret",    aura: "#BFE6FF", stages: ["🥚", "🐣", "🐁", "🦦", "❄️"] },
-  { id: "firemouse",  zh: "火鼠",   en: "Fire Mouse",     aura: "#FF8A3D", stages: ["🥚", "🐣", "🐭", "🐀", "🌋"] },
+  { id: "qilin",      zh: "麒麟",   en: "Qilin",          aura: "#FFC45C", stages: ["🥚", "🐣", "🦌", "🐐", "🦄", "✨"] },
+  { id: "phoenix",    zh: "凤凰",   en: "Phoenix",        aura: "#FF7A6A", stages: ["🥚", "🐣", "🐤", "🕊️", "🦅", "🔥"] },
+  { id: "ninetail",   zh: "九尾狐", en: "Nine-Tail Fox",  aura: "#BE8CFF", stages: ["🥚", "🐣", "🐈", "🦊", "🦊", "🌙"] },
+  { id: "yinglong",   zh: "应龙",   en: "Winged Dragon",  aura: "#5AC8FF", stages: ["🥚", "🐣", "🦎", "🐊", "🐲", "🐉"] },
+  { id: "baize",      zh: "白泽",   en: "Baize",          aura: "#E8F0FF", stages: ["🥚", "🐣", "🐐", "🐑", "🦬", "📖"] },
+  { id: "lingui",     zh: "灵龟",   en: "Spirit Turtle",  aura: "#5ADCAA", stages: ["🥚", "🐣", "🐌", "🐢", "🐢", "🛡️"] },
+  { id: "stardeer",   zh: "星鹿",   en: "Star Deer",      aura: "#8CAAFF", stages: ["🥚", "🐣", "🐇", "🦌", "🦌", "🌟"] },
+  { id: "cloudpard",  zh: "云豹",   en: "Cloud Leopard",  aura: "#FFE196", stages: ["🥚", "🐣", "🐈", "🐆", "🐆", "☁️"] },
+  { id: "seakirin",   zh: "海麟",   en: "Sea Kirin",      aura: "#50BEDC", stages: ["🥚", "🐟", "🐠", "🐡", "🐬", "🌊"] },
+  { id: "pixiu",      zh: "貔貅",   en: "Pixiu",          aura: "#FFB45A", stages: ["🥚", "🐣", "🐕", "🦁", "🦁", "💰"] },
+  { id: "thunder",    zh: "雷鸟",   en: "Thunderbird",    aura: "#FFE66E", stages: ["🥚", "🐣", "🐦", "🦆", "🦅", "⚡"] },
+  { id: "bamboo",     zh: "竹灵",   en: "Bamboo Spirit",  aura: "#96DC78", stages: ["🌰", "🌱", "🌿", "🎋", "🎍", "🌳"] },
+  { id: "zhuque",     zh: "朱雀",   en: "Vermilion Bird", aura: "#FF5A48", stages: ["🥚", "🐣", "🐦", "🦜", "🦚", "☀️"] },
+  { id: "xuanwu",     zh: "玄武",   en: "Black Tortoise", aura: "#6FA8CC", stages: ["🥚", "🐣", "🐢", "🐍", "🐲", "🌑"] },
+  { id: "baihu",      zh: "白虎",   en: "White Tiger",    aura: "#DCE9FF", stages: ["🥚", "🐣", "🐈", "🐅", "🐅", "⚔️"] },
+  { id: "qinglong",   zh: "青龙",   en: "Azure Dragon",   aura: "#46E0B4", stages: ["🥚", "🐣", "🦎", "🐍", "🐲", "🍃"] },
+  { id: "griffin",    zh: "狮鹫",   en: "Griffin",        aura: "#FFD98A", stages: ["🥚", "🐣", "🐦", "🦅", "🦁", "🏅"] },
+  { id: "snowferret", zh: "雪貂灵", en: "Snow Ferret",    aura: "#BFE6FF", stages: ["🥚", "🐣", "🐁", "🐀", "🦦", "❄️"] },
+  { id: "firemouse",  zh: "火鼠",   en: "Fire Mouse",     aura: "#FF8A3D", stages: ["🥚", "🐣", "🐭", "🐹", "🐀", "🌋"] },
 ];
 
 // Exp thresholds, calibrated against the school's real ledger (756 star events,
@@ -662,12 +662,20 @@ const PET_SPECIES = [
 // (8/25/60/120) put 42% of the school at max stage on day one, which kills the
 // point of the game — these spread the current roster across all five stages
 // and leave 传说 as a genuine year-long goal nobody has reached yet.
+// Six stages on a MONTHLY cycle — everyone starts each month as an egg.
+// Calibrated against the school's real per-month numbers (19 students; best
+// month max 123, median 40): almost every child clears 10, about half clear
+// 30, and 70+ is the top handful. 150 has never been reached in a single
+// month, so the top two sit at 90 and 120 instead: in the best month so far
+// 90 would have been reached by three children and 120 by the one who scored
+// 123 — hard, but not theoretical.
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
-  { minExp: 25,  zh: "幼体", en: "Baby" },
+  { minExp: 10,  zh: "破蛋", en: "Hatching" },
+  { minExp: 30,  zh: "幼兽", en: "Cub" },
   { minExp: 70,  zh: "少年", en: "Junior" },
-  { minExp: 150, zh: "成年", en: "Adult" },
-  { minExp: 300, zh: "传说", en: "Legend" },
+  { minExp: 90,  zh: "成年", en: "Adult" },
+  { minExp: 120, zh: "传说", en: "Legend" },
 ];
 
 const PET_HUNGER_LEVELS = [
@@ -751,14 +759,19 @@ function petHungerFor(days) {
 }
 
 function petState(state, studentId, now = Date.now()) {
-  const events = (state.starLedger || []).filter(e => e.studentId === studentId);
+  const all = (state.starLedger || []).filter(e => e.studentId === studentId);
 
-  // Lifetime growth: positives feed the pet, deductions do set it back (a
-  // deduction is a real behaviour signal), but never below zero.
+  // Growth is THIS MONTH's stars, on the same cutoff as the redeemable
+  // balance. On the 1st every beast is an egg again, so the park shows what a
+  // child has done this month rather than since joining. Deductions inside the
+  // month shrink the beast — that is the point — but never below the egg.
+  const events = all.filter(e => (e.ts || 0) >= monthStartTs(now));
   const exp = Math.max(0, events.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
+  const lifetimeExp = Math.max(0, all.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
 
-  // Hunger only looks at stars EARNED, so a deduction doesn't count as a meal.
-  const lastFedTs = events
+  // Hunger reads the WHOLE ledger, not just this month: scoped to the month,
+  // every child would look "never fed" for the first days of September.
+  const lastFedTs = all
     .filter(e => (Number(e.stars) || 0) > 0)
     .reduce((latest, e) => Math.max(latest, Number(e.ts) || 0), 0);
   const daysSinceFed = lastFedTs ? Math.floor((now - lastFedTs) / DAY_MS) : null;
@@ -776,6 +789,7 @@ function petState(state, studentId, now = Date.now()) {
   return {
     studentId,
     species,
+    lifetimeExp,
     nickname: state?.pets?.[studentId]?.nickname || "",
     exp,
     stageIndex,

@@ -74,6 +74,13 @@ const PET_LOOKS = {
   firemouse:  { body: 0xE8663A, belly: 0xFFC49A, accent: 0xB2321A, aura: 0xFF8A3D, horns: "round", mane: "none",  tail: "flame",   wings: false, extra: "embers" },
 };
 
+// Scale per stage. The old ramp (0.9 + stage * 0.26) only spanned 2.2x across
+// the whole ladder, so an egg and a legend read as the same animal at slightly
+// different sizes. This spans 5.2x — you can tell who has been working from
+// across the classroom, which is the whole point of putting it on a screen.
+const PET_STAGE_SCALE = [0.5, 0.85, 1.2, 1.65, 2.1, 2.6];
+const LEGEND_STAGE = 5;
+
 // ─────────────────────────── 3D park ───────────────────────────
 
 function PetPark3D({ report, onPick }) {
@@ -442,7 +449,7 @@ function PetPark3D({ report, onPick }) {
         [[-0.3, 0.3], [0.3, 0.3], [-0.3, -0.32], [0.3, -0.32]].forEach(leg =>
           add(ballGeo, accM, [leg[0], 0.17, leg[1]], [0.18, 0.15, 0.22]));
 
-        if (stage === 4) { // 传说 — a slowly turning ring of light
+        if (stage === LEGEND_STAGE) { // 传说 — a slowly turning ring of light
           const ring = new THREE.Mesh(
             ringGeo,
             keep(new THREE.MeshBasicMaterial({ color: L.aura, transparent: true, opacity: 0.85 }))
@@ -465,20 +472,48 @@ function PetPark3D({ report, onPick }) {
       const startAspect = startRect.height > 0 ? startRect.width / startRect.height : 1.4;
       const spreadScale = startAspect < 1 ? 0.7 : startAspect < 1.15 ? 0.85 : 1;
 
+      // Each beast gets its OWN patch of grass and stays on it. The old version
+      // had them wandering, which made the park restless and made it hard to
+      // find your own — and a name tag chasing a moving target never settles.
+      const spotGeo = keep(new THREE.CircleGeometry(1, 22));
+      const spotMat = mat(0x8CC167), spotRimMat = mat(0x6F9E52);
+      const innerCount = Math.min(6, Math.max(1, Math.round(report.length / 3)));
+      // Beasts face the held camera rather than the middle, so the school sees
+      // faces instead of 19 backs.
+      const faceX = Math.cos(0.7) * 40, faceZ = Math.sin(0.7) * 40;
+
       const pets = [];
       report.forEach((row, i) => {
         const p = row.pet;
         // displayStageIndex, not stageIndex: a starving beast is literally
         // smaller in the park, matching the rule the UI already states.
         const grp = buildBeast(p.species.id, p.displayStageIndex);
-        const scale = 0.9 + p.displayStageIndex * 0.26;
+        const scale = PET_STAGE_SCALE[p.displayStageIndex] || PET_STAGE_SCALE[0];
         grp.scale.setScalar(scale);
 
-        const a = (i / Math.max(1, report.length)) * Math.PI * 2 + (i * 0.7) % 1;
-        // A phone's canvas is taller than it is wide, so a ring sized for a
-        // desktop frame spills out both sides. Pack it in on portrait.
-        const r = (5.5 + ((i * 4.3) % 10.5)) * spreadScale;
+        // Two rings so nineteen beasts have room even at legend size; the outer
+        // ring is offset half a step so nobody hides directly behind anybody.
+        const inner = i < innerCount;
+        const n = inner ? innerCount : Math.max(1, report.length - innerCount);
+        const k = inner ? i : i - innerCount;
+        const a = (k / n) * Math.PI * 2 + (inner ? 0 : Math.PI / n);
+        const r = (inner ? 7 : 14.5) * spreadScale;
         grp.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+        grp.rotation.y = Math.atan2(faceX - grp.position.x, faceZ - grp.position.z);
+
+        const padR = 1.5 + scale * 0.75;
+        const rim = new THREE.Mesh(spotGeo, spotRimMat);
+        rim.rotation.x = -Math.PI / 2;
+        rim.position.set(grp.position.x, 0.015, grp.position.z);
+        rim.scale.setScalar(padR);
+        rim.receiveShadow = true;
+        scene.add(rim);
+        const pad = new THREE.Mesh(spotGeo, spotMat);
+        pad.rotation.x = -Math.PI / 2;
+        pad.position.set(grp.position.x, 0.03, grp.position.z);
+        pad.scale.setScalar(padR * 0.86);
+        pad.receiveShadow = true;
+        scene.add(pad);
 
         const look = PET_LOOKS[p.species.id] || PET_LOOKS.qilin;
         const aura = new THREE.Sprite(keep(new THREE.SpriteMaterial({
@@ -489,6 +524,7 @@ function PetPark3D({ report, onPick }) {
           blending: THREE.AdditiveBlending,
           depthWrite: false,
         })));
+        const auraOpacity = aura.material.opacity;
         aura.scale.set(3.2 * scale, 3.2 * scale, 1);
         aura.position.set(grp.position.x, 0.9 * scale, grp.position.z);
         scene.add(aura);
@@ -515,27 +551,25 @@ function PetPark3D({ report, onPick }) {
 
         pets.push({
           row: row, group: grp, aura: aura, tag: tag, scale: scale,
-          speed: (p.hunger.key === "starving" || p.displayStageIndex === 0) ? 0 : 0.4 + ((i * 13) % 10) / 24,
+          baseRot: grp.rotation.y, auraOpacity: auraOpacity,
           phase: (i * 1.3) % 6.28,
           blink: 1 + (i % 5),
-          target: new THREE.Vector3(),
+          cheer: 0,
         });
       });
 
       const tmp = new THREE.Vector3();
-      function retarget(p) {
-        const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 13;
-        p.target.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-      }
-      pets.forEach(retarget);
 
       // ── camera: a HELD composition, not an auto-orbit ──
       // The old version span forever, which made the park unwatchable and left
       // students unable to look at their own beast. Now it sits at one composed
       // angle with a barely-perceptible drift; dragging looks around and it
       // eases back to the composition a few seconds after release.
-      const BASE_ANGLE = 0.7, BASE_DIST = 29, BASE_HEIGHT = 20;
+      const BASE_ANGLE = 0.7, BASE_DIST = 41, BASE_HEIGHT = 27;
       let fitScale = 1;
+      const CHEER_DUR = 1.25;
+      const cheerTimers = [];
+      cleanupFns.push(() => cheerTimers.forEach(clearTimeout));
       let userAngle = 0, userDist = 0, idleSince = 0;
       let dragging = false, lastX = 0, moved = 0;
       const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -561,7 +595,16 @@ function PetPark3D({ report, onPick }) {
             let obj = hits[0].object;
             while (obj.parent && !pets.find(p => p.group === obj)) obj = obj.parent;
             const found = pets.find(p => p.group === obj);
-            if (found && onPick) onPick(found.row.id);
+            if (found) {
+              found.cheer = CHEER_DUR;
+              // Let the beast get its hop in before the card covers it —
+              // tapping should feel like poking the creature, not opening a
+              // dialog box.
+              if (onPick) {
+                const timer = setTimeout(() => onPick(found.row.id), 520);
+                cheerTimers.push(timer);
+              }
+            }
           }
         }
         dragging = false;
@@ -639,27 +682,31 @@ function PetPark3D({ report, onPick }) {
         const rect = host.getBoundingClientRect();
         pets.forEach(p => {
           const g = p.group;
-          if (p.speed > 0) {
-            tmp.copy(p.target).sub(g.position);
-            tmp.y = 0;
-            if (tmp.length() < 0.6) retarget(p);
-            else {
-              tmp.normalize();
-              g.position.addScaledVector(tmp, p.speed * dt * 2.2);
-              g.rotation.y = Math.atan2(tmp.x, tmp.z);
-              p.phase += dt * 6.5;
-              const hop = Math.abs(Math.sin(p.phase));
-              g.position.y = hop * 0.13 * p.scale;
-              // squash and stretch sells the bounce more than the height does
-              g.scale.set(
-                p.scale * (1 + (1 - hop) * 0.05),
-                p.scale * (1 + hop * 0.07),
-                p.scale * (1 + (1 - hop) * 0.05)
-              );
-              if (g.userData.head) g.userData.head.rotation.x = Math.sin(p.phase) * 0.06;
+          if (p.cheer > 0) {
+            // Tapped: three hops, one full spin, a squash on each landing.
+            p.cheer = Math.max(0, p.cheer - dt);
+            const prog = 1 - p.cheer / CHEER_DUR;
+            const hop = Math.abs(Math.sin(prog * Math.PI * 3));
+            g.position.y = hop * 0.6 * p.scale;
+            g.rotation.y = p.baseRot + prog * Math.PI * 2;
+            g.scale.set(
+              p.scale * (1 + (1 - hop) * 0.1),
+              p.scale * (1 + hop * 0.14),
+              p.scale * (1 + (1 - hop) * 0.1)
+            );
+            if (g.userData.head) g.userData.head.rotation.x = -Math.sin(prog * Math.PI * 3) * 0.22;
+            p.aura.material.opacity = p.auraOpacity + 0.35 * (1 - prog);
+            if (p.cheer === 0) {                 // settle back exactly
+              g.rotation.y = p.baseRot;
+              g.scale.setScalar(p.scale);
+              g.position.y = 0;
+              p.aura.material.opacity = p.auraOpacity;
+              if (g.userData.head) g.userData.head.rotation.x = 0;
             }
           } else {
-            g.position.y = Math.sin(t * 1.5 + p.phase) * 0.035;
+            // Idle on its own pad: a slow breath and a lazy look around.
+            g.position.y = Math.sin(t * 1.5 + p.phase) * 0.04 * p.scale;
+            g.rotation.y = p.baseRot + Math.sin(t * 0.5 + p.phase) * 0.16;
           }
 
           p.aura.position.set(g.position.x, 0.9 * p.scale, g.position.z);
@@ -744,7 +791,7 @@ function PetPark3D({ report, onPick }) {
         </div>
       )}
       {status === "ready" && (
-        <div className="park-hint">🖱️ 拖动看四周 · 放手后自动回原位 · 点神兽看详情</div>
+        <div className="park-hint">🖱️ 拖动看四周 · 点一下神兽，它会跳给你看</div>
       )}
     </div>
   );
@@ -777,8 +824,9 @@ function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => 
         </div>
 
         <div className="pet-rule-note">
-          🍽️ 宠物会自动吃你赚到的星星 —— <b>换礼物不会让宠物变小</b>。
-          太久没有新星星，宠物会饿哦！
+          🥚 <b>每个月 1 号，全部变回蛋</b>，重新开始养 —— 这个月拿到的星星决定它长多大。
+          10 ⭐ 破蛋 · 30 幼兽 · 70 少年 · 90 成年 · 120 传说。
+          被扣星星会缩小，<b>换礼物不会</b>。太久没有新星星，还会饿哦！
         </div>
 
         <div className="pet-summary">
@@ -937,7 +985,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <div className="pet-modal-stats">
           <div className="pet-stat">
-            <b>{p.exp}</b><span>成长值 ⭐</span>
+            <b>{p.exp}</b><span>本月 ⭐</span>
           </div>
           <div className="pet-stat">
             <b>{p.hunger.icon}</b><span>{p.hunger.zh}</span>
