@@ -458,6 +458,13 @@ function PetPark3D({ report, onPick }) {
         return g;
       }
 
+      // Portrait canvases (phones) see a much narrower slice of the world at a
+      // given camera distance, so both the ring of beasts and the camera pull
+      // in/back to keep the whole park in frame.
+      const startRect = host.getBoundingClientRect();
+      const startAspect = startRect.height > 0 ? startRect.width / startRect.height : 1.4;
+      const spreadScale = startAspect < 1 ? 0.7 : startAspect < 1.15 ? 0.85 : 1;
+
       const pets = [];
       report.forEach((row, i) => {
         const p = row.pet;
@@ -468,7 +475,9 @@ function PetPark3D({ report, onPick }) {
         grp.scale.setScalar(scale);
 
         const a = (i / Math.max(1, report.length)) * Math.PI * 2 + (i * 0.7) % 1;
-        const r = 5.5 + ((i * 4.3) % 10.5);
+        // A phone's canvas is taller than it is wide, so a ring sized for a
+        // desktop frame spills out both sides. Pack it in on portrait.
+        const r = (5.5 + ((i * 4.3) % 10.5)) * spreadScale;
         grp.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
 
         const look = PET_LOOKS[p.species.id] || PET_LOOKS.qilin;
@@ -526,6 +535,7 @@ function PetPark3D({ report, onPick }) {
       // angle with a barely-perceptible drift; dragging looks around and it
       // eases back to the composition a few seconds after release.
       const BASE_ANGLE = 0.7, BASE_DIST = 29, BASE_HEIGHT = 20;
+      let fitScale = 1;
       let userAngle = 0, userDist = 0, idleSince = 0;
       let dragging = false, lastX = 0, moved = 0;
       const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
@@ -582,6 +592,11 @@ function PetPark3D({ report, onPick }) {
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+        // Visible half-width at the look-at point is d * tan(fov/2) * aspect.
+        // Below the desktop aspect that shrinks fast, so scale the distance by
+        // how much narrower the frame is — capped, or a phone ends up so far
+        // back the beasts are specks.
+        fitScale = Math.min(1.7, Math.max(1, 1.35 / (w / h)));
       }
       resize();
       requestAnimationFrame(resize);
@@ -609,9 +624,15 @@ function PetPark3D({ report, onPick }) {
           }
         }
         const angle = BASE_ANGLE + drift + userAngle;
-        const dist = BASE_DIST + userDist;
-        camera.position.set(Math.cos(angle) * dist, BASE_HEIGHT + userDist * 0.5, Math.sin(angle) * dist);
-        camera.lookAt(0, 1.5, 0);
+        const dist = BASE_DIST * fitScale + userDist;
+        camera.position.set(
+          Math.cos(angle) * dist,
+          BASE_HEIGHT * fitScale + userDist * 0.5,
+          Math.sin(angle) * dist
+        );
+        // Pulled back on a phone the park sinks to the bottom of a tall frame
+        // under a slab of empty sky; aiming lower tips it back up into view.
+        camera.lookAt(0, 1.5 - (fitScale - 1) * 7, 0);
 
         motes.rotation.y += dt * 0.02;
 
@@ -668,6 +689,12 @@ function PetPark3D({ report, onPick }) {
           if (p.sz >= 1) { p.tag.style.opacity = 0; return; }
           const w = p.tag.offsetWidth || 90, h = p.tag.offsetHeight || 34;
           const box = { l: p.sx - w / 2, r: p.sx + w / 2, t: p.sy - h, b: p.sy };
+          // A tag clipped by the canvas edge reads as a broken half-name, so
+          // hide it rather than show "…依的白虎".
+          if (box.l < 2 || box.r > rect.width - 2 || box.t < 0 || box.b > rect.height) {
+            p.tag.style.opacity = 0;
+            return;
+          }
           const hit = placed.some(q => !(box.r < q.l || box.l > q.r || box.b < q.t || box.t > q.b));
           p.tag.style.opacity = hit ? 0 : 1;
           if (!hit) {
