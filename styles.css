@@ -4426,6 +4426,7 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
   min-width: 1440px;
   min-height: 1024px;
   overflow: hidden;
+  container-type: size;
 }
 
 .cinematic-park-background {
@@ -4442,7 +4443,22 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 .cinematic-beast {
   --wander-delay: 0s;
   --wander-duration: 20s;
+  --roam-x1: var(--desktop-roam-x1, 0cqw);
+  --roam-y1: var(--desktop-roam-y1, 0cqh);
+  --roam-s1: var(--desktop-roam-s1, 1);
+  --roam-x2: var(--desktop-roam-x2, 0cqw);
+  --roam-y2: var(--desktop-roam-y2, 0cqh);
+  --roam-s2: var(--desktop-roam-s2, 1);
+  --roam-x3: var(--desktop-roam-x3, 0cqw);
+  --roam-y3: var(--desktop-roam-y3, 0cqh);
+  --roam-s3: var(--desktop-roam-s3, 1);
+  --roam-x4: var(--desktop-roam-x4, 0cqw);
+  --roam-y4: var(--desktop-roam-y4, 0cqh);
+  --roam-s4: var(--desktop-roam-s4, 1);
   position: absolute;
+  left: var(--park-x, 50%);
+  top: var(--park-y, 50%);
+  width: var(--pet-width, 88px);
   appearance: none;
   display: block;
   height: auto;
@@ -4453,34 +4469,28 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
   transform-origin: 50% 86%;
   animation-duration: var(--wander-duration);
   animation-delay: var(--wander-delay);
-  animation-timing-function: ease-in-out;
+  animation-name: cinematic-free-roam;
+  animation-timing-function: cubic-bezier(.45,.05,.55,.95);
   animation-iteration-count: infinite;
+  animation-direction: var(--wander-direction, normal);
   will-change: transform;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.cinematic-beast.route-glide,
-.cinematic-beast.route-serpent { animation-name: cinematic-roam-wide; }
-.cinematic-beast.route-prowl,
-.cinematic-beast.route-slink,
-.cinematic-beast.route-dart { animation-name: cinematic-roam-side; }
-.cinematic-beast.route-graze,
-.cinematic-beast.route-sway,
-.cinematic-beast.route-amble { animation-name: cinematic-roam-soft; }
 
-@keyframes cinematic-roam-wide {
-  0%, 100% { transform: translate(-50%, -50%) translate3d(-24px, 4px, 0) rotate(-1.2deg); }
-  34% { transform: translate(-50%, -50%) translate3d(14px, -13px, 0) rotate(.7deg); }
-  68% { transform: translate(-50%, -50%) translate3d(28px, 5px, 0) rotate(1.1deg); }
+@keyframes cinematic-free-roam {
+  0%, 100% { transform: translate(-50%, -50%) translate3d(0, 0, 0) scale(1) rotate(0); }
+  22% { transform: translate(-50%, -50%) translate3d(var(--roam-x1), var(--roam-y1), 0) scale(var(--roam-s1)) rotate(-1deg); }
+  48% { transform: translate(-50%, -50%) translate3d(var(--roam-x2), var(--roam-y2), 0) scale(var(--roam-s2)) rotate(.8deg); }
+  74% { transform: translate(-50%, -50%) translate3d(var(--roam-x3), var(--roam-y3), 0) scale(var(--roam-s3)) rotate(-.6deg); }
+  90% { transform: translate(-50%, -50%) translate3d(var(--roam-x4), var(--roam-y4), 0) scale(var(--roam-s4)) rotate(.5deg); }
 }
-@keyframes cinematic-roam-side {
-  0%, 100% { transform: translate(-50%, -50%) translate3d(-18px, 0, 0) rotate(-.8deg); }
-  50% { transform: translate(-50%, -50%) translate3d(22px, -5px, 0) rotate(.9deg); }
-}
-@keyframes cinematic-roam-soft {
-  0%, 100% { transform: translate(-50%, -50%) translate3d(-8px, 2px, 0); }
-  45% { transform: translate(-50%, -50%) translate3d(10px, -7px, 0) rotate(.5deg); }
-  70% { transform: translate(-50%, -50%) translate3d(3px, 2px, 0) rotate(-.4deg); }
+
+.cinematic-beast-body {
+  position: relative;
+  display: block;
+  width: 100%;
+  transform-origin: 50% 86%;
 }
 
 .cinematic-beast-art {
@@ -4525,6 +4535,8 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 
 .cinematic-beast.is-performing {
   z-index: 79 !important;
+}
+.cinematic-beast.is-performing .cinematic-beast-body {
   animation: cinematic-pet-response 1.2s cubic-bezier(.2,.8,.2,1) both;
 }
 .cinematic-beast.is-performing .cinematic-beast-art {
@@ -4537,11 +4549,11 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
           drop-shadow(0 0 30px var(--pet-aura));
 }
 @keyframes cinematic-pet-response {
-  0% { transform: translate(-50%, -50%) scale(1) rotate(0); }
-  24% { transform: translate(-50%, -50%) translate3d(0,-12px,0) scale(1.08) rotate(-2deg); }
-  48% { transform: translate(-50%, -50%) translate3d(8px,-8px,0) scale(1.12) rotate(2.2deg); }
-  72% { transform: translate(-50%, -50%) translate3d(-4px,-5px,0) scale(1.09) rotate(-1deg); }
-  100% { transform: translate(-50%, -50%) scale(1.03) rotate(0); }
+  0% { transform: scale(1) rotate(0); }
+  24% { transform: translate3d(0,-12px,0) scale(1.08) rotate(-2deg); }
+  48% { transform: translate3d(8px,-8px,0) scale(1.12) rotate(2.2deg); }
+  72% { transform: translate3d(-4px,-5px,0) scale(1.09) rotate(-1deg); }
+  100% { transform: scale(1.03) rotate(0); }
 }
 
 .cinematic-owner-tag {
@@ -4662,6 +4674,7 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 }
 .cinematic-park-guide .material-symbols-rounded { color: #E9D49B; font-size: 18px; }
 .cinematic-park-guide i { width: 1px; height: 16px; background: rgba(255,255,255,.18); }
+.cinematic-guide-fit { display: none; }
 
 .cinematic-view-switch {
   position: absolute;
@@ -4707,8 +4720,8 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 .cinematic-roster-head span { font-size: 11px; color: #DCC27F; letter-spacing: .12em; }
 .cinematic-roster-head b { font-size: 17px; }
 .cinematic-roster-head button {
-  width: 38px;
-  height: 38px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(238,217,162,.2);
@@ -4785,6 +4798,37 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 .pet-modal::-webkit-scrollbar-track { background: transparent; }
 .pet-modal::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(220,194,127,.38); }
 .pet-modal .login-modal-close { color: #F7F0D9; background: rgba(255,255,255,.06); }
+.pet-modal-close-dock {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+.pet-modal .pet-modal-close {
+  position: relative;
+  top: -10px;
+  right: -10px;
+  width: 60px;
+  min-width: 60px;
+  height: 60px;
+  min-height: 60px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(238,217,162,.34);
+  color: #FFF9E7;
+  background: rgba(8,25,20,.94);
+  box-shadow: 0 10px 26px rgba(0,0,0,.38);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.pet-modal .pet-modal-close .material-symbols-rounded { font-size: 32px; }
+.pet-modal .pet-modal-close:active { transform: scale(.94); background: rgba(27,62,50,.98); }
 .pet-modal .star-modal-title,
 .pet-modal .pet-next-note { color: #F7F0D9; }
 .pet-modal .star-modal-title small,
@@ -4955,16 +4999,58 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
 .pet-evolution-stage > span { display: block; margin-top: 2px; color: rgba(247,240,217,.48); font-size: 9px; }
 
 @media (max-width: 560px) {
-  .pet-evolution-preview { width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: rgba(220,194,127,.3) transparent; }
-  .pet-evolution-preview::-webkit-scrollbar { height: 4px; }
-  .pet-evolution-preview::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(220,194,127,.3); }
-  .pet-evolution-heading { position: sticky; left: 0; }
-  .pet-legend-goal-chip { right: 48px; }
+  .login-modal-backdrop {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+  .pet-modal {
+    max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    padding: 14px 14px 12px;
+  }
+  .pet-modal .pet-modal-close { top: -7px; right: -7px; width: 64px; min-width: 64px; height: 64px; min-height: 64px; }
+  .pet-modal-hero.is-legend-goal { width: min(330px, 86vw); height: 232px; margin-top: 0; margin-bottom: 8px; }
+  .pet-modal .star-modal-title { margin-bottom: 8px; font-size: 16px; }
+  .pet-modal-stats { margin: 8px 0; }
+  .pet-stat { padding: 6px 4px; }
+  .pet-stat b { font-size: 18px; }
+  .pet-evolution-preview { width: 100%; max-width: 100%; margin: 8px 0 6px; padding: 10px 8px 8px; overflow: hidden; }
+  .pet-evolution-heading { margin-bottom: 7px; }
+  .pet-evolution-track { grid-template-columns: repeat(6, minmax(0, 1fr)); min-width: 0; gap: 2px; }
+  .pet-evolution-stage { padding: 6px 1px 5px; }
+  .pet-evolution-stage > b { font-size: 8px; }
+  .pet-evolution-stage > span { font-size: 7px; }
+  .pet-legend-goal-chip { right: 76px; }
+  .pet-progress-block { margin: 6px 0; }
+  .pet-hunger-note { margin-top: 6px; padding: 7px 10px; font-size: 12px; }
 }
 
 @media (max-width: 720px) {
-  .cinematic-park { min-height: 100%; }
-  .cinematic-park-world { width: 1180px; min-width: 1180px; height: 1024px; min-height: 1024px; }
+  .cinematic-pet-view,
+  .cinematic-park { height: 100dvh; min-height: 0; }
+  .cinematic-park-scroller {
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    cursor: default;
+  }
+  .cinematic-park-world { width: 100%; min-width: 0; height: 100%; min-height: 0; }
+  .cinematic-beast {
+    --roam-x1: var(--mobile-roam-x1, 0cqw);
+    --roam-y1: var(--mobile-roam-y1, 0cqh);
+    --roam-s1: var(--mobile-roam-s1, 1);
+    --roam-x2: var(--mobile-roam-x2, 0cqw);
+    --roam-y2: var(--mobile-roam-y2, 0cqh);
+    --roam-s2: var(--mobile-roam-s2, 1);
+    --roam-x3: var(--mobile-roam-x3, 0cqw);
+    --roam-y3: var(--mobile-roam-y3, 0cqh);
+    --roam-s3: var(--mobile-roam-s3, 1);
+    --roam-x4: var(--mobile-roam-x4, 0cqw);
+    --roam-y4: var(--mobile-roam-y4, 0cqh);
+    --roam-s4: var(--mobile-roam-s4, 1);
+    left: var(--mobile-x, 50%);
+    top: var(--mobile-y, 50%);
+    width: var(--mobile-pet-width, 58px);
+    z-index: var(--mobile-depth, 30) !important;
+  }
   .cinematic-park-title { top: 76px; left: 16px; }
   .cinematic-park-title > .material-symbols-rounded { font-size: 26px; }
   .cinematic-park-title h1 { font-size: 25px; }
@@ -4980,17 +5066,26 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
   }
   .cinematic-park-filters::-webkit-scrollbar { display: none; }
   .cinematic-park-filters button { min-height: 38px; padding: 7px 11px; font-size: 12px; flex: 0 0 auto; }
-  .cinematic-owner-tag { padding: 5px 9px 5px 7px; }
-  .cinematic-owner-tag b { font-size: 11px; }
-  .cinematic-owner-tag > span:last-child { font-size: 9px; }
-  .cinematic-park-guide { bottom: 78px; font-size: 11px; padding: 8px 11px; }
-  .cinematic-view-switch { right: 14px; bottom: 18px; }
-  .cinematic-reaction { bottom: 126px; border-radius: 16px; text-align: center; }
+  .cinematic-owner-tag {
+    width: 116px;
+    min-width: 116px;
+    max-width: 116px;
+    grid-template-columns: 6px minmax(0, 1fr);
+    column-gap: 4px;
+    padding: 4px 5px;
+    border-radius: 11px;
+  }
+  .cinematic-owner-tag b { font-size: 8px; line-height: 1.05; white-space: normal; text-align: left; }
+  .cinematic-owner-tag > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 7px; }
+  .cinematic-team-dot { width: 6px; height: 6px; }
+  .cinematic-park-guide { display: none; }
+  .cinematic-view-switch { right: 14px; bottom: max(14px, env(safe-area-inset-bottom)); }
+  .cinematic-reaction { bottom: max(124px, calc(112px + env(safe-area-inset-bottom))); border-radius: 16px; text-align: center; }
   .cinematic-roster {
     top: auto;
     left: 10px;
     right: 10px;
-    bottom: 72px;
+    bottom: max(72px, calc(62px + env(safe-area-inset-bottom)));
     width: auto;
     height: min(64vh, 590px);
     border-radius: 22px;
@@ -5000,6 +5095,12 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
   body.pet-cinema-active .mode-switcher { max-width: calc(100vw - 118px); }
   body.pet-cinema-active .mode-switcher button { padding: 7px 9px; }
   body.pet-cinema-active .mode-switcher .mode-label { display: none; }
+}
+
+@media (max-width: 720px) and (max-height: 700px) {
+  .pet-modal-hero.is-legend-goal { height: 184px; }
+  .pet-current-state-chip > img { width: 32px; height: 32px; }
+  .pet-evolution-artbox { max-height: 88px; }
 }
 
 @media (max-height: 660px) and (min-width: 721px) {
@@ -5013,4 +5114,5 @@ body.pet-cinema-active .sync-status.cloud { color: #8DE5CA; }
   .cinematic-beast.is-performing,
   .cinematic-roster,
   .cinematic-reaction { animation: none !important; transition: none !important; }
+  .cinematic-beast { transform: translate(-50%, -50%) !important; }
 }

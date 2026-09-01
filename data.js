@@ -657,24 +657,15 @@ const PET_SPECIES = [
   { id: "firemouse",  zh: "火鼠",   en: "Fire Mouse",     aura: "#FF8A3D", stages: ["🥚", "🐣", "🐭", "🐹", "🐀", "🌋"] },
 ];
 
-// Exp thresholds, calibrated against the school's real ledger (756 star events,
-// 19 students, lifetime totals 0–244, median ~105). Earlier draft values
-// (8/25/60/120) put 42% of the school at max stage on day one, which kills the
-// point of the game — these spread the current roster across all five stages
-// and leave 传说 as a genuine year-long goal nobody has reached yet.
-// Six stages on a MONTHLY cycle — everyone starts each month as an egg.
-// Calibrated against the school's real per-month numbers (19 students; best
-// month max 123, median 40): almost every child clears 10, about half clear
-// 30, and 70+ is the top handful. 150 has never been reached in a single
-// month, so the top two sit at 90 and 120 instead: in the best month so far
-// 90 would have been reached by three children and 120 by the one who scored
-// 123 — hard, but not theoretical.
+// Monthly growth milestones intentionally reward the first effort quickly:
+// one 10-star step visibly starts the hatch, 20 reveals the full cub, and the
+// larger jumps are reserved for the increasingly cinematic later forms.
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
   { minExp: 10,  zh: "破蛋", en: "Hatching" },
-  { minExp: 30,  zh: "幼兽", en: "Cub" },
-  { minExp: 70,  zh: "少年", en: "Junior" },
-  { minExp: 90,  zh: "成年", en: "Adult" },
+  { minExp: 20,  zh: "幼兽", en: "Cub" },
+  { minExp: 50,  zh: "少年", en: "Junior" },
+  { minExp: 80,  zh: "成年", en: "Adult" },
   { minExp: 120, zh: "传说", en: "Legend" },
 ];
 

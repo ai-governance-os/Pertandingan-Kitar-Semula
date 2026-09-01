@@ -87,7 +87,7 @@ const LEGEND_STAGE = 5;
 // nineteen students in one living world without downloading a second 3D engine.
 const CINEMATIC_PET_ASSET_BASE = "assets/pet-park/beasts";
 const CINEMATIC_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg.png`;
-const CINEMATIC_CRACKED_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg-cracked.png`;
+const CINEMATIC_HATCHING_EGG_ASSET = `${CINEMATIC_PET_ASSET_BASE}/egg-hatching.png`;
 const CINEMATIC_PET_ASSETS = {
   qilin: `${CINEMATIC_PET_ASSET_BASE}/qilin.png`,
   phoenix: `${CINEMATIC_PET_ASSET_BASE}/phoenix.png`,
@@ -171,12 +171,49 @@ function cinematicPetAsset(row) {
 
 const CINEMATIC_STAGE_VISUALS = [
   { key: "egg",      width: 88,  previewHeight: 42, asset: () => CINEMATIC_EGG_ASSET },
-  { key: "hatching", width: 106, previewHeight: 52, asset: () => CINEMATIC_CRACKED_EGG_ASSET },
+  { key: "hatching", width: 106, previewHeight: 58, asset: () => CINEMATIC_HATCHING_EGG_ASSET },
   { key: "cub",      scale: .50, previewHeight: 62, asset: cinematicPetAsset },
   { key: "junior",   scale: .72, previewHeight: 80, asset: cinematicPetAsset },
   { key: "adult",    scale: .96, previewHeight: 100, asset: cinematicPetAsset },
   { key: "legend",   scale: 1.25, previewHeight: 122, asset: cinematicPetAsset },
 ];
+
+// Phones use a portrait composition instead of shrinking the 1440px desktop
+// world. Three columns keep all nineteen owners visible in one screen while
+// preserving a comfortable tap target and unmistakable stage-size changes.
+const CINEMATIC_MOBILE_STAGE_WIDTHS = [58, 68, 80, 96, 116, 140];
+
+function cinematicMobileAnchor(index, stageIndex) {
+  const column = index % 3;
+  const row = Math.floor(index / 3);
+  return {
+    x: index === 18 ? 50 : [17, 50, 83][column],
+    y: 23.5 + row * 10.35,
+    depth: 30 + row,
+    width: CINEMATIC_MOBILE_STAGE_WIDTHS[stageIndex] || CINEMATIC_MOBILE_STAGE_WIDTHS[0],
+  };
+}
+
+function cinematicRoamVariables(index, start, mobile = false) {
+  const prefix = mobile ? "mobile" : "desktop";
+  const variables = {};
+  for (let step = 0; step < 4; step += 1) {
+    const point = mobile
+      ? {
+          x: 16 + ((index * 29 + step * 47 + 11) % 68),
+          y: 24 + ((index * 31 + step * 29 + 7) % 56),
+        }
+      : {
+          x: 10 + ((index * 37 + step * 53 + 13) % 80),
+          y: 22 + ((index * 29 + step * 31 + 5) % 58),
+        };
+    const number = step + 1;
+    variables[`--${prefix}-roam-x${number}`] = `${(point.x - start.x).toFixed(2)}cqw`;
+    variables[`--${prefix}-roam-y${number}`] = `${(point.y - start.y).toFixed(2)}cqh`;
+    variables[`--${prefix}-roam-s${number}`] = (1 + (point.y - start.y) * .0015).toFixed(3);
+  }
+  return variables;
+}
 
 const CINEMATIC_EGG_HUES = {
   qilin: 8, phoenix: 326, ninetail: 78, yinglong: 6, baize: 184,
@@ -1008,7 +1045,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
       <div
         className="cinematic-park-scroller"
         ref={scrollerRef}
-        aria-label="拖动浏览整座神兽乐园"
+        aria-label="十九只神兽同屏活动；桌面可拖动浏览，手机已自动适配全景"
       >
         <div className="cinematic-park-world">
           <img
@@ -1024,18 +1061,29 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
             const isDimmed = teamFilter !== "all" && row.teamId !== teamFilter;
             const ownerName = row.name.split(" ").slice(-1)[0];
             const displayStage = row.pet.displayStageIndex;
+            const mobileLayout = cinematicMobileAnchor(index, displayStage);
+            const desktopRoam = cinematicRoamVariables(index, layout);
+            const mobileRoam = cinematicRoamVariables(index, mobileLayout, true);
+            const roamDuration = 66 + (index % 5) * 6;
             return (
               <button
                 key={row.id}
                 type="button"
                 className={`cinematic-beast stage-${displayStage} route-${layout.route} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} hunger-${row.pet.hunger.key}`}
                 style={{
-                  left: `${layout.x}%`,
-                  top: `${layout.y}%`,
-                  width: `${cinematicStageWidth(row, layout)}px`,
+                  '--park-x': `${layout.x}%`,
+                  '--park-y': `${layout.y}%`,
+                  '--pet-width': `${cinematicStageWidth(row, layout)}px`,
+                  '--mobile-x': `${mobileLayout.x}%`,
+                  '--mobile-y': `${mobileLayout.y}%`,
+                  '--mobile-pet-width': `${mobileLayout.width}px`,
+                  '--mobile-depth': mobileLayout.depth,
+                  ...desktopRoam,
+                  ...mobileRoam,
                   zIndex: layout.depth,
-                  '--wander-delay': `${-(index * 1.37).toFixed(2)}s`,
-                  '--wander-duration': `${(16 + (index % 7) * 2.3).toFixed(1)}s`,
+                  '--wander-delay': `${-(roamDuration * index / report.length).toFixed(2)}s`,
+                  '--wander-duration': `${roamDuration}s`,
+                  '--wander-direction': index % 2 ? 'reverse' : 'normal',
                   '--pet-aura': row.pet.species.aura,
                   '--team-color': row.teamColor,
                   '--egg-hue': `${CINEMATIC_EGG_HUES[speciesId] || 0}deg`,
@@ -1043,17 +1091,19 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
                 onClick={() => interact(row)}
                 aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。点按互动`}
               >
-                <img
-                  className="cinematic-beast-art"
-                  src={cinematicStageAsset(row)}
-                  alt=""
-                  draggable="false"
-                  loading="eager"
-                />
-                <span className="cinematic-owner-tag">
-                  <span className="cinematic-team-dot" aria-hidden="true" />
-                  <b>{row.name}</b>
-                  <span>{row.pet.nickname || row.pet.species.zh} · {row.pet.stage.zh}</span>
+                <span className="cinematic-beast-body">
+                  <img
+                    className="cinematic-beast-art"
+                    src={cinematicStageAsset(row)}
+                    alt=""
+                    draggable="false"
+                    loading="eager"
+                  />
+                  <span className="cinematic-owner-tag">
+                    <span className="cinematic-team-dot" aria-hidden="true" />
+                    <b>{row.name}</b>
+                    <span>{row.pet.nickname || row.pet.species.zh} · {row.pet.stage.zh}</span>
+                  </span>
                 </span>
               </button>
             );
@@ -1092,8 +1142,10 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
       </div>
 
       <div className="cinematic-park-guide">
-        <span className="material-symbols-rounded" aria-hidden="true">pan_tool_alt</span>
-        <span>拖动浏览</span>
+        <span className="material-symbols-rounded cinematic-guide-pan" aria-hidden="true">pan_tool_alt</span>
+        <span className="cinematic-guide-pan">拖动浏览</span>
+        <span className="material-symbols-rounded cinematic-guide-fit" aria-hidden="true">fit_screen</span>
+        <span className="cinematic-guide-fit">全景已适配</span>
         <i aria-hidden="true" />
         <span className="material-symbols-rounded" aria-hidden="true">touch_app</span>
         <span>点伙伴互动</span>
@@ -1256,9 +1308,11 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
   return (
     <div className="login-modal-backdrop" onClick={onClose}>
       <div className="star-modal pet-modal" onClick={e => e.stopPropagation()}>
-        <button type="button" className="login-modal-close" onClick={onClose} aria-label="关闭详情">
-          <span className="material-symbols-rounded" aria-hidden="true">close</span>
-        </button>
+        <div className="pet-modal-close-dock">
+          <button type="button" className="login-modal-close pet-modal-close" onClick={onClose} aria-label="关闭详情">
+            <span className="material-symbols-rounded" aria-hidden="true">close</span>
+          </button>
+        </div>
 
         <div className={`pet-modal-hero hunger-${p.hunger.key} ${showingLegendGoal ? "is-legend-goal" : ""}`}>
           <img
