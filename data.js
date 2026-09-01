@@ -648,6 +648,13 @@ const PET_SPECIES = [
   { id: "pixiu",     zh: "貔貅",   en: "Pixiu",         aura: "#FFB45A", stages: ["🥚", "🐣", "🐕", "🦁", "💰"] },
   { id: "thunder",   zh: "雷鸟",   en: "Thunderbird",   aura: "#FFE66E", stages: ["🥚", "🐣", "🐦", "🦅", "⚡"] },
   { id: "bamboo",    zh: "竹灵",   en: "Bamboo Spirit", aura: "#96DC78", stages: ["🌰", "🌱", "🌿", "🎋", "🌳"] },
+  { id: "zhuque",     zh: "朱雀",   en: "Vermilion Bird", aura: "#FF5A48", stages: ["🥚", "🐣", "🐦", "🦚", "☀️"] },
+  { id: "xuanwu",     zh: "玄武",   en: "Black Tortoise", aura: "#6FA8CC", stages: ["🥚", "🐣", "🐢", "🐍", "🌑"] },
+  { id: "baihu",      zh: "白虎",   en: "White Tiger",    aura: "#DCE9FF", stages: ["🥚", "🐣", "🐈", "🐅", "⚔️"] },
+  { id: "qinglong",   zh: "青龙",   en: "Azure Dragon",   aura: "#46E0B4", stages: ["🥚", "🐣", "🦎", "🐍", "🍃"] },
+  { id: "griffin",    zh: "狮鹫",   en: "Griffin",        aura: "#FFD98A", stages: ["🥚", "🐣", "🦅", "🦁", "🏅"] },
+  { id: "snowferret", zh: "雪貂灵", en: "Snow Ferret",    aura: "#BFE6FF", stages: ["🥚", "🐣", "🐁", "🦦", "❄️"] },
+  { id: "firemouse",  zh: "火鼠",   en: "Fire Mouse",     aura: "#FF8A3D", stages: ["🥚", "🐣", "🐭", "🐀", "🌋"] },
 ];
 
 // Exp thresholds, calibrated against the school's real ledger (756 star events,
@@ -689,10 +696,47 @@ function hashString(str) {
   return Math.abs(h);
 }
 
+// Every child is meant to have a beast nobody else has. A plain hash % N does
+// not give that — dropping 19 students into 19 species collides on roughly a
+// third of them. So assignment is resolved against the whole roster: each
+// student starts probing at their own hash and takes the first species nobody
+// ahead of them has claimed. Roster order is the stored team/member order, so
+// a newly enrolled student is appended and never reshuffles anyone's beast.
+let speciesMapCache = { key: "", map: null };
+
+function petSpeciesMap(state) {
+  const roster = (state?.teams || []).flatMap(t => (t.members || []).map(m => m.id));
+  const key = roster.map(id => `${id}>${state?.pets?.[id]?.speciesId || ""}`).join(",");
+  if (speciesMapCache.key === key && speciesMapCache.map) return speciesMapCache.map;
+
+  const map = {}, taken = new Set();
+  // teacher's manual 换宠物 wins, and reserves that species from everyone else
+  roster.forEach(id => {
+    const override = state?.pets?.[id]?.speciesId;
+    if (override && PET_SPECIES.some(sp => sp.id === override)) { map[id] = override; taken.add(override); }
+  });
+  roster.forEach(id => {
+    if (map[id]) return;
+    const start = hashString(id) % PET_SPECIES.length;
+    let chosen = PET_SPECIES[start].id; // only reached once every species is taken
+    for (let step = 0; step < PET_SPECIES.length; step++) {
+      const cand = PET_SPECIES[(start + step) % PET_SPECIES.length];
+      if (!taken.has(cand.id)) { chosen = cand.id; break; }
+    }
+    map[id] = chosen;
+    taken.add(chosen);
+  });
+  speciesMapCache = { key, map };
+  return map;
+}
+
 function petSpeciesFor(state, studentId) {
   const override = state?.pets?.[studentId]?.speciesId;
   const picked = override && PET_SPECIES.find(s => s.id === override);
-  return picked || PET_SPECIES[hashString(studentId) % PET_SPECIES.length];
+  if (picked) return picked;
+  const assigned = petSpeciesMap(state)[studentId];
+  return PET_SPECIES.find(s => s.id === assigned) ||
+         PET_SPECIES[hashString(studentId) % PET_SPECIES.length];
 }
 
 function petStageFor(exp) {
@@ -1015,7 +1059,7 @@ Object.assign(window, {
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     redListThreshold, setRedListThreshold,
     // Pets
-    petState, petReport, petSpeciesFor, setPetSpecies, setPetNickname,
+    petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname,
     PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
     exportCSV,
     // AI scan helpers

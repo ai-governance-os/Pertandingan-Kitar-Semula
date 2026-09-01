@@ -64,6 +64,14 @@ const PET_LOOKS = {
   pixiu:     { body: 0xE4B26A, belly: 0xFBDCAE, accent: 0x9A5C24, aura: 0xFFB45A, horns: "single", mane: "flame", tail: "tuft",  wings: true,  extra: "none" },
   thunder:   { body: 0xF2DC81, belly: 0xFFF3C0, accent: 0xD09A1E, aura: 0xFFE66E, horns: "none",   mane: "crest", tail: "plume", wings: true,  extra: "beak" },
   bamboo:    { body: 0x8ECC66, belly: 0xC5E9A6, accent: 0x477F2E, aura: 0x96DC78, horns: "leaf",   mane: "none",  tail: "tuft",  wings: false, extra: "leaves" },
+  // the four 四象 plus three more, so all 19 children get a different beast
+  zhuque:     { body: 0xE0453C, belly: 0xFFB9A0, accent: 0xFFC93C, aura: 0xFF5A48, horns: "none",  mane: "crest", tail: "fan",     wings: true,  extra: "halo" },
+  xuanwu:     { body: 0x4A6B84, belly: 0x9FBED4, accent: 0x2C4358, aura: 0x6FA8CC, horns: "horn",  mane: "none",  tail: "coil",    wings: false, extra: "shell" },
+  baihu:      { body: 0xF0F3F8, belly: 0xFFFFFF, accent: 0x3A3F4A, aura: 0xDCE9FF, horns: "ears",  mane: "none",  tail: "banded",  wings: false, extra: "stripes" },
+  qinglong:   { body: 0x3FBF9A, belly: 0xBFF0DF, accent: 0x1E7A66, aura: 0x46E0B4, horns: "antler", mane: "none", tail: "serpent", wings: false, extra: "serpentine" },
+  griffin:    { body: 0xD9A64E, belly: 0xF7E3B6, accent: 0xF2EFE6, aura: 0xFFD98A, horns: "none",  mane: "flame", tail: "tuft",    wings: true,  extra: "beak" },
+  snowferret: { body: 0xEDF4FF, belly: 0xFFFFFF, accent: 0x9CC8E8, aura: 0xBFE6FF, horns: "ears",  mane: "none",  tail: "sweep",   wings: false, extra: "frost" },
+  firemouse:  { body: 0xE8663A, belly: 0xFFC49A, accent: 0xB2321A, aura: 0xFF8A3D, horns: "round", mane: "none",  tail: "flame",   wings: false, extra: "embers" },
 };
 
 // ─────────────────────────── 3D park ───────────────────────────
@@ -247,23 +255,7 @@ function PetPark3D({ report, onPick }) {
         scene.add(rl);
       }
 
-      // ── dawn atmosphere: pollen drifting through the light ──
-      const moteGeo = keep(new THREE.BufferGeometry());
-      const motePos = new Float32Array(120 * 3);
-      for (let i = 0; i < 120; i++) {
-        const a = (i * 2.399), r = 3 + (i % 20) * 1.05;
-        motePos[i * 3] = Math.cos(a) * r;
-        motePos[i * 3 + 1] = 1 + (i % 9);
-        motePos[i * 3 + 2] = Math.sin(a) * r;
-      }
-      moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
-      const motes = new THREE.Points(moteGeo, keep(new THREE.PointsMaterial({
-        color: 0xFFF3CE, size: 0.26, transparent: true, opacity: 0.85,
-        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-      })));
-      scene.add(motes);
-
-      // soft glow disc reused for every beast's aura
+      // soft glow disc shared by the pollen motes and every beast's aura
       const auraCanvas = document.createElement("canvas");
       auraCanvas.width = auraCanvas.height = 64;
       const actx = auraCanvas.getContext("2d");
@@ -275,6 +267,22 @@ function PetPark3D({ report, onPick }) {
       actx.fillRect(0, 0, 64, 64);
       const auraTex = keep(new THREE.CanvasTexture(auraCanvas));
 
+      // ── dawn atmosphere: pollen drifting through the light ──
+      const moteGeo = keep(new THREE.BufferGeometry());
+      const motePos = new Float32Array(120 * 3);
+      for (let i = 0; i < 120; i++) {
+        const a = (i * 2.399), r = 3 + (i % 20) * 1.05;
+        motePos[i * 3] = Math.cos(a) * r;
+        motePos[i * 3 + 1] = 1 + (i % 9);
+        motePos[i * 3 + 2] = Math.sin(a) * r;
+      }
+      moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
+      const motes = new THREE.Points(moteGeo, keep(new THREE.PointsMaterial({
+        color: 0xFFF3CE, size: 0.26, map: auraTex, transparent: true, opacity: 0.7,
+        blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+      })));
+      scene.add(motes);
+
       // ── the mythic beasts ──
       const ballGeo = keep(new THREE.SphereGeometry(1, 14, 11));
       const eyeGeo = keep(new THREE.SphereGeometry(1, 10, 8));
@@ -283,6 +291,7 @@ function PetPark3D({ report, onPick }) {
       const pupilMat = keep(new THREE.MeshBasicMaterial({ color: 0x2A2118 }));
       const blushMat = keep(new THREE.MeshBasicMaterial({ color: 0xFF9BB0, transparent: true, opacity: 0.7 }));
       const starMat = keep(new THREE.MeshBasicMaterial({ color: 0xFFF6C4 }));
+      const ringGeo = keep(new THREE.TorusGeometry(0.95, 0.07, 6, 20));
 
       function buildBeast(speciesId, stage) {
         const L = PET_LOOKS[speciesId] || PET_LOOKS.qilin;
@@ -339,6 +348,9 @@ function PetPark3D({ report, onPick }) {
           [-1, 1].forEach(s => hAdd(coneGeo, accM, [s * 0.34, 0.56, 0.02], [0.15, 0.34, 0.12], [0, 0, -s * 0.3]));
         } else if (L.horns === "fin") {
           hAdd(coneGeo, accM, [0, 0.6, -0.05], [0.06, 0.42, 0.22]);
+        } else if (L.horns === "round") {
+          [-1, 1].forEach(s => hAdd(ballGeo, accM, [s * 0.44, 0.44, -0.02], [0.26, 0.26, 0.07]));
+          [-1, 1].forEach(s => hAdd(ballGeo, bellyM, [s * 0.44, 0.44, 0.03], [0.17, 0.17, 0.05]));
         } else if (L.horns === "leaf") {
           [-1, 1].forEach(s => hAdd(ballGeo, mat(0x6FCB55), [s * 0.34, 0.52, 0], [0.26, 0.08, 0.14], [0, 0, s * 0.5]));
         }
@@ -373,6 +385,28 @@ function PetPark3D({ report, onPick }) {
           add(ballGeo, bellyM, [0, 0.85, -0.85], [0.26, 0.2, 0.26]);
         } else if (L.tail === "tuft") {
           add(ballGeo, accM, [0, 0.78, -0.82], [0.2, 0.2, 0.2]);
+        } else if (L.tail === "fan") {
+          // 朱雀 — five plumes opened out flat, the widest silhouette in the park
+          [-2, -1, 0, 1, 2].forEach(o =>
+            add(coneGeo, o % 2 ? accM : bodyM, [o * 0.16, 0.86 + Math.abs(o) * 0.04, -0.95],
+                [0.11, 0.75 - Math.abs(o) * 0.09, 0.11], [-1.3, 0, o * 0.26]));
+        } else if (L.tail === "coil") {
+          // 玄武 — the serpent coiled at the shell's rim, head raised
+          [0, 1, 2].forEach(i =>
+            add(ballGeo, accM, [Math.sin(i * 1.7) * 0.34, 0.5 + i * 0.16, -0.72 - i * 0.05], [0.17, 0.15, 0.17]));
+          add(ballGeo, accM, [0.3, 1.0, -0.66], [0.16, 0.13, 0.2]);
+        } else if (L.tail === "banded") {
+          [0, 1, 2].forEach(i =>
+            add(ballGeo, i % 2 ? accM : bodyM, [0, 0.74 + i * 0.05, -0.8 - i * 0.22], [0.16, 0.16, 0.16]));
+        } else if (L.tail === "serpent") {
+          // 青龙 — no wings, so the body itself trails away in segments
+          [0, 1, 2, 3].forEach(i =>
+            add(ballGeo, i === 3 ? accM : bodyM,
+                [Math.sin(i * 1.1) * 0.22, 0.72 - i * 0.06, -0.78 - i * 0.28],
+                [0.3 - i * 0.05, 0.26 - i * 0.045, 0.3 - i * 0.05]));
+        } else if (L.tail === "sweep") {
+          [0, 1, 2].forEach(i =>
+            add(ballGeo, accM, [0, 0.6 - i * 0.1, -0.82 - i * 0.26], [0.19 - i * 0.03, 0.15 - i * 0.02, 0.24]));
         }
 
         if (L.extra === "shell") {
@@ -383,6 +417,26 @@ function PetPark3D({ report, onPick }) {
           [-1, 1].forEach(s => hAdd(ballGeo, starMat, [s * 0.5, 0.95, 0.05], [0.07, 0.07, 0.07]));
         } else if (L.extra === "leaves") {
           add(ballGeo, mat(0x6FCB55), [0.5, 0.9, -0.3], [0.22, 0.07, 0.14], [0, 0.6, 0.4]);
+        } else if (L.extra === "halo") {
+          const halo = new THREE.Mesh(ringGeo, keep(new THREE.MeshBasicMaterial({
+            color: L.aura, transparent: true, opacity: 0.6, depthWrite: false,
+          })));
+          halo.scale.setScalar(0.62);
+          halo.position.set(0, 1.42, -0.42);
+          g.add(halo);
+        } else if (L.extra === "stripes") {
+          [[0, 0.92, 0.12], [0, 0.86, -0.16], [0, 0.76, -0.44]].forEach(p =>
+            add(ballGeo, accM, p, [0.74, 0.05, 0.5]));
+          hAdd(ballGeo, accM, [0, 0.5, 0.12], [0.5, 0.04, 0.4]);
+        } else if (L.extra === "serpentine") {
+          [-1, 1].forEach(s => hAdd(coneGeo, accM, [s * 0.3, -0.06, 0.5], [0.04, 0.6, 0.04], [1.4, 0, s * 0.5]));
+          [0, 1, 2].forEach(i => hAdd(coneGeo, accM, [0, 0.5 - i * 0.02, -0.1 - i * 0.18], [0.07, 0.16, 0.07]));
+        } else if (L.extra === "frost") {
+          [[-0.5, 1.5, 0.1], [0.46, 1.72, -0.2], [0.1, 1.86, 0.25]].forEach(p =>
+            add(coneGeo, starMat, p, [0.09, 0.16, 0.09]));
+        } else if (L.extra === "embers") {
+          [[-0.45, 1.4, -0.3], [0.4, 1.6, -0.1], [0.05, 1.78, -0.42]].forEach(p =>
+            add(ballGeo, mat(0xFFD08A), p, [0.08, 0.08, 0.08]));
         }
 
         [[-0.3, 0.3], [0.3, 0.3], [-0.3, -0.32], [0.3, -0.32]].forEach(leg =>
@@ -390,7 +444,7 @@ function PetPark3D({ report, onPick }) {
 
         if (stage === 4) { // 传说 — a slowly turning ring of light
           const ring = new THREE.Mesh(
-            keep(new THREE.TorusGeometry(0.95, 0.07, 6, 20)),
+            ringGeo,
             keep(new THREE.MeshBasicMaterial({ color: L.aura, transparent: true, opacity: 0.85 }))
           );
           ring.rotation.x = Math.PI / 2;
