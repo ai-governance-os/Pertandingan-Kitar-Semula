@@ -93,25 +93,29 @@ const DEFAULT_REWARD_CATEGORIES = [
 ];
 
 const DEFAULT_REWARD_ITEMS = [
-  { id: "reward_a_bottle", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_bottle.jpg", nameZh: "水瓶", nameEn: "Bottle", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_a_markers", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_markers.jpg", nameZh: "马克笔", nameEn: "Markers", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_a_colored_pencils", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_colored_pencils.jpg", nameZh: "颜色笔", nameEn: "Colour pencils", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_a_premium_toy", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_premium_toy.jpg", nameZh: "特级玩具", nameEn: "Premium toy", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_b_pencil_case", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_pencil_case.jpg", nameZh: "笔袋", nameEn: "Pencil case", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_b_mechanical_pen", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_mechanical_pen.jpg", nameZh: "自动笔", nameEn: "Mechanical pen", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_b_toy", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_toy.jpg", nameZh: "玩具", nameEn: "Toy", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_b_piggy_bank", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_piggy_bank.jpg", nameZh: "扑满", nameEn: "Piggy bank", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_b_chess", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_chess.jpg", nameZh: "棋类游戏", nameEn: "Board game", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_c_keychain", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_keychain.jpg", nameZh: "锁匙扣", nameEn: "Keychain", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_c_eraser", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_eraser.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_c_toy", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_toy.jpg", nameZh: "小玩具", nameEn: "Small toy", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_c_correction_fluid", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_correction_fluid.jpg", nameZh: "涂改液", nameEn: "Correction fluid", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_d_pencils", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_pencils.jpg", nameZh: "铅笔", nameEn: "Pencils", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_d_sharpener", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_sharpener.jpg", nameZh: "铅笔削", nameEn: "Sharpener", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_d_eraser", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_eraser.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_d_stickers", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_stickers.jpg", nameZh: "贴纸", nameEn: "Stickers", quantity: 10, purchaseCostRm: 0, active: true },
-  { id: "reward_d_ruler", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_ruler.jpg", nameZh: "尺", nameEn: "Ruler", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_bottle", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_bottle-v2.jpg", nameZh: "水瓶", nameEn: "Bottle", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_markers", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_markers-v2.jpg", nameZh: "马克笔", nameEn: "Markers", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_colored_pencils", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_colored_pencils-v2.jpg", nameZh: "颜色笔", nameEn: "Colour pencils", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_a_premium_toy", categoryId: "a", icon: "🏆", imageUrl: "assets/rewards/a_premium_toy-v2.jpg", nameZh: "特级玩具", nameEn: "Premium toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_pencil_case", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_pencil_case-v2.jpg", nameZh: "笔袋", nameEn: "Pencil case", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_mechanical_pen", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_mechanical_pen-v2.jpg", nameZh: "自动笔", nameEn: "Mechanical pen", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_toy", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_toy-v2.jpg", nameZh: "玩具", nameEn: "Toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_piggy_bank", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_piggy_bank-v2.jpg", nameZh: "扑满", nameEn: "Piggy bank", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_b_chess", categoryId: "b", icon: "🥈", imageUrl: "assets/rewards/b_chess-v2.jpg", nameZh: "棋类游戏", nameEn: "Board game", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_keychain", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_keychain-v2.jpg", nameZh: "锁匙扣", nameEn: "Keychain", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_eraser", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_eraser-v2.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_toy", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_toy-v2.jpg", nameZh: "小玩具", nameEn: "Small toy", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_c_correction_fluid", categoryId: "c", icon: "🥉", imageUrl: "assets/rewards/c_correction_fluid-v2.jpg", nameZh: "涂改液", nameEn: "Correction fluid", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_pencils", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_pencils-v2.jpg", nameZh: "铅笔", nameEn: "Pencils", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_sharpener", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_sharpener-v2.jpg", nameZh: "铅笔削", nameEn: "Sharpener", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_eraser", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_eraser-v2.jpg", nameZh: "橡皮擦", nameEn: "Eraser", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_stickers", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_stickers-v2.jpg", nameZh: "贴纸", nameEn: "Stickers", quantity: 10, purchaseCostRm: 0, active: true },
+  { id: "reward_d_ruler", categoryId: "d", icon: "⭐", imageUrl: "assets/rewards/d_ruler-v2.jpg", nameZh: "尺", nameEn: "Ruler", quantity: 10, purchaseCostRm: 0, active: true },
 ];
+
+const LEGACY_REWARD_IMAGE_UPGRADES = Object.fromEntries(
+  DEFAULT_REWARD_ITEMS.map(item => [item.imageUrl.replace("-v2.jpg", ".jpg"), item.imageUrl])
+);
 
 const DEFAULT_SETTINGS = {
   aiEnabled: true,
@@ -188,7 +192,7 @@ function normalizeRewardItems(items, categories = DEFAULT_REWARD_CATEGORIES) {
       id: item.id || makeId("reward"),
       categoryId,
       icon: item.icon || (categoryId === "a" ? "🏆" : categoryId === "b" ? "🥈" : categoryId === "c" ? "🥉" : "⭐"),
-      imageUrl: item.imageUrl || "",
+      imageUrl: LEGACY_REWARD_IMAGE_UPGRADES[item.imageUrl] || item.imageUrl || "",
       nameZh: item.nameZh || item.name || `奖品 ${index + 1}`,
       nameEn: item.nameEn || item.name || `Reward ${index + 1}`,
       quantity: Math.max(0, Number(item.quantity) || 0),
