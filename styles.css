@@ -2222,6 +2222,20 @@ button { font-family: inherit; cursor: pointer; }
   border-radius: 14px;
 }
 .cat-row .icon-cell { font-size: 30px; text-align: center; line-height: 1;}
+.category-image {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.category-image img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 1px rgba(20,18,40,0.15));
+}
+.category-image span { font-size: 30px; line-height: 1; }
 .cat-row input, .cat-row .static-text {
   font-family: var(--font-body);
   font-size: 14px;
@@ -2233,6 +2247,7 @@ button { font-family: inherit; cursor: pointer; }
   border-radius: 6px;
   width: 100%;
 }
+.cat-row .static-text { box-sizing: border-box; }
 .cat-row input:focus { outline: 2px solid var(--gold); background: white;}
 .cat-row .lbl { font-size: 10px; color: var(--ink-mute); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
 .cat-row .pts-input {
@@ -2277,6 +2292,8 @@ button { font-family: inherit; cursor: pointer; }
 .cat-row .name-stack { display: flex; flex-direction: column; gap: 0;}
 .cat-row .name-stack input:first-child { font-weight: 700; font-size: 15px; }
 .cat-row .name-stack input:last-child { opacity: 0.7; }
+.cat-row .cat-name-primary { font-weight: 800; font-size: 15px; }
+.cat-row .cat-name-secondary { opacity: 0.72; }
 .add-cat-btn {
   margin-top: 12px;
   border: 2px dashed var(--ink-mute);
@@ -2290,6 +2307,152 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 15px;
 }
 .add-cat-btn:hover { border-color: var(--ink); color: var(--ink); background: var(--bg-cream); }
+
+/* ── Admin roster management ─────────────────────── */
+.roster-section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+.roster-section-heading .section-sub { max-width: 760px; }
+.roster-capacity {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--gold-pale, #FFF3C8);
+  font-weight: 800;
+  white-space: nowrap;
+}
+.roster-capacity b { font-family: var(--font-display); font-size: 18px; }
+.roster-add-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(130px, 180px) auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+.roster-add-row input,
+.roster-add-row select,
+.roster-student-row input,
+.roster-student-row select,
+.roster-leader-control select {
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+  background: white;
+  border: 2px solid rgba(20,18,40,0.18);
+  border-radius: 11px;
+  padding: 9px 10px;
+}
+.roster-add-row input:focus,
+.roster-add-row select:focus,
+.roster-student-row input:focus,
+.roster-student-row select:focus,
+.roster-leader-control select:focus {
+  outline: 3px solid rgba(255,201,60,0.7);
+  border-color: var(--ink);
+}
+.roster-help {
+  margin-top: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(46,196,182,0.12);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+.roster-notice {
+  margin-top: 10px;
+  padding: 9px 11px;
+  white-space: pre-line;
+  border: 1px solid rgba(20,18,40,0.18);
+  border-radius: 10px;
+  background: #FFFBEF;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+.roster-team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.roster-team-card {
+  min-width: 0;
+  padding: 13px;
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  background: var(--bg-cream);
+}
+.roster-team-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(20,18,40,0.14);
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+.roster-team-head .table-team-cell { color: var(--ink); font-size: 15px; }
+.roster-leader-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin: 11px 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+.roster-member-list { display: flex; flex-direction: column; gap: 8px; }
+.roster-student-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(108px, 128px) auto;
+  gap: 7px;
+  align-items: center;
+}
+.roster-row-actions { display: flex; gap: 5px; }
+.roster-row-actions .chunky-btn { padding: 7px 8px; }
+.roster-archive-btn {
+  background: #FFE1D7 !important;
+  color: #8E2D1A !important;
+}
+.roster-empty {
+  padding: 14px 8px;
+  color: var(--ink-mute);
+  text-align: center;
+  font-size: 13px;
+}
+.roster-archive-list {
+  margin-top: 12px;
+  border-top: 1px dashed rgba(20,18,40,0.22);
+  padding-top: 9px;
+}
+.roster-archive-list summary {
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+.roster-archived-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0 0 18px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+.roster-archived-row .chunky-btn { padding: 6px 9px; }
 
 .log-table {
   width: 100%;
@@ -2344,6 +2507,31 @@ button { font-family: inherit; cursor: pointer; }
   .cat-row { grid-template-columns: 50px 1fr 90px 70px 32px; }
   .cat-row .name-stack { grid-column: 2 / span 1; }
   .cat-row .lbl { display: none; }
+  /* Price moves below the name only in the admin category-weight rows. This
+     leaves enough room for labels such as 铝罐 on a 390px phone. */
+  .cat-row.compact-cat-row {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  .cat-row.compact-cat-row .category-image { width: 44px; height: 44px; }
+  .cat-row.compact-cat-row .category-image img { width: 42px; height: 42px; }
+  .cat-row.compact-cat-row .name-stack { grid-column: 2; min-width: 0; }
+  .cat-row.compact-cat-row .cat-name-primary,
+  .cat-row.compact-cat-row .cat-name-secondary { overflow-wrap: anywhere; }
+  .cat-row.compact-cat-row .pts-input {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding: 5px 12px;
+  }
+  .roster-section-heading { flex-direction: column; }
+  .roster-add-row { grid-template-columns: 1fr; }
+  .roster-add-row .chunky-btn { width: 100%; }
+  .roster-team-grid { grid-template-columns: 1fr; }
+  .roster-student-row { grid-template-columns: minmax(0, 1fr) minmax(100px, 118px); }
+  .roster-row-actions { grid-column: 1 / -1; }
+  .roster-row-actions .chunky-btn { flex: 1; }
+  .roster-leader-control { grid-template-columns: 1fr; gap: 4px; }
   .admin-view { padding: 64px 16px max(96px, calc(32px + env(safe-area-inset-bottom)));}
 }
 

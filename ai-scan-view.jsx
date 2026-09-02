@@ -23,7 +23,8 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
   const uploadRef = useRef(null);
 
   const team = state.teams.find(t => t.id === teamId) || state.teams[0];
-  const student = team?.members?.find(m => m.id === studentId);
+  const teamMembers = team ? EcoData.activeTeamMembers(state, team.id) : [];
+  const student = teamMembers.find(m => m.id === studentId);
   const recentScans = useMemo(() => (state.aiScans || []).slice(0, 8), [state.aiScans]);
   const remaining = Math.max(0, EcoAI.DAILY_LIMIT - dailyUsed);
 
@@ -184,7 +185,7 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
               <span>学生 · Student</span>
               <select value={studentId} onChange={e => setStudentId(e.target.value)}>
                 <option value="">— 不指定 · Optional —</option>
-                {(team?.members || []).map(m => (
+                {teamMembers.map(m => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>

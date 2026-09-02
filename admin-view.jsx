@@ -9,9 +9,15 @@ function AdminView(props) {
 
 function AdminViewInner({ state, setState, isAdmin = false }) {
   const [confirmReset, setConfirmReset] = useStateA(false);
+  const [newStudentName, setNewStudentName] = useStateA("");
+  const [newStudentTeamId, setNewStudentTeamId] = useStateA(() => state.teams[0]?.id || "");
+  const [rosterNameDrafts, setRosterNameDrafts] = useStateA({});
+  const [rosterNotice, setRosterNotice] = useStateA("");
   const report = useMemoA(() => EcoData.absenceReport(state), [state]);
   const ineligible = report.filter(r => !r.eligible);
   const threshold = EcoData.redListThreshold(state);
+  const activeRosterCount = EcoData.activeStudentCount(state);
+  const maxActiveStudents = EcoData.MAX_ACTIVE_STUDENTS;
 
   function changeThreshold(next) {
     const value = Math.max(1, Math.round(Number(next) || 1));
@@ -53,6 +59,90 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
   function patchCat(id, patch) {
     const next = state.categories.map(c => c.id === id ? { ...c, ...patch } : c);
     setState(EcoData.updateCategories(state, next));
+  }
+
+  function rosterNameDraft(member) {
+    return Object.prototype.hasOwnProperty.call(rosterNameDrafts, member.id)
+      ? rosterNameDrafts[member.id]
+      : member.name;
+  }
+
+  function patchRosterName(memberId, name) {
+    setRosterNameDrafts(drafts => ({ ...drafts, [memberId]: name }));
+  }
+
+  function saveRosterName(member) {
+    const name = rosterNameDraft(member).trim();
+    if (!name) {
+      setRosterNotice("学生姓名不能为空。\nStudent name cannot be empty.");
+      return;
+    }
+    if (name === member.name) {
+      setRosterNotice("姓名没有改变。\nNo name change was made.");
+      return;
+    }
+    setState(EcoData.renameStudent(state, member.id, name));
+    setRosterNameDrafts(drafts => {
+      const next = { ...drafts };
+      delete next[member.id];
+      return next;
+    });
+    setRosterNotice(`已更新 ${name} 的姓名。\nName updated.`);
+  }
+
+  function addRosterStudent() {
+    const name = newStudentName.trim();
+    const team = state.teams.find(item => item.id === newStudentTeamId);
+    if (!name) {
+      setRosterNotice("请先输入学生姓名。\nEnter the student's name first.");
+      return;
+    }
+    if (!team) {
+      setRosterNotice("请选择组别。\nChoose a team first.");
+      return;
+    }
+    if (activeRosterCount >= maxActiveStudents) {
+      setRosterNotice(`目前已有 ${maxActiveStudents} 位在籍学生。请先归档离校学生，再加入新生；这样每位学生仍保有不同神兽。`);
+      return;
+    }
+    setState(EcoData.addStudent(state, { name, teamId: team.id }));
+    setNewStudentName("");
+    setRosterNotice(`${name} 已加入 ${team.zh}。`);
+  }
+
+  function moveRosterStudent(member, fromTeam, toTeamId) {
+    if (toTeamId === fromTeam.id) return;
+    const destination = state.teams.find(team => team.id === toTeamId);
+    if (!destination) return;
+    const ok = window.confirm(`把 ${member.name} 从「${fromTeam.zh}」转到「${destination.zh}」？\n已有的重量、星星、奖品和出席记录会保留。`);
+    if (!ok) {
+      setRosterNotice("已取消转组。\nTeam change cancelled.");
+      return;
+    }
+    setState(EcoData.moveStudent(state, member.id, destination.id));
+    setRosterNotice(`${member.name} 已转到 ${destination.zh}。`);
+  }
+
+  function archiveRosterStudent(member) {
+    const ok = window.confirm(`归档 ${member.name}？\n他/她将不再出现在日常记录、AI、奖品和神兽乐园，但原有资料会保留，可随时恢复。`);
+    if (!ok) return;
+    setState(EcoData.archiveStudent(state, member.id));
+    setRosterNotice(`${member.name} 已归档；历史记录已保留。`);
+  }
+
+  function restoreRosterStudent(member, team) {
+    if (activeRosterCount >= maxActiveStudents) {
+      setRosterNotice(`目前已有 ${maxActiveStudents} 位在籍学生。请先归档一位离校学生，才能恢复 ${member.name}。`);
+      return;
+    }
+    setState(EcoData.restoreStudent(state, member.id));
+    setRosterNotice(`${member.name} 已恢复到 ${team.zh}。`);
+  }
+
+  function changeTeamLeader(teamId, studentId) {
+    if (!studentId) return;
+    setState(EcoData.setTeamLeader(state, teamId, studentId));
+    setRosterNotice("组长已更新。\nTeam leader updated.");
   }
 
   function exportCsv() {
@@ -100,7 +190,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
               <StatBox
                 key={team.id}
                 label={`${index === 0 ? "领先" : "追赶"} · ${team.zh}`}
-                sub={team.leader}
+                sub={EcoData.teamLeaderName(team)}
                 value={fmtRM(stats.points)}
                 unit=""
                 color={team.primary}
@@ -165,6 +255,90 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
           </div>
         )}
 
+        {isAdmin && (
+          <div className="admin-section roster-admin-section">
+            <div className="roster-section-heading">
+              <div>
+                <h2>学生名册与组别分派</h2>
+                <div className="section-sub">只限 Admin。可改名、转组、设组长、加入新生，或把离校学生归档后日后恢复；既有记录不会被删除。</div>
+              </div>
+              <div className="roster-capacity"><b>{activeRosterCount}</b> / {maxActiveStudents} 在籍</div>
+            </div>
+
+            <div className="roster-add-row">
+              <input
+                value={newStudentName}
+                maxLength="80"
+                placeholder="新生姓名 · Student name"
+                onChange={e => setNewStudentName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") addRosterStudent(); }}
+              />
+              <select value={newStudentTeamId} onChange={e => setNewStudentTeamId(e.target.value)}>
+                {state.teams.map(team => <option key={team.id} value={team.id}>{team.zh}</option>)}
+              </select>
+              <button className="chunky-btn primary" type="button" onClick={addRosterStudent}>+ 加入学生</button>
+            </div>
+            <div className="roster-help">神兽乐园目前有 {maxActiveStudents} 只不同神兽，因此在籍名额保持 {maxActiveStudents} 位；先归档离校学生，才可加入新生。</div>
+            {rosterNotice && <div className="roster-notice" role="status">{rosterNotice}</div>}
+
+            <div className="roster-team-grid">
+              {state.teams.map(team => {
+                const activeMembers = EcoData.activeTeamMembers(state, team.id);
+                const archivedMembers = EcoData.teamMembers(state, team.id, { includeArchived: true }).filter(member => member.active === false);
+                return (
+                  <section className="roster-team-card" key={team.id}>
+                    <div className="roster-team-head">
+                      <span className="table-team-cell"><TeamBadge team={team} size={32} /> <b>{team.zh}</b></span>
+                      <span>{activeMembers.length} 位在籍</span>
+                    </div>
+                    <label className="roster-leader-control">
+                      <span>组长 · Leader</span>
+                      <select value={team.leaderId || ""} onChange={e => changeTeamLeader(team.id, e.target.value)} disabled={!activeMembers.length}>
+                        {!activeMembers.length && <option value="">暂无在籍学生</option>}
+                        {activeMembers.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
+                      </select>
+                    </label>
+
+                    <div className="roster-member-list">
+                      {activeMembers.map(member => (
+                        <div className="roster-student-row" key={member.id}>
+                          <input
+                            value={rosterNameDraft(member)}
+                            aria-label={`${member.name} 的姓名`}
+                            maxLength="80"
+                            onChange={e => patchRosterName(member.id, e.target.value)}
+                            onKeyDown={e => { if (e.key === "Enter") saveRosterName(member); }}
+                          />
+                          <select value={team.id} aria-label={`${member.name} 的组别`} onChange={e => moveRosterStudent(member, team, e.target.value)}>
+                            {state.teams.map(option => <option key={option.id} value={option.id}>{option.zh}</option>)}
+                          </select>
+                          <div className="roster-row-actions">
+                            <button className="chunky-btn small-btn" type="button" onClick={() => saveRosterName(member)}>保存</button>
+                            <button className="chunky-btn roster-archive-btn" type="button" onClick={() => archiveRosterStudent(member)}>归档</button>
+                          </div>
+                        </div>
+                      ))}
+                      {!activeMembers.length && <div className="roster-empty">暂无在籍学生</div>}
+                    </div>
+
+                    {archivedMembers.length > 0 && (
+                      <details className="roster-archive-list">
+                        <summary>已归档 {archivedMembers.length} 位学生</summary>
+                        {archivedMembers.map(member => (
+                          <div className="roster-archived-row" key={member.id}>
+                            <span>{member.name}</span>
+                            <button className="chunky-btn small-btn" type="button" onClick={() => restoreRosterStudent(member, team)}>恢复</button>
+                          </div>
+                        ))}
+                      </details>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="admin-section">
           <h2>Session 管理</h2>
           <div className="session-admin-list">
@@ -193,10 +367,12 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
           <div className="cat-list">
             {state.categories.map(c => (
               <div className="cat-row compact-cat-row" key={c.id}>
-                <input className="icon-cell" value={c.icon} onChange={e => patchCat(c.id, {icon: e.target.value})} />
+                <div className="category-image" aria-hidden="true">
+                  {c.imageSrc ? <img src={c.imageSrc} alt="" /> : <span>{c.icon}</span>}
+                </div>
                 <div className="name-stack">
-                  <input value={c.zh} onChange={e => patchCat(c.id, {zh: e.target.value})} />
-                  <input value={c.ms} onChange={e => patchCat(c.id, {ms: e.target.value})} />
+                  <div className="static-text cat-name-primary">{c.zh}</div>
+                  <div className="static-text cat-name-secondary">{c.ms}</div>
                 </div>
                 <div className="pts-input">
                   <input type="number" min="0" step="0.01" value={c.price} onChange={e => patchCat(c.id, {price: +e.target.value || 0})} />

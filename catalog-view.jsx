@@ -13,7 +13,8 @@ function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn 
   const [studentId, setStudentId] = useState("");
 
   const team = state.teams.find(t => t.id === teamId) || state.teams[0];
-  const student = team?.members?.find(m => m.id === studentId);
+  const teamMembers = team ? EcoData.activeTeamMembers(state, team.id) : [];
+  const student = teamMembers.find(m => m.id === studentId);
 
   const groups = window.EcoCatalog?.CATALOG_GROUPS || [];
   const binLabels = window.EcoCatalog?.BIN_LABELS || {};
@@ -77,7 +78,7 @@ function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn 
               <span>学生 · Student</span>
               <select value={studentId} onChange={e => setStudentId(e.target.value)}>
                 <option value="">— 不指定 · Optional —</option>
-                {(team?.members || []).map(m => (
+                {teamMembers.map(m => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
               </select>

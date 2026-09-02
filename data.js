@@ -4,6 +4,9 @@
 const STORAGE_KEY = "eco_warrior_v2";
 const LEGACY_STORAGE_KEY = "eco_warrior_v1";
 const SCORING_VERSION = 4;
+// The pet world has nineteen distinct guardian species. Keep the active roster
+// at the same ceiling so every current student can still have a unique beast.
+const MAX_ACTIVE_STUDENTS = 19;
 
 const DEFAULT_CATEGORIES = [
   { id: "aluminum",  icon: "🥫", imageSrc: "assets/recycling-icons/aluminum.png", zh: "铝罐",   ms: "Tin aluminium",  price: 5.50, points: 550, color: "#8A9AA8" },
@@ -25,6 +28,7 @@ const DEFAULT_TEAMS = [
     primary: "#2EC4B6",
     glow: "#88E5FF",
     leader: "Queenie Lee Li Ying 李栎颖",
+    leaderId: "lions_queenie_lee_li_ying",
     members: [
       { id: "lions_low_li_en", name: "Low Li En 刘丽恩" },
       { id: "lions_low_li_qing", name: "Low Li Qing 刘丽情" },
@@ -46,6 +50,7 @@ const DEFAULT_TEAMS = [
     primary: "#FF6B35",
     glow: "#FFC93C",
     leader: "Ong Xing Mei 王欣美",
+    leaderId: "dragons_ong_xing_mei",
     members: [
       { id: "dragons_lau_yan_tong", name: "Lau Yan Tong 刘妍彤" },
       { id: "dragons_ong_xing_yi", name: "Ong Xing Yi 王欣依" },
@@ -310,15 +315,41 @@ function normalizeCategories(categories, keepExistingPoints = false) {
 }
 
 function normalizeTeams(teams) {
-  const byId = new Map(teams.map(t => [t.id, t]));
+  const byId = new Map((Array.isArray(teams) ? teams : []).map(t => [t.id, t]));
   return DEFAULT_TEAMS.map(def => {
     const existing = byId.get(def.id);
     if (!existing) return clone(def);
+    const members = Array.isArray(existing.members)
+      ? existing.members.map((member, index) => normalizeRosterMember(member, def.id, index))
+      : clone(def.members);
+    const activeMembers = members.filter(isActiveMember);
+    const legacyLeaderId = existing.leaderId || members.find(member => member.name === existing.leader)?.id || def.leaderId;
+    const leaderId = activeMembers.some(member => member.id === legacyLeaderId)
+      ? legacyLeaderId
+      : (activeMembers[0]?.id || "");
+    const leader = members.find(member => member.id === leaderId)?.name || "";
     return {
       ...def,
-      members: Array.isArray(existing.members) && existing.members.length ? existing.members : clone(def.members),
+      members,
+      leaderId,
+      leader,
     };
   });
+}
+
+function normalizeRosterMember(member, teamId, index) {
+  const source = member && typeof member === "object" ? member : {};
+  const name = String(source.name || `学生 ${index + 1}`).trim().slice(0, 80);
+  return {
+    ...source,
+    id: String(source.id || `legacy_${teamId}_${index + 1}`),
+    name: name || `学生 ${index + 1}`,
+    active: source.active !== false,
+  };
+}
+
+function isActiveMember(member) {
+  return !!member && member.active !== false;
 }
 
 function mapLegacyCategory(id) {
@@ -448,8 +479,138 @@ function attendanceFor(state, sessionId, memberId) {
   return row ? row.brought : true;
 }
 
-function teamMembers(state, teamId) {
-  return state.teams.find(t => t.id === teamId)?.members || [];
+function teamMembers(state, teamId, { includeArchived = false } = {}) {
+  const members = state.teams.find(t => t.id === teamId)?.members || [];
+  return includeArchived ? members : members.filter(isActiveMember);
+}
+
+function activeTeamMembers(state, teamId) {
+  return teamMembers(state, teamId);
+}
+
+function rosterMembers(state, { includeArchived = false } = {}) {
+  return (state.teams || []).flatMap(team => teamMembers(state, team.id, { includeArchived }).map(member => ({
+    ...member,
+    teamId: team.id,
+    teamName: team.zh,
+  })));
+}
+
+function activeStudentCount(state) {
+  return rosterMembers(state).length;
+}
+
+function teamLeaderName(team) {
+  const leader = (team?.members || []).find(member => member.id === team?.leaderId && isActiveMember(member));
+  return leader?.name || team?.leader || "未设组长";
+}
+
+// Freeze each active learner's current guardian before a roster mutation.
+// Without this, removing one child can make the deterministic species allocator
+// reshuffle another child's pet. Existing species overrides are never changed.
+function pinActivePetSpecies(state) {
+  const assignments = petSpeciesMap(state);
+  const pets = { ...(state.pets || {}) };
+  Object.entries(assignments).forEach(([studentId, speciesId]) => {
+    if (!pets[studentId]?.speciesId) {
+      pets[studentId] = { ...(pets[studentId] || {}), speciesId };
+    }
+  });
+  return pets;
+}
+
+function commitRoster(state, teams, pets = pinActivePetSpecies(state)) {
+  const next = {
+    ...state,
+    pets,
+    teams: normalizeTeams(teams),
+  };
+  save(next);
+  return next;
+}
+
+function addStudent(state, { name, teamId }) {
+  const cleanName = String(name || "").trim().replace(/\s+/g, " ").slice(0, 80);
+  const target = state.teams.find(team => team.id === teamId);
+  if (!cleanName || !target || activeStudentCount(state) >= MAX_ACTIVE_STUDENTS) return state;
+  const teams = state.teams.map(team => team.id === teamId
+    ? { ...team, members: [...(team.members || []), { id: makeId("student"), name: cleanName, active: true }] }
+    : team
+  );
+  return commitRoster(state, teams);
+}
+
+function renameStudent(state, studentId, name) {
+  const cleanName = String(name || "").trim().replace(/\s+/g, " ").slice(0, 80);
+  if (!studentId || !cleanName) return state;
+  const teams = state.teams.map(team => {
+    const members = (team.members || []).map(member => member.id === studentId ? { ...member, name: cleanName } : member);
+    const isLeader = team.leaderId === studentId;
+    return { ...team, members, leader: isLeader ? cleanName : team.leader };
+  });
+  return commitRoster(state, teams);
+}
+
+function moveStudent(state, studentId, toTeamId) {
+  const source = state.teams.find(team => (team.members || []).some(member => member.id === studentId));
+  const target = state.teams.find(team => team.id === toTeamId);
+  if (!source || !target || source.id === target.id) return state;
+  const student = source.members.find(member => member.id === studentId);
+  if (!isActiveMember(student)) return state;
+  const teams = state.teams.map(team => {
+    if (team.id === source.id) {
+      const members = team.members.filter(member => member.id !== studentId);
+      const remainingLeader = team.leaderId === studentId
+        ? (members.find(isActiveMember)?.id || "")
+        : team.leaderId;
+      return { ...team, members, leaderId: remainingLeader };
+    }
+    if (team.id === target.id) return { ...team, members: [...team.members, student] };
+    return team;
+  });
+  return commitRoster(state, teams);
+}
+
+function archiveStudent(state, studentId) {
+  const found = (state.teams || []).some(team => (team.members || []).some(member => member.id === studentId && isActiveMember(member)));
+  if (!found) return state;
+  const teams = state.teams.map(team => {
+    const members = (team.members || []).map(member => member.id === studentId ? { ...member, active: false } : member);
+    const nextLeaderId = team.leaderId === studentId ? (members.find(isActiveMember)?.id || "") : team.leaderId;
+    return { ...team, members, leaderId: nextLeaderId };
+  });
+  return commitRoster(state, teams);
+}
+
+function restoreStudent(state, studentId) {
+  if (activeStudentCount(state) >= MAX_ACTIVE_STUDENTS) return state;
+  const archivedMember = rosterMembers(state, { includeArchived: true })
+    .find(member => member.id === studentId && !isActiveMember(member));
+  if (!archivedMember) return state;
+  const teams = state.teams.map(team => {
+    const containsStudent = (team.members || []).some(member => member.id === studentId);
+    const members = (team.members || []).map(member => member.id === studentId ? { ...member, active: true } : member);
+    return containsStudent && !team.leaderId
+      ? { ...team, members, leaderId: studentId }
+      : { ...team, members };
+  });
+  const pets = pinActivePetSpecies(state);
+  const currentSpecies = new Set(Object.values(petSpeciesMap(state)));
+  const restoredSpecies = pets[studentId]?.speciesId;
+  // If a new child took this archived child's former species, retain the
+  // current child's beast and give the restored child one of the open species.
+  if (!restoredSpecies || currentSpecies.has(restoredSpecies)) {
+    const spare = PET_SPECIES.find(species => !currentSpecies.has(species.id));
+    if (spare) pets[studentId] = { ...(pets[studentId] || {}), speciesId: spare.id };
+  }
+  return commitRoster(state, teams, pets);
+}
+
+function setTeamLeader(state, teamId, studentId) {
+  const team = state.teams.find(item => item.id === teamId);
+  if (!team || !(team.members || []).some(member => member.id === studentId && isActiveMember(member))) return state;
+  const teams = state.teams.map(item => item.id === teamId ? { ...item, leaderId: studentId } : item);
+  return commitRoster(state, teams);
 }
 
 function sessionTeamStats(state, sessionId, teamId) {
@@ -495,9 +656,9 @@ function setRedListThreshold(state, value) {
   return updated;
 }
 
-function absenceReport(state) {
+function absenceReport(state, { includeArchived = false } = {}) {
   const threshold = redListThreshold(state);
-  const allMembers = state.teams.flatMap(team => team.members.map(m => ({
+  const allMembers = state.teams.flatMap(team => teamMembers(state, team.id, { includeArchived }).map(m => ({
     ...m,
     teamId: team.id,
     teamName: team.zh,
@@ -612,9 +773,9 @@ function studentAllTimeStarBalance(state, studentId) {
   return earned - spent;
 }
 
-function studentStarReport(state) {
+function studentStarReport(state, { includeArchived = false } = {}) {
   const members = state.teams.flatMap(t =>
-    t.members.map(m => ({
+    teamMembers(state, t.id, { includeArchived }).map(m => ({
       ...m,
       teamId: t.id,
       teamName: t.zh,
@@ -721,7 +882,7 @@ function hashString(str) {
 let speciesMapCache = { key: "", map: null };
 
 function petSpeciesMap(state) {
-  const roster = (state?.teams || []).flatMap(t => (t.members || []).map(m => m.id));
+  const roster = (state?.teams || []).flatMap(t => teamMembers(state, t.id).map(m => m.id));
   const key = roster.map(id => `${id}>${state?.pets?.[id]?.speciesId || ""}`).join(",");
   if (speciesMapCache.key === key && speciesMapCache.map) return speciesMapCache.map;
 
@@ -820,7 +981,7 @@ function petState(state, studentId, now = Date.now()) {
 
 function petReport(state, now = Date.now()) {
   const members = state.teams.flatMap(t =>
-    t.members.map(m => ({
+    teamMembers(state, t.id).map(m => ({
       ...m,
       teamId: t.id,
       teamName: t.zh,
@@ -1068,7 +1229,7 @@ function exportCSV(state) {
     const cat = state.categories.find(c => c.id === w.categoryId) || {};
     rows.push(["weigh_in", session.name || "", session.date || "", team.zh || "", cat.zh || "", w.kg, (cat.points || 0) / 100, (w.points || 0) / 100, "", ""]);
   });
-  absenceReport(state).forEach(m => {
+  absenceReport(state, { includeArchived: true }).forEach(m => {
     state.sessions.forEach(s => {
       rows.push(["attendance", s.name, s.date || "", m.teamName, m.name, "", "", "", attendanceFor(state, s.id, m.id) ? "有带" : "没带", m.missedCount]);
     });
@@ -1084,7 +1245,8 @@ Object.assign(window, {
     load, save, defaultState, resetSeason,
     activeSession, setActiveSession, addSession, updateSession, removeSession,
     updateCategories, updateWeighIn, getWeight,
-    setAttendance, attendanceFor, teamMembers,
+    setAttendance, attendanceFor, teamMembers, activeTeamMembers, rosterMembers, activeStudentCount, teamLeaderName,
+    addStudent, renameStudent, moveStudent, archiveStudent, restoreStudent, setTeamLeader, MAX_ACTIVE_STUDENTS,
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     redListThreshold, setRedListThreshold,
     // Pets

@@ -171,7 +171,7 @@ function MobileViewInner({ state, setState }) {
           </div>
 
           <div className="member-list">
-            {team.members.map(member => {
+            {EcoData.activeTeamMembers(state, team.id).map(member => {
               const brought = EcoData.attendanceFor(state, session.id, member.id);
               const report = EcoData.absenceReport(state).find(r => r.id === member.id);
               return (
