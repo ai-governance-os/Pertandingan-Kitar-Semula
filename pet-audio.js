@@ -8,7 +8,13 @@
 
 const EcoMythicAudio = (() => {
   const PREF_KEY = "eco_pet_soundscape_enabled_v1";
-  const MASTER_LEVEL = 0.115;
+  // Web Audio gains multiply. The first experimental mix used a 0.115 master
+  // over 0.012-0.026 voices, which put the real phone output near -55 dB and
+  // made it effectively inaudible. These levels target a gentle but clearly
+  // audible game ambience; a compressor below keeps combined peaks safe.
+  const MASTER_LEVEL = 0.42;
+  const MUSIC_BUS_LEVEL = 0.88;
+  const ACCENT_BUS_LEVEL = 0.95;
   const STEP_SECONDS = 0.75;
   const STEPS_PER_LOOP = 64; // 48-second harmonic cycle
   const PENTATONIC = [261.63, 293.66, 329.63, 392.0, 440.0];
@@ -78,6 +84,7 @@ const EcoMythicAudio = (() => {
     let step = 0;
     let muted = true;
     let destroyed = false;
+    let welcomePlayed = false;
 
     function notifyRunning() {
       if (!onRunningChange) return;
@@ -136,7 +143,7 @@ const EcoMythicAudio = (() => {
       filter.type = "bandpass";
       filter.frequency.value = 620;
       filter.Q.value = 0.32;
-      gain.gain.value = 0.018;
+      gain.gain.value = 0.034;
       lfo.frequency.value = 0.07;
       lfoGain.gain.value = 0.006;
       filterLfo.frequency.value = 0.031;
@@ -162,8 +169,8 @@ const EcoMythicAudio = (() => {
         oscillator.frequency.value = frequency;
         oscillator.detune.value = index === 1 ? 3 : -2;
         gain.gain.setValueAtTime(0.0001, time);
-        gain.gain.exponentialRampToValueAtTime(index === 1 ? 0.006 : 0.008, time + 2.2);
-        gain.gain.setValueAtTime(index === 1 ? 0.006 : 0.008, time + 9.5);
+        gain.gain.exponentialRampToValueAtTime(index === 1 ? 0.019 : 0.024, time + 2.2);
+        gain.gain.setValueAtTime(index === 1 ? 0.019 : 0.024, time + 9.5);
         gain.gain.exponentialRampToValueAtTime(0.0001, time + 13.5);
         oscillator.connect(gain);
         connectWithEcho(gain, musicBus, 0.09);
@@ -172,7 +179,7 @@ const EcoMythicAudio = (() => {
       });
     }
 
-    function schedulePluck(frequency, time, duration = 1.25, level = 0.022, bus = musicBus, send = 0.2) {
+    function schedulePluck(frequency, time, duration = 1.25, level = 0.06, bus = musicBus, send = 0.2) {
       const oscillator = context.createOscillator();
       const overtone = context.createOscillator();
       const overtoneGain = context.createGain();
@@ -202,7 +209,7 @@ const EcoMythicAudio = (() => {
       overtone.stop(time + duration + 0.05);
     }
 
-    function scheduleBell(frequency, time, level = 0.018, bus = musicBus) {
+    function scheduleBell(frequency, time, level = 0.05, bus = musicBus) {
       [1, 2.01, 3.98].forEach((ratio, index) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
@@ -229,8 +236,8 @@ const EcoMythicAudio = (() => {
       filter.type = "lowpass";
       filter.frequency.value = 980;
       gain.gain.setValueAtTime(0.0001, time);
-      gain.gain.linearRampToValueAtTime(0.012, time + 0.45);
-      gain.gain.setValueAtTime(0.012, time + duration * 0.68);
+      gain.gain.linearRampToValueAtTime(0.032, time + 0.45);
+      gain.gain.setValueAtTime(0.032, time + duration * 0.68);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
       oscillator.connect(filter);
       filter.connect(gain);
@@ -246,7 +253,7 @@ const EcoMythicAudio = (() => {
       oscillator.frequency.setValueAtTime(92, time);
       oscillator.frequency.exponentialRampToValueAtTime(46, time + 0.55);
       gain.gain.setValueAtTime(0.0001, time);
-      gain.gain.exponentialRampToValueAtTime(0.026, time + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.062, time + 0.012);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.72);
       oscillator.connect(gain);
       gain.connect(musicBus);
@@ -264,11 +271,11 @@ const EcoMythicAudio = (() => {
       const noteIndex = MELODY[cycleStep];
       if (noteIndex !== null) {
         const octave = cycleStep >= 32 && cycleStep < 48 ? 0.5 : 1;
-        schedulePluck(PENTATONIC[noteIndex] * octave, time + 0.035, 1.32, 0.019);
+        schedulePluck(PENTATONIC[noteIndex] * octave, time + 0.035, 1.32, 0.052);
       }
 
       if ([6, 22, 38, 54].includes(cycleStep)) {
-        scheduleBell(PENTATONIC[(cycleStep / 16 | 0) % PENTATONIC.length] * 2, time, 0.012);
+        scheduleBell(PENTATONIC[(cycleStep / 16 | 0) % PENTATONIC.length] * 2, time, 0.026);
       }
       if ([12, 28, 44, 60].includes(cycleStep)) {
         scheduleBreath(PENTATONIC[(cycleStep / 8 | 0) % PENTATONIC.length], time, 2.25);
@@ -296,19 +303,26 @@ const EcoMythicAudio = (() => {
       const echoTone = context.createBiquadFilter();
       const echoFeedback = context.createGain();
       const echoReturn = context.createGain();
+      const limiter = context.createDynamicsCompressor();
 
       master.gain.value = 0.0001;
-      musicBus.gain.value = 0.78;
-      accentBus.gain.value = 0.72;
+      musicBus.gain.value = MUSIC_BUS_LEVEL;
+      accentBus.gain.value = ACCENT_BUS_LEVEL;
       echoDelay.delayTime.value = 0.375;
       echoTone.type = "lowpass";
       echoTone.frequency.value = 2300;
       echoFeedback.gain.value = 0.22;
-      echoReturn.gain.value = 0.42;
+      echoReturn.gain.value = 0.48;
+      limiter.threshold.value = -16;
+      limiter.knee.value = 10;
+      limiter.ratio.value = 7;
+      limiter.attack.value = 0.006;
+      limiter.release.value = 0.24;
 
       musicBus.connect(master);
       accentBus.connect(master);
-      master.connect(context.destination);
+      master.connect(limiter);
+      limiter.connect(context.destination);
 
       echoInput = context.createGain();
       echoInput.gain.value = 1;
@@ -341,7 +355,14 @@ const EcoMythicAudio = (() => {
         nextStepTime = Math.max(nextStepTime, context.currentTime + 0.05);
         runScheduler();
         startScheduler();
-        safeParam(master.gain, MASTER_LEVEL, context.currentTime, 0.42);
+        safeParam(master.gain, MASTER_LEVEL, context.currentTime, 0.18);
+        if (!welcomePlayed) {
+          welcomePlayed = true;
+          // An unmistakable two-note jade-bell confirms that mobile audio has
+          // actually unlocked before the quieter ambient layers settle in.
+          scheduleBell(523.25, context.currentTime + 0.12, 0.11, accentBus);
+          scheduleBell(659.25, context.currentTime + 0.38, 0.09, accentBus);
+        }
         notifyRunning();
         return true;
       } catch (e) {
@@ -369,8 +390,8 @@ const EcoMythicAudio = (() => {
       if (!context || !musicBus || muted || context.state !== "running") return;
       const now = context.currentTime;
       musicBus.gain.cancelScheduledValues(now);
-      musicBus.gain.setTargetAtTime(0.28, now, 0.07);
-      musicBus.gain.setTargetAtTime(0.78, now + Math.max(0.8, seconds - 0.55), 0.22);
+      musicBus.gain.setTargetAtTime(0.34, now, 0.07);
+      musicBus.gain.setTargetAtTime(MUSIC_BUS_LEVEL, now + Math.max(0.8, seconds - 0.55), 0.22);
     }
 
     function playAccent(speciesId, stageIndex = 0) {
@@ -379,8 +400,8 @@ const EcoMythicAudio = (() => {
       duck(stageIndex >= 2 ? 3 : 1.6);
 
       if (stageIndex < 2) {
-        scheduleBell(stageIndex === 0 ? 392 : 523.25, now, 0.014, accentBus);
-        schedulePluck(stageIndex === 0 ? 293.66 : 659.25, now + 0.24, 0.72, 0.018, accentBus, 0.18);
+        scheduleBell(stageIndex === 0 ? 392 : 523.25, now, 0.085, accentBus);
+        schedulePluck(stageIndex === 0 ? 293.66 : 659.25, now + 0.24, 0.72, 0.07, accentBus, 0.18);
         return;
       }
 
@@ -389,9 +410,9 @@ const EcoMythicAudio = (() => {
         const frequency = motif.root * Math.pow(2, semitones / 12);
         const at = now + index * (motif.type === "flare" ? 0.19 : 0.24);
         if (motif.type === "bell" || motif.type === "shimmer") {
-          scheduleBell(frequency, at, motif.type === "shimmer" ? 0.012 : 0.016, accentBus);
+          scheduleBell(frequency, at, motif.type === "shimmer" ? 0.06 : 0.075, accentBus);
         } else {
-          schedulePluck(frequency, at, motif.type === "water" ? 1.15 : 0.82, 0.023, accentBus, motif.type === "wind" ? 0.34 : 0.2);
+          schedulePluck(frequency, at, motif.type === "water" ? 1.15 : 0.82, 0.075, accentBus, motif.type === "wind" ? 0.34 : 0.2);
         }
       });
     }
