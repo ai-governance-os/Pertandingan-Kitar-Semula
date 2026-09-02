@@ -1045,7 +1045,7 @@ function PetPark3D({ report, onPick }) {
   );
 }
 
-function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick }) {
+function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick, onPetInteract }) {
   const { useEffect, useRef, useState } = React;
   const scrollerRef = useRef(null);
   const reactionTimerRef = useRef(null);
@@ -1073,6 +1073,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
   function interact(row) {
     const speciesId = row.pet.species.id;
     const hasHatched = row.pet.displayStageIndex >= 2;
+    if (onPetInteract) onPetInteract(row);
     setRosterOpen(false);
     setActiveId(row.id);
     const ownerName = row.name.split(" ").slice(-1)[0];
@@ -1252,10 +1253,142 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick 
   );
 }
 
+function useMythicParkAudio() {
+  const { useCallback, useEffect, useRef, useState } = React;
+  const audioApi = window.EcoMythicAudio;
+  const available = !!(audioApi && (window.AudioContext || window.webkitAudioContext));
+  const [enabled, setEnabled] = useState(() => available && audioApi.readPreference());
+  const [playing, setPlaying] = useState(false);
+  const engineRef = useRef(null);
+  const enabledRef = useRef(enabled);
+  const playingRef = useRef(false);
+
+  const rememberEnabled = useCallback((next) => {
+    enabledRef.current = next;
+    setEnabled(next);
+    if (audioApi) audioApi.writePreference(next);
+  }, [audioApi]);
+
+  const start = useCallback(async () => {
+    if (!available || !enabledRef.current) return false;
+    if (!engineRef.current) {
+      engineRef.current = audioApi.create({
+        onRunningChange: (next) => {
+          playingRef.current = next;
+          setPlaying(next);
+        },
+      });
+    }
+    if (!engineRef.current) return false;
+    const ok = await engineRef.current.start();
+    playingRef.current = ok;
+    setPlaying(ok);
+    return ok;
+  }, [audioApi, available]);
+
+  const toggle = useCallback(() => {
+    if (!available) return;
+
+    // The soundtrack is enabled by default but cannot begin until the browser
+    // receives a gesture. In that waiting state, the first press means "play"
+    // rather than surprisingly switching the preference off.
+    if (enabledRef.current && !playingRef.current) {
+      start();
+      return;
+    }
+
+    const next = !enabledRef.current;
+    rememberEnabled(next);
+    if (next) {
+      start();
+    } else {
+      playingRef.current = false;
+      setPlaying(false);
+      if (engineRef.current) engineRef.current.setMuted(true);
+    }
+  }, [available, rememberEnabled, start]);
+
+  const playPetAccent = useCallback((row) => {
+    if (!enabledRef.current) return;
+    start().then((ok) => {
+      if (ok && engineRef.current) {
+        engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex);
+      }
+    });
+  }, [start]);
+
+  const unlock = useCallback((event) => {
+    if (!available || !enabledRef.current || playingRef.current) return;
+    // The music button owns its own click. Ignoring its capture event prevents
+    // browser unlocking and the toggle from firing twice.
+    const target = event && event.target;
+    if (target && target.closest && target.closest(".cinematic-music-toggle")) return;
+    start();
+  }, [available, start]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (!engineRef.current) return;
+      if (document.hidden) {
+        playingRef.current = false;
+        setPlaying(false);
+        engineRef.current.pauseForVisibility();
+      } else if (enabledRef.current) {
+        engineRef.current.resumeFromVisibility().then((ok) => {
+          playingRef.current = ok;
+          setPlaying(ok);
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, []);
+
+  useEffect(() => () => {
+    if (engineRef.current) engineRef.current.destroy();
+    engineRef.current = null;
+  }, []);
+
+  return { available, enabled, playing, toggle, unlock, playPetAccent };
+}
+
+function MythicMusicToggle({ available, enabled, playing, onToggle }) {
+  const status = !available
+    ? "此浏览器不支持乐音"
+    : playing
+      ? "播放中"
+      : enabled
+        ? "点按启乐"
+        : "已静音";
+  const icon = !available || !enabled ? "volume_off" : playing ? "graphic_eq" : "music_note";
+
+  return (
+    <button
+      type="button"
+      className={`cinematic-music-toggle ${playing ? "is-playing" : ""} ${enabled ? "is-enabled" : "is-muted"}`}
+      onClick={onToggle}
+      aria-label={`神兽乐音：${status}`}
+      aria-pressed={enabled}
+      title={`神兽乐音 · ${status}`}
+      disabled={!available}
+    >
+      <span className="material-symbols-rounded cinematic-music-icon" aria-hidden="true">{icon}</span>
+      <span className="cinematic-music-copy">
+        <b>神兽乐音</b>
+        <small>{status}</small>
+      </span>
+      <span className="cinematic-music-meter" aria-hidden="true">
+        <i /><i /><i />
+      </span>
+    </button>
+  );
+}
+
 function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => fn && fn() }) {
   const { useEffect, useMemo, useState } = React;
   const [teamFilter, setTeamFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
+  const mythicAudio = useMythicParkAudio();
   const report = useMemo(() => EcoData.petReport(state), [state]);
   const selected = selectedId ? report.find(row => row.id === selectedId) : null;
 
@@ -1265,13 +1398,27 @@ function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => 
   }, []);
 
   return (
-    <div className="cinematic-pet-view">
+    <div
+      className="cinematic-pet-view"
+      onPointerDownCapture={mythicAudio.unlock}
+      onTouchEndCapture={mythicAudio.unlock}
+      onClickCapture={mythicAudio.unlock}
+      onKeyDownCapture={mythicAudio.unlock}
+    >
       <CinematicSharedPark
         report={report}
         teams={state.teams}
         teamFilter={teamFilter}
         setTeamFilter={setTeamFilter}
         onPick={setSelectedId}
+        onPetInteract={mythicAudio.playPetAccent}
+      />
+
+      <MythicMusicToggle
+        available={mythicAudio.available}
+        enabled={mythicAudio.enabled}
+        playing={mythicAudio.playing}
+        onToggle={mythicAudio.toggle}
       />
 
       {selected && (

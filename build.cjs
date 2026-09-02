@@ -24,6 +24,7 @@ const SOURCES = [
   'data.js',
   'cloud-sync.js',
   'ai-client.js',
+  'pet-audio.js',
   // React components (JSX)
   'tweaks-panel.jsx',
   'components.jsx',
