@@ -6,13 +6,13 @@ const LEGACY_STORAGE_KEY = "eco_warrior_v1";
 const SCORING_VERSION = 4;
 
 const DEFAULT_CATEGORIES = [
-  { id: "aluminum",  icon: "🥫", zh: "铝罐",   ms: "Tin aluminium",  price: 5.50, points: 550, color: "#8A9AA8" },
-  { id: "used_oil",  icon: "🛢️", zh: "回锅油", ms: "Minyak terpakai", price: 3.40, points: 340, color: "#6F7D3C" },
-  { id: "newspaper", icon: "📰", zh: "报纸",   ms: "Surat khabar",   price: 1.00, points: 100, color: "#D8B35D" },
-  { id: "metal",     icon: "🔩", zh: "铁制品", ms: "Besi",           price: 0.40, points: 40,  color: "#737C86" },
-  { id: "cardboard", icon: "📦", zh: "纸皮",   ms: "Kotak kadbod",   price: 0.25, points: 25,  color: "#B07A42" },
-  { id: "plastic",   icon: "🧴", zh: "塑料",   ms: "Plastik",        price: 0.25, points: 25,  color: "#45A8C7" },
-  { id: "paper",     icon: "📄", zh: "纸张",   ms: "Kertas",         price: 0.10, points: 10,  color: "#8DB580" },
+  { id: "aluminum",  icon: "🥫", imageSrc: "assets/recycling-icons/aluminum.png", zh: "铝罐",   ms: "Tin aluminium",  price: 5.50, points: 550, color: "#8A9AA8" },
+  { id: "used_oil",  icon: "🛢️", imageSrc: "assets/recycling-icons/used-oil.png", zh: "回锅油", ms: "Minyak terpakai", price: 3.40, points: 340, color: "#6F7D3C" },
+  { id: "newspaper", icon: "📰", imageSrc: "assets/recycling-icons/newspaper.png", zh: "报纸",   ms: "Surat khabar",   price: 1.00, points: 100, color: "#D8B35D" },
+  { id: "metal",     icon: "🔩", imageSrc: "assets/recycling-icons/metal.png", zh: "铁制品", ms: "Besi",           price: 0.40, points: 40,  color: "#737C86" },
+  { id: "cardboard", icon: "📦", imageSrc: "assets/recycling-icons/cardboard.png", zh: "纸皮",   ms: "Kotak kadbod",   price: 0.25, points: 25,  color: "#B07A42" },
+  { id: "plastic",   icon: "🧴", imageSrc: "assets/recycling-icons/plastic.png", zh: "塑料",   ms: "Plastik",        price: 0.25, points: 25,  color: "#45A8C7" },
+  { id: "paper",     icon: "📄", imageSrc: "assets/recycling-icons/paper.png", zh: "纸张",   ms: "Kertas",         price: 0.10, points: 10,  color: "#8DB580" },
 ];
 
 const DEFAULT_TEAMS = [

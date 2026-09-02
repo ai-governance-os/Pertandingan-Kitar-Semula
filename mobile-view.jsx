@@ -140,7 +140,9 @@ function MobileViewInner({ state, setState }) {
               return (
                 <div className="weight-row" key={cat.id}>
                   <div className="cat-label">
-                    <span className="cat-icon">{cat.icon}</span>
+                    {cat.imageSrc
+                      ? <img className="cat-icon cat-icon-image" src={cat.imageSrc} alt="" aria-hidden="true" />
+                      : <span className="cat-icon">{cat.icon}</span>}
                     <span>{cat.zh}</span>
                     <small>RM {fmt(cat.price, 2)}/kg</small>
                   </div>

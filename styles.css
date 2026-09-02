@@ -234,6 +234,13 @@
   font-size: 24px;
 }
 
+.cat-label .cat-icon-image {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 3px rgba(20,18,40,0.18));
+}
+
 .cat-label small {
   color: var(--ink-mute);
   font-weight: 700;
