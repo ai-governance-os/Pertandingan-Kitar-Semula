@@ -45,3 +45,17 @@ for(const species of updated.data.PET_SPECIES){
   }
 }
 console.log('PASS: 50 species, 300 form/action definitions, 19 unique owners, exact roster preserved, Li Guande beetle, swap/reload and all six thresholds.');
+for(const species of updated.data.PET_SPECIES)for(let stage=0;stage<6;stage++)for(const [width,height] of [[390,844],[320,568],[1440,900]]){
+  const origin={x:width*.7,y:height*.65,scale:.6},size=Math.min(180,Math.max(100,width*.25));
+  const first=evo.parkPose(species.id,stage,0,width,height,origin,size);
+  const last=evo.parkPose(species.id,stage,1,width,height,origin,size);
+  for(const key of ['x','y','scale']){assert(Math.abs(first[key]-origin[key])<.001);assert(Math.abs(last[key]-origin[key])<.001);}
+  for(let i=0;i<=100;i++){
+    const pose=evo.parkPose(species.id,stage,i/100,width,height,origin,size);
+    assert(Number.isFinite(pose.x)&&Number.isFinite(pose.y)&&pose.scale>0);
+    assert(pose.x>=0&&pose.x<=width&&pose.y>=0&&pose.y<=height);
+    const still=evo.parkPose(species.id,stage,i/100,width,height,origin,size,true);
+    assert.equal(still.x,origin.x);assert.equal(still.y,origin.y);assert.equal(still.scale,origin.scale);
+  }
+}
+console.log('PASS: all 300 park shows return to origin, stay in mobile/desktop bounds, and respect reduced motion.');

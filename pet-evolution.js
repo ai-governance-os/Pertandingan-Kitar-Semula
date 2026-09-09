@@ -180,4 +180,34 @@ function evolutionPose(id, stage, progress) {
   }
   return pose;
 }
-window.PetEvolution = { profiles:EVOLUTION_PROFILES, names:PET_FORM_NAMES, profile:evolutionProfile, asset:evolutionAsset, pose:evolutionPose };
+function parkPerformancePose(id,stage,t,width,height,origin,size,reduced=false){
+  t=Math.max(0,Math.min(1,t));
+  const smooth=n=>{n=Math.max(0,Math.min(1,n));return n*n*(3-2*n);};
+  const lerp=(a,b,q)=>a+(b-a)*q;
+  const seed=Object.keys(EVOLUTION_PROFILES).indexOf(id)+1;
+  const motion=evolutionProfile(id).motion;
+  const fly=['soar','loop','dart','fan','salute','breach','beetle','stag','owl','butterfly','bee','bat','flamingo'].includes(motion);
+  const swim=['swim','coil','otter','axolotl','jelly','manta','squid','carp'].includes(motion);
+  const intro=smooth(t/.14),outro=smooth((t-.86)/.14),visible=intro*(1-outro);
+  const scale=lerp(origin.scale,stage<2?1.15:1.05,visible);
+  if(reduced)return {x:origin.x,y:origin.y,scale:origin.scale};
+  const left=Math.min(width*.28,size*.82),right=width-left;
+  const top=Math.min(height*.4,size*.85+150),bottom=Math.max(top+1,height-size*.8-115);
+  const cx=width/2,cy=(top+bottom)/2,rx=(right-left)/2,ry=(bottom-top)/2;
+  if(stage<2){
+    const centerX=lerp(origin.x,cx,visible),centerY=lerp(origin.y,cy,visible);
+    const hops=Math.abs(Math.sin(t*Math.PI*(stage===0?3:4)));
+    return {x:centerX+Math.sin(t*Math.PI*4)*(stage===0?28:48)*visible,y:centerY-hops*(stage===0?35:65)*visible,scale};
+  }
+  const q=Math.max(0,Math.min(1,(t-.14)/.72));
+  const direction=seed%2?1:-1,angle=seed*2.399+direction*Math.PI*2*q;
+  const reach=stage===2?.75:stage===3?.9:1;
+  const wave=(swim?Math.sin(q*Math.PI*4)*14:fly?0:-Math.abs(Math.sin(q*Math.PI*(6+seed%3)))*20)*Math.sin(Math.PI*q);
+  const loopX=cx+Math.cos(angle)*rx*reach;
+  const loopY=cy+Math.sin(angle)*ry*reach+wave;
+  const entry={x:cx+Math.cos(seed*2.399)*rx*reach,y:cy+Math.sin(seed*2.399)*ry*reach};
+  if(t<.14)return {x:lerp(origin.x,entry.x,intro),y:lerp(origin.y,entry.y,intro),scale};
+  if(t>.86)return {x:lerp(entry.x,origin.x,outro),y:lerp(entry.y,origin.y,outro),scale};
+  return {x:Math.max(left,Math.min(right,loopX)),y:Math.max(top,Math.min(bottom,loopY)),scale};
+}
+window.PetEvolution = { profiles:EVOLUTION_PROFILES, names:PET_FORM_NAMES, profile:evolutionProfile, asset:evolutionAsset, pose:evolutionPose, parkPose:parkPerformancePose };

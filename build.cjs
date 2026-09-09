@@ -34,6 +34,7 @@ const SOURCES = [
   'admin-view.jsx',
   'ai-scan-view.jsx',
   'pet-performance.jsx',
+  'park-performance.jsx',
   'pet-library.jsx',
   'pet-evolution-detail.jsx',
   'pet-view.jsx',

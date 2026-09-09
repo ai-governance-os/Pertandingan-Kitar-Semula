@@ -82,9 +82,16 @@ function drawPetMesh(ctx, image, pose, profile) {
   }
 }
 
-function drawPetShow(ctx,image,id,stage,t,color,reduced) {
+function drawPetShow(ctx,image,id,stage,t,color,reduced,motionScale=1) {
   const p=PetEvolution.pose(id,stage,t),profile=PetEvolution.profile(id);
-  ctx.clearRect(0,0,512,512);
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+  ctx.save();ctx.translate((ctx.canvas.width-512)/2,(ctx.canvas.height-512)/2);
+  const gain=stage<2?2.6:2.15;
+  p.x=Math.max(-105,Math.min(105,p.x*gain))*motionScale;
+  p.y=Math.max(-105,Math.min(105,p.y*gain))*motionScale;
+  if(Math.abs(p.angle)<1.5)p.angle*=1.7;
+  p.head*=1.55;p.wings*=1.45;p.tail*=1.5;
+  const zoom=reduced?1:1+p.envelope*.09*motionScale;
   if(reduced){p.x=0;p.y=0;p.angle=0;p.stretch=1;p.head=0;p.wings=0;p.tail=0;}
   const e=p.envelope,phase=reduced?.5:Math.min(1,Math.max(0,(t-.12)/.73));
   const showTime=reduced?.5:t;
@@ -95,7 +102,7 @@ function drawPetShow(ctx,image,id,stage,t,color,reduced) {
     if(stage===5){ctx.beginPath();ctx.arc(256,245,105+phase*45,-Math.PI/2,-Math.PI/2+phase*Math.PI*2);ctx.stroke();}
     ctx.restore();
   }
-  ctx.save();ctx.translate(256+p.x,256+p.y);ctx.rotate(p.angle);ctx.scale(1/p.stretch,p.stretch);ctx.translate(-160,-160);
+  ctx.save();ctx.translate(256+p.x,256+p.y);ctx.rotate(p.angle);ctx.scale(zoom/p.stretch,zoom*p.stretch);ctx.translate(-160,-160);
   drawPetMesh(ctx,image,p,profile);ctx.restore();
   const count=[1,2,3,5,7,11][stage],radius=65+stage*13;
   for(let i=0;i<count;i++){
@@ -117,12 +124,14 @@ function drawPetShow(ctx,image,id,stage,t,color,reduced) {
     const a=i*Math.PI/6+p.seed*.3, r=25+phase*170;
     ctx.save();ctx.globalAlpha=e*.6;ctx.fillStyle='#fff6d1';ctx.beginPath();ctx.arc(256+Math.cos(a)*r,270+Math.sin(a)*r*.7,1+i%3,0,Math.PI*2);ctx.fill();ctx.restore();
   }
+  ctx.restore();
 }
 
-function EvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='lazy',playToken=0,onFinished}) {
+function EvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='lazy',playToken=0,onFinished,onStarted,duration=3000,motionScale=1}) {
   const {useRef,useEffect,useState}=React;
   const canvasRef=useRef(null),imageRef=useRef(null),finishRef=useRef(onFinished);
   const [playing,setPlaying]=useState(false);
+  const startedRef=useRef(onStarted);startedRef.current=onStarted;
   finishRef.current=onFinished;
   const src=PetEvolution.asset(speciesId,stage);
   useEffect(()=>{
@@ -137,20 +146,20 @@ function EvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='l
     function tick(now){
       if(cancelled)return;
       if(!start)start=now;
-      const t=Math.min(1,(now-start)/3000);
-      drawPetShow(ctx,img,speciesId,stage,t,color,reduced);
+      const t=Math.min(1,(now-start)/duration);
+      drawPetShow(ctx,img,speciesId,stage,t,color,reduced,motionScale);
       if(t<1)frame=requestAnimationFrame(tick);
       else {setPlaying(false);finishRef.current?.();}
     }
-    function begin(){if(cancelled||!img.naturalWidth)return;setPlaying(true);frame=requestAnimationFrame(tick);}
+    function begin(){if(cancelled||!img.naturalWidth)return;setPlaying(true);startedRef.current?.();frame=requestAnimationFrame(tick);}
     function failed(){if(!cancelled){setPlaying(false);finishRef.current?.();}}
     if(img.complete){if(img.naturalWidth)begin();else failed();}
     else {img.addEventListener('load',begin,{once:true});img.addEventListener('error',failed,{once:true});}
     return ()=>{cancelled=true;cancelAnimationFrame(frame);img.removeEventListener('load',begin);img.removeEventListener('error',failed);setPlaying(false);};
-  },[playToken,src]);
+  },[playToken,src,duration,motionScale]);
   return <span className={`evolved-beast stage-${stage} ${className} ${playing?'actor-playing':''}`} style={style} data-species={speciesId} data-stage={stage}>
     <img ref={imageRef} src={src} alt={alt} loading={loading} draggable={false}/>
-    <canvas ref={canvasRef} width="512" height="512" aria-hidden="true"/>
+    <canvas ref={canvasRef} width="768" height="768" aria-hidden="true"/>
   </span>;
 }
 window.EvolvedBeast=EvolvedBeast;

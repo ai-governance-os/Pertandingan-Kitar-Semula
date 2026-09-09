@@ -1014,6 +1014,9 @@ function PetPark3D({ report, onPick }) {
 function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick, onPetInteract }) {
   const { useEffect, useRef, useState } = React;
   const scrollerRef = useRef(null);
+  const parkRef = useRef(null);
+  const [parkShow,setParkShow] = useState(null);
+  const [lastPetId,setLastPetId] = useState(null);
   const reactionTimerRef = useRef(null);
   const [activeId, setActiveId] = useState(null);
   const activeInteractionRef = useRef(null);
@@ -1038,22 +1041,23 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
 
   useEffect(() => () => clearTimeout(reactionTimerRef.current), []);
 
-  function interact(row) {
+  function interact(row,button) {
     const speciesId = row.pet.species.id;
     if (onPetInteract) onPetInteract(row);
     setRosterOpen(false);
     setActiveId(row.id);
     activeInteractionRef.current = row.id;
     setShowToken(n => n + 1);
-    setReaction(`${row.name} · ${PetEvolution.profile(speciesId).acts[row.pet.displayStageIndex]}`);
+    setLastPetId(row.id);
+    const image=button?.querySelector('.evolved-beast');
+    const rect=image?.getBoundingClientRect();
+    const host=parkRef.current.getBoundingClientRect();
+    setParkShow({row,token:showToken+1,origin:{x:rect?rect.left+rect.width/2:host.left+host.width/2,y:rect?rect.top+rect.height/2:host.top+host.height/2,width:rect?.width||70}});
+    setReaction(`${row.name} · ${row.pet.displayStageIndex<2?'弹跳打招呼':'环园大巡游'}`);
     clearTimeout(reactionTimerRef.current);
     // Loading failure still permits opening the details. The normal completion
     // comes from the actor so slow image loading cannot truncate the show.
-    reactionTimerRef.current = setTimeout(() => {
-      setActiveId(null);
-      setReaction("");
-      onPick(row.id);
-    }, 8000);
+    reactionTimerRef.current = setTimeout(() => finishInteraction(row), 12000);
   }
 
   function finishInteraction(row) {
@@ -1061,12 +1065,20 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     activeInteractionRef.current = null;
     clearTimeout(reactionTimerRef.current);
     setActiveId(null);
-    setReaction("");
-    onPick(row.id);
+    setParkShow(null);
+    setReaction(`${row.pet.nickname||row.pet.species.zh} 回来啦！点它可以再表演一次`);
+  }
+
+  function openEvolution(){
+    activeInteractionRef.current=null;
+    clearTimeout(reactionTimerRef.current);
+    setActiveId(null);setParkShow(null);setReaction('');
+    if(lastPetId)onPick(lastPetId);
   }
 
   return (
-    <section className="cinematic-park" aria-label="十九位学生共享的神兽乐园">
+    <section ref={parkRef} className="cinematic-park" aria-label="十九位学生共享的神兽乐园">
+      {parkShow&&<ParkPetPerformance key={parkShow.token} show={parkShow} hostRef={parkRef} onFinished={finishInteraction}/>}
       <div
         className="cinematic-park-scroller"
         ref={scrollerRef}
@@ -1113,7 +1125,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                   '--team-color': row.teamColor,
                   '--egg-hue': `${CINEMATIC_EGG_HUES[speciesId] || 0}deg`,
                 }}
-                onClick={() => interact(row)}
+                onClick={e => interact(row,e.currentTarget)}
                 aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。点按互动`}
               >
                 <span className="cinematic-beast-body">
@@ -1123,8 +1135,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                     alt=""
                     draggable="false"
                     loading="eager"
-                    playToken={isActive ? showToken : 0}
-                    onFinished={() => finishInteraction(row)}
+                    playToken={0}
                   />
                   <span className="cinematic-owner-tag">
                     <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={20} className="cinematic-team-badge" />
@@ -1223,7 +1234,8 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
 
       <div className={`cinematic-reaction ${reaction ? "show" : ""}`} role="status" aria-live="polite">
         <span className="material-symbols-rounded" aria-hidden="true">auto_awesome</span>
-        {reaction}
+        <span className="cinematic-reaction-copy">{reaction}</span>
+        {lastPetId&&<button type="button" onClick={openEvolution}>查看进化</button>}
       </div>
     </section>
   );

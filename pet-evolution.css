@@ -1,13 +1,27 @@
 /* Six real forms; the original park's colour/scale shortcuts no longer apply. */
 .evolved-beast { position:relative;display:block;aspect-ratio:1;isolation:isolate;overflow:visible; }
 .evolved-beast > img { display:block;width:100%;height:100%;object-fit:contain;pointer-events:none; }
-.evolved-beast > canvas { position:absolute;left:-30%;top:-30%;width:160%;height:160%;display:none;pointer-events:none; }
+.evolved-beast > canvas { position:absolute;left:-70%;top:-70%;width:240%;height:240%;display:none;pointer-events:none; }
 .evolved-beast.actor-playing > canvas { display:block; }
 .evolved-beast.actor-playing > img { opacity:0; }
 .cinematic-beast .evolved-beast.cinematic-beast-art { transform:none;filter:drop-shadow(0 9px 9px #14212877);height:auto;max-height:none; }
 .cinematic-beast.stage-5 .evolved-beast { filter:drop-shadow(0 0 10px var(--pet-aura)); }
 .cinematic-beast.is-performing { animation-play-state:paused; }
 .cinematic-beast.is-performing .cinematic-beast-body { animation:none!important; }
+.cinematic-beast.is-performing .cinematic-beast-body{visibility:hidden}
+.park-performance-layer{position:absolute;inset:0;z-index:90;pointer-events:none;overflow:hidden}
+.park-performance-actor{position:absolute;left:0;top:0;will-change:transform;transform-origin:50% 50%}
+.park-performance-actor .evolved-beast{width:100%;height:100%;filter:drop-shadow(0 9px 8px #061e2680)}
+.park-performance-owner{position:absolute;top:100%;left:50%;transform:translateX(-50%);max-width:190px;min-width:95px;padding:4px 9px;border-radius:12px;background:#092d2ee8;border:1px solid #ffe5a266;color:#fff4ce;text-align:center;font-size:11px;white-space:normal;line-height:1.35}
+.park-performance-trail{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.park-performance-trail path{fill:none;stroke:var(--show-color,#ffe29d);stroke-width:4;stroke-linecap:round;filter:drop-shadow(0 0 5px var(--show-color,#ffe29d))}
+.cinematic-reaction button{border:1px solid #f7db9566;border-radius:20px;background:#f8e7b5;color:#153d35;min-height:44px;padding:7px 12px;font-size:12px;font-weight:800;pointer-events:auto;white-space:nowrap}
+.cinematic-reaction{width:min(550px,calc(100% - 24px));border-radius:18px;box-sizing:border-box}
+.cinematic-reaction-copy{flex:1;min-width:0;line-height:1.45;font-size:12px;overflow-wrap:anywhere}
+.park-performance-owner{width:max-content;min-width:0;max-width:180px}
+.evolution-hero{overflow:hidden}
+.library-preview{overflow:hidden}
+.evolution-hero-caption{z-index:2}
 .cinematic-roster .evolved-beast { width:48px;flex:0 0 48px; }
 .evolution-backdrop { position:fixed;inset:0;z-index:500;background:#081721b8;backdrop-filter:blur(10px);display:grid;place-items:center;padding:16px;overscroll-behavior:contain; }
 .evolution-dialog { width:min(100%,540px);max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;background:linear-gradient(145deg,#fffdf7,#f2f7f5);color:#1b343b;border:1px solid #ffffffbb;border-radius:26px;box-shadow:0 24px 90px #0005;padding:20px;font-family:var(--font-body,sans-serif); }
