@@ -13,6 +13,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
   const [newStudentTeamId, setNewStudentTeamId] = useStateA(() => state.teams[0]?.id || "");
   const [rosterNameDrafts, setRosterNameDrafts] = useStateA({});
   const [rosterNotice, setRosterNotice] = useStateA("");
+  const [beastStudentId,setBeastStudentId] = useStateA(null);
   const report = useMemoA(() => EcoData.absenceReport(state), [state]);
   const ineligible = report.filter(r => !r.eligible);
   const threshold = EcoData.redListThreshold(state);
@@ -278,7 +279,8 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
               </select>
               <button className="chunky-btn primary" type="button" onClick={addRosterStudent}>+ 加入学生</button>
             </div>
-            <div className="roster-help">神兽乐园目前有 {maxActiveStudents} 只不同神兽，因此在籍名额保持 {maxActiveStudents} 位；先归档离校学生，才可加入新生。</div>
+            <div className="roster-help">神兽库有 {EcoData.PET_SPECIES.length} 种原创神兽。班级在籍名额保持 {maxActiveStudents} 位；每人拥有不同伙伴。点击「选神兽」可预览六阶外形再分配。</div>
+            {beastStudentId&&<BeastLibraryPicker state={state} setState={setState} studentId={beastStudentId} isAdmin={isAdmin} onClose={()=>setBeastStudentId(null)}/>}
             {rosterNotice && <div className="roster-notice" role="status">{rosterNotice}</div>}
 
             <div className="roster-team-grid">
@@ -313,6 +315,7 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
                             {state.teams.map(option => <option key={option.id} value={option.id}>{option.zh}</option>)}
                           </select>
                           <div className="roster-row-actions">
+                            <button className="chunky-btn small-btn" type="button" onClick={()=>setBeastStudentId(member.id)}>选神兽</button>
                             <button className="chunky-btn small-btn" type="button" onClick={() => saveRosterName(member)}>保存</button>
                             <button className="chunky-btn roster-archive-btn" type="button" onClick={() => archiveRosterStudent(member)}>归档</button>
                           </div>

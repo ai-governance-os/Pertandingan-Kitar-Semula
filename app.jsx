@@ -211,7 +211,7 @@ function App() {
       {mode === "mobile" && <MobileView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
       {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
-      {mode === "pets" && <PetGardenView state={state} setState={setState} authed={authed} requireAuth={requireAuth} />}
+      {mode === "pets" && <PetGardenView state={state} setState={setState} authed={authed} isAdmin={isAdmin} requireAuth={requireAuth} />}
       {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
       {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} isAdmin={isAdmin} teacherId={teacherId} />}
 

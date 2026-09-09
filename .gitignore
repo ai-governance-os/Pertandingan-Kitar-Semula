@@ -3,3 +3,4 @@ package-lock.json
 .DS_Store
 *.log
 icon-preview/
+audit/evolution-tools/

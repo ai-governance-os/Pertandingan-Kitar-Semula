@@ -25,6 +25,7 @@ const SOURCES = [
   'cloud-sync.js',
   'ai-client.js',
   'pet-audio.js',
+  'pet-evolution.js',
   // React components (JSX)
   'tweaks-panel.jsx',
   'components.jsx',
@@ -32,6 +33,9 @@ const SOURCES = [
   'bigscreen-view.jsx',
   'admin-view.jsx',
   'ai-scan-view.jsx',
+  'pet-performance.jsx',
+  'pet-library.jsx',
+  'pet-evolution-detail.jsx',
   'pet-view.jsx',
   'reward-corner-view.jsx',
   // entry point — must come last

@@ -223,8 +223,7 @@ const CINEMATIC_EGG_HUES = {
 };
 
 function cinematicStageAsset(row, stageIndex = row?.pet?.displayStageIndex || 0) {
-  const stage = CINEMATIC_STAGE_VISUALS[stageIndex] || CINEMATIC_STAGE_VISUALS[0];
-  return stage.asset(row);
+  return PetEvolution.asset(row.pet.species.id, stageIndex);
 }
 
 function CinematicStageArt({
@@ -235,45 +234,12 @@ function CinematicStageArt({
   style = {},
   loading,
   draggable = false,
+  playToken = 0,
+  onFinished,
 }) {
   const classes = `${className} stage-${stageIndex}`.trim();
-  if (stageIndex !== 1) {
-    return (
-      <img
-        className={classes}
-        src={cinematicStageAsset(row, stageIndex)}
-        alt={alt}
-        style={style}
-        loading={loading}
-        draggable={draggable}
-      />
-    );
-  }
-
-  return (
-    <span
-      className={`cinematic-hatchling-composite ${classes}`.trim()}
-      style={style}
-      role={alt ? "img" : undefined}
-      aria-label={alt || undefined}
-      aria-hidden={alt ? undefined : true}
-    >
-      <img
-        className="cinematic-hatchling-creature"
-        src={cinematicPetAsset(row)}
-        alt=""
-        loading={loading}
-        draggable={draggable}
-      />
-      <img
-        className="cinematic-hatchling-shell"
-        src={CINEMATIC_HATCHING_SHELL_ASSET}
-        alt=""
-        loading={loading}
-        draggable={draggable}
-      />
-    </span>
-  );
+  return <EvolvedBeast speciesId={row.pet.species.id} stage={stageIndex} className={classes}
+    alt={alt} style={style} loading={loading} playToken={playToken} onFinished={onFinished}/>;
 }
 
 function cinematicStageWidth(row, layout) {
@@ -1050,6 +1016,8 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
   const scrollerRef = useRef(null);
   const reactionTimerRef = useRef(null);
   const [activeId, setActiveId] = useState(null);
+  const activeInteractionRef = useRef(null);
+  const [showToken, setShowToken] = useState(0);
   const [reaction, setReaction] = useState("");
   const [rosterOpen, setRosterOpen] = useState(false);
 
@@ -1072,23 +1040,29 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
 
   function interact(row) {
     const speciesId = row.pet.species.id;
-    const hasHatched = row.pet.displayStageIndex >= 2;
     if (onPetInteract) onPetInteract(row);
     setRosterOpen(false);
     setActiveId(row.id);
-    const ownerName = row.name.split(" ").slice(-1)[0];
-    const response = row.pet.displayStageIndex === 0
-      ? "神兽蛋轻轻晃了三下，蛋壳亮起一颗小心心"
-      : row.pet.displayStageIndex === 1
-        ? `${row.pet.species.zh}从蛋壳里探出小小上半身，开心地认出了你`
-        : `${row.pet.species.zh}${CINEMATIC_REACTIONS[speciesId] || "转过身来回应你"}`;
-    setReaction(`${ownerName}的${response}`);
+    activeInteractionRef.current = row.id;
+    setShowToken(n => n + 1);
+    setReaction(`${row.name} · ${PetEvolution.profile(speciesId).acts[row.pet.displayStageIndex]}`);
     clearTimeout(reactionTimerRef.current);
+    // Loading failure still permits opening the details. The normal completion
+    // comes from the actor so slow image loading cannot truncate the show.
     reactionTimerRef.current = setTimeout(() => {
       setActiveId(null);
       setReaction("");
       onPick(row.id);
-    }, hasHatched ? 3000 : 1600);
+    }, 8000);
+  }
+
+  function finishInteraction(row) {
+    if (activeInteractionRef.current !== row.id) return;
+    activeInteractionRef.current = null;
+    clearTimeout(reactionTimerRef.current);
+    setActiveId(null);
+    setReaction("");
+    onPick(row.id);
   }
 
   return (
@@ -1107,7 +1081,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
           />
           {report.map((row, index) => {
             const speciesId = row.pet.species.id;
-            const layout = CINEMATIC_PET_LAYOUT[speciesId] || { x: 50, y: 50, w: 168, route: "amble", depth: 50 };
+            const layout = CINEMATIC_PET_LAYOUT[speciesId] || { x:12+(index%5)*18, y:40+Math.floor(index/5)*9, w:168, route:["amble","graze","prowl","serpent"][index%4], depth:45+index };
             const isActive = activeId === row.id;
             const isDimmed = teamFilter !== "all" && row.teamId !== teamFilter;
             const ownerName = row.name.split(" ").slice(-1)[0];
@@ -1149,11 +1123,13 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                     alt=""
                     draggable="false"
                     loading="eager"
+                    playToken={isActive ? showToken : 0}
+                    onFinished={() => finishInteraction(row)}
                   />
                   <span className="cinematic-owner-tag">
                     <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={20} className="cinematic-team-badge" />
                     <b>{row.name}</b>
-                    <span>{row.pet.nickname || row.pet.species.zh} · {row.pet.stage.zh}</span>
+                    <span>{row.pet.nickname || row.pet.species.zh} · {PetEvolution.names[displayStage]}</span>
                   </span>
                 </span>
               </button>
@@ -1384,7 +1360,7 @@ function MythicMusicToggle({ available, enabled, playing, onToggle }) {
   );
 }
 
-function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => fn && fn() }) {
+function PetGardenView({ state, setState, authed = false, isAdmin = false, requireAuth = (fn) => fn && fn() }) {
   const { useEffect, useMemo, useState } = React;
   const [teamFilter, setTeamFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
@@ -1422,11 +1398,12 @@ function PetGardenView({ state, setState, authed = false, requireAuth = (fn) => 
       />
 
       {selected && (
-        <PetDetailModal
+        <EvolutionDetailModal
           state={state}
           setState={setState}
           row={selected}
           authed={authed}
+          isAdmin={isAdmin}
           requireAuth={requireAuth}
           onClose={() => setSelectedId(null)}
         />

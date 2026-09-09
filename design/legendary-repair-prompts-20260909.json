@@ -1,0 +1,20 @@
+[
+  {
+    "id": "zhuque",
+    "stage": 5,
+    "tool": "built-in imagegen",
+    "prompt": "Use case: precise-object-edit. This is the legendary game creature sprite. Preserve this EXACT animal identity, colors, face, premium cute cinematic 3D style, ornament and pose. Produce a single full body isolated creature centered in a SQUARE image with a generous 15% margin on all four sides. Restore any clipped outer feathers, wings, antennae or ribbons. Remove ALL rectangular backdrop patches and floor shadows. Genuinely transparent background, no painted checkerboard. Every feather/antenna tip must end naturally completely inside the frame. No text. No border. No grid. Do not add a landscape or other creatures."
+  },
+  {
+    "id": "orchidlemur",
+    "stage": 5,
+    "tool": "built-in imagegen",
+    "prompt": "Use case: precise-object-edit. This is the legendary game creature sprite. Preserve this EXACT animal identity, colors, face, premium cute cinematic 3D style, ornament and pose. Produce a single full body isolated creature centered in a SQUARE image with a generous 15% margin on all four sides. Restore any clipped outer feathers, wings, antennae or ribbons. Remove ALL rectangular backdrop patches and floor shadows. Genuinely transparent background, no painted checkerboard. Every feather/antenna tip must end naturally completely inside the frame. No text. No border. No grid. Do not add a landscape or other creatures."
+  },
+  {
+    "id": "ambermantis",
+    "stage": 5,
+    "tool": "built-in imagegen",
+    "prompt": "Use case: precise-object-edit. This is the legendary game creature sprite. Preserve this EXACT animal identity, colors, face, premium cute cinematic 3D style, ornament and pose. Produce a single full body isolated creature centered in a SQUARE image with a generous 15% margin on all four sides. Restore any clipped outer feathers, wings, antennae or ribbons. Remove ALL rectangular backdrop patches and floor shadows. Genuinely transparent background, no painted checkerboard. Every feather/antenna tip must end naturally completely inside the frame. No text. No border. No grid. Do not add a landscape or other creatures."
+  }
+]

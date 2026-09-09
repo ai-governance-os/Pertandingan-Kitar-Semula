@@ -4,8 +4,7 @@
 const STORAGE_KEY = "eco_warrior_v2";
 const LEGACY_STORAGE_KEY = "eco_warrior_v1";
 const SCORING_VERSION = 4;
-// The pet world has nineteen distinct guardian species. Keep the active roster
-// at the same ceiling so every current student can still have a unique beast.
+// Class capacity is nineteen; the collectible library is independently expandable.
 const MAX_ACTIVE_STUDENTS = 19;
 
 const DEFAULT_CATEGORIES = [
@@ -208,7 +207,7 @@ function normalizeRewardItems(items, categories = DEFAULT_REWARD_CATEGORIES) {
 }
 
 function defaultState() {
-  return {
+  const initial = {
     version: 2,
     scoringVersion: SCORING_VERSION,
     categories: clone(DEFAULT_CATEGORIES),
@@ -233,6 +232,7 @@ function defaultState() {
     settings: { ...DEFAULT_SETTINGS },
     season: { startedAt: Date.now(), name: { zh: "2026 环保回收赛", ms: "Musim Kitar Semula 2026" } },
   };
+  return migratePetLibrary(initial);
 }
 
 function clone(value) {
@@ -292,6 +292,8 @@ function normalizeState(input) {
   state.fundEvents = Array.isArray(input.fundEvents) ? input.fundEvents : [];
   state.catalog = Array.isArray(input.catalog) && input.catalog.length ? input.catalog : seedCatalog();
   state.pets = (input.pets && typeof input.pets === "object") ? input.pets : {};
+  state.petLibraryVersion = input.petLibraryVersion || 0;
+  migratePetLibrary(state);
   state.settings = { ...DEFAULT_SETTINGS, ...(input.settings || {}) };
 
   state.season = input.season || base.season;
@@ -802,7 +804,7 @@ function teamStarStats(state, teamId) {
 // ─────────────────────────── 宠物园 · Eco Pets ───────────────────────────
 //
 // Pets are DERIVED from the star ledger on purpose:
-//   growth (exp) = lifetime stars EARNED — spending stars on a gift never
+//   growth (exp) = this month's net stars — spending stars on a gift never
 //                  shrinks a pet ("auto-feed" rule chosen by the school)
 //   hunger       = days since that student last earned a star
 //
@@ -810,7 +812,7 @@ function teamStarStats(state, teamId) {
 // single-row cloud sync and can't create write conflicts. The only stored bits
 // are the species override and nickname (state.pets), which change rarely.
 
-// Nineteen mythic beasts, one per student and never repeated across the school.
+// Fifty original guardians; the active class still has nineteen unique companions.
 // Internal IDs stay stable so an existing student's assigned beast never changes
 // when its art direction or display name is upgraded.
 const PET_SPECIES = [
@@ -833,6 +835,37 @@ const PET_SPECIES = [
   { id: "griffin",    zh: "狮鹫",   en: "Griffin",        aura: "#FFD98A", stages: ["🥚", "🐣", "🐦", "🦅", "🦁", "🏅"] },
   { id: "snowferret", zh: "雪貂灵", en: "Snow Ferret",    aura: "#BFE6FF", stages: ["🥚", "🐣", "🐁", "🐀", "🦦", "❄️"] },
   { id: "firemouse",  zh: "火鼠",   en: "Fire Mouse",     aura: "#FF8A3D", stages: ["🥚", "🐣", "🐭", "🐹", "🐀", "🌋"] },
+  { id:"hornbeetle", zh:"天角仙", en:"hornbeetle", category:"虫灵", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"moonrabbit", zh:"月玉兔", en:"moonrabbit", category:"灵兽", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"lotusotter", zh:"莲水獭", en:"lotusotter", category:"海灵", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"coralpanda", zh:"珊瑚熊猫", en:"coralpanda", category:"灵兽", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"sunlion", zh:"曦光狮", en:"sunlion", category:"灵兽", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"crystalowl", zh:"晶羽鸮", en:"crystalowl", category:"飞羽", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"mossbear", zh:"苔山熊", en:"mossbear", category:"灵兽", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"lotusfrog", zh:"莲心蛙", en:"lotusfrog", category:"海灵", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"aurorabutterfly", zh:"极光蝶", en:"aurorabutterfly", category:"虫灵", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"ambermantis", zh:"琥珀螳", en:"ambermantis", category:"虫灵", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"staghorn", zh:"双钳将", en:"staghorn", category:"虫灵", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"jewelspider", zh:"宝珠蛛", en:"jewelspider", category:"虫灵", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"honeybee", zh:"蜜金蜂", en:"honeybee", category:"虫灵", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"maplehedgehog", zh:"枫刺团", en:"maplehedgehog", category:"灵兽", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"misttapir", zh:"雾梦貘", en:"misttapir", category:"灵兽", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"staraxolotl", zh:"星鳃灵", en:"staraxolotl", category:"海灵", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"opaljelly", zh:"琉璃水母", en:"opaljelly", category:"海灵", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"tidemanta", zh:"潮翼鳐", en:"tidemanta", category:"海灵", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"conchsquid", zh:"螺音鱿", en:"conchsquid", category:"海灵", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"silvercarp", zh:"银跃鲤", en:"silvercarp", category:"海灵", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"coconutcrab", zh:"椰甲蟹", en:"coconutcrab", category:"海灵", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"pebblepenguin", zh:"冰砾企鹅", en:"pebblepenguin", category:"飞羽", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"sunmeerkat", zh:"日哨獴", en:"sunmeerkat", category:"灵兽", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"rainchameleon", zh:"虹纹蜥", en:"rainchameleon", category:"灵兽", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"velvetbat", zh:"绒月蝠", en:"velvetbat", category:"飞羽", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"blossomhorse", zh:"花风驹", en:"blossomhorse", category:"灵兽", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"jadeelephant", zh:"玉山象", en:"jadeelephant", category:"灵兽", aura:"#CEACFF", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"sandsquirrel", zh:"沙铃松鼠", en:"sandsquirrel", category:"灵兽", aura:"#6DD7EC", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"orchidlemur", zh:"兰尾狐猴", en:"orchidlemur", category:"灵兽", aura:"#FFBE87", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"stormram", zh:"风岳羊", en:"stormram", category:"灵兽", aura:"#F7D47D", stages:["🥚","🐣","✦","✦","✦","✧"] },
+  { id:"roseflamingo", zh:"绯羽鹭", en:"roseflamingo", category:"飞羽", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
 ];
 
 // Monthly growth milestones intentionally reward the first effort quickly:
@@ -840,11 +873,11 @@ const PET_SPECIES = [
 // larger jumps are reserved for the increasingly cinematic later forms.
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
-  { minExp: 10,  zh: "破蛋", en: "Hatching" },
+  { minExp: 10,  zh: "破壳", en: "Hatching" },
   { minExp: 20,  zh: "幼兽", en: "Cub" },
-  { minExp: 50,  zh: "少年", en: "Junior" },
-  { minExp: 80,  zh: "成年", en: "Adult" },
-  { minExp: 120, zh: "传说", en: "Legend" },
+  { minExp: 50,  zh: "守护兽", en: "Guardian" },
+  { minExp: 80,  zh: "战将兽", en: "Champion" },
+  { minExp: 120, zh: "传奇", en: "Legend" },
 ];
 
 const PET_HUNGER_LEVELS = [
@@ -881,23 +914,37 @@ function hashString(str) {
 // a newly enrolled student is appended and never reshuffles anyone's beast.
 let speciesMapCache = { key: "", map: null };
 
-function petSpeciesMap(state) {
+function migratePetLibrary(state) {
+  if (state.petLibraryVersion >= 2) return state;
+  const assignments = petSpeciesMap(state, PET_SPECIES.slice(0,19));
+  const pets = { ...(state.pets || {}) };
+  Object.entries(assignments).forEach(([id,speciesId]) => {
+    pets[id] = { ...(pets[id] || {}), speciesId };
+  });
+  const guande = 'dragons_lucas_lee_guan_teck';
+  if (assignments[guande]) pets[guande] = { ...pets[guande], speciesId:'hornbeetle' };
+  state.pets = pets;
+  state.petLibraryVersion = 2;
+  return state;
+}
+
+function petSpeciesMap(state, speciesPool = PET_SPECIES) {
   const roster = (state?.teams || []).flatMap(t => teamMembers(state, t.id).map(m => m.id));
-  const key = roster.map(id => `${id}>${state?.pets?.[id]?.speciesId || ""}`).join(",");
+  const key = speciesPool.length + ':' + roster.map(id => `${id}>${state?.pets?.[id]?.speciesId || ""}`).join(",");
   if (speciesMapCache.key === key && speciesMapCache.map) return speciesMapCache.map;
 
   const map = {}, taken = new Set();
   // teacher's manual 换宠物 wins, and reserves that species from everyone else
   roster.forEach(id => {
     const override = state?.pets?.[id]?.speciesId;
-    if (override && PET_SPECIES.some(sp => sp.id === override)) { map[id] = override; taken.add(override); }
+    if (override && PET_SPECIES.some(sp => sp.id === override) && !taken.has(override)) { map[id] = override; taken.add(override); }
   });
   roster.forEach(id => {
     if (map[id]) return;
-    const start = hashString(id) % PET_SPECIES.length;
-    let chosen = PET_SPECIES[start].id; // only reached once every species is taken
-    for (let step = 0; step < PET_SPECIES.length; step++) {
-      const cand = PET_SPECIES[(start + step) % PET_SPECIES.length];
+    const start = hashString(id) % speciesPool.length;
+    let chosen = speciesPool[start].id;
+    for (let step = 0; step < speciesPool.length; step++) {
+      const cand = speciesPool[(start + step) % speciesPool.length];
       if (!taken.has(cand.id)) { chosen = cand.id; break; }
     }
     map[id] = chosen;
@@ -908,9 +955,6 @@ function petSpeciesMap(state) {
 }
 
 function petSpeciesFor(state, studentId) {
-  const override = state?.pets?.[studentId]?.speciesId;
-  const picked = override && PET_SPECIES.find(s => s.id === override);
-  if (picked) return picked;
   const assigned = petSpeciesMap(state)[studentId];
   return PET_SPECIES.find(s => s.id === assigned) ||
          PET_SPECIES[hashString(studentId) % PET_SPECIES.length];
@@ -996,7 +1040,13 @@ function petReport(state, now = Date.now()) {
 }
 
 function setPetSpecies(state, studentId, speciesId) {
+  if (!PET_SPECIES.some(s=>s.id===speciesId)) return state;
+  const assignments = petSpeciesMap(state);
+  if (!assignments[studentId] || assignments[studentId] === speciesId) return state;
   const pets = { ...(state.pets || {}) };
+  Object.entries(assignments).forEach(([id,assigned])=>{pets[id]={...(pets[id]||{}),speciesId:assigned};});
+  const other = Object.keys(assignments).find(id=>id!==studentId && assignments[id]===speciesId);
+  if (other) pets[other] = { ...pets[other], speciesId:assignments[studentId] };
   pets[studentId] = { ...(pets[studentId] || {}), speciesId };
   const next = { ...state, pets };
   save(next);
