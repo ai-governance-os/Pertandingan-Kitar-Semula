@@ -56,48 +56,52 @@ const PET_LIVING_FAMILIES={
  wing:'yinglong aurorabutterfly honeybee velvetbat staghorn',
  water:'seakirin xuanwu staraxolotl tidemanta silvercarp',
  tentacle:'opaljelly conchsquid',
- insect:'ambermantis jewelspider coconutcrab',
+ insect:'hornbeetle ambermantis jewelspider coconutcrab',
  bouncy:'moonrabbit firemouse sandsquirrel lotusfrog maplehedgehog',
  gentle:'baize mossbear jadeelephant misttapir stormram bamboo',
 };
 function livingFamily(id){return Object.keys(PET_LIVING_FAMILIES).find(k=>PET_LIVING_FAMILIES[k].split(' ').includes(id))||'beast';}
 function livingSeed(id){return [...id].reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,7);}
+const livingRigCache=new Map();
 function livingRig(id,stage){
- const anchors=PET_EYES[id]?.[stage-1];if(!anchors)return null;
+ const key=id+':'+stage;if(livingRigCache.has(key))return livingRigCache.get(key);
+ const beetle=id==='hornbeetle'?window.BeetleRig?.rigs[stage]:null;
+ const anchors=PET_EYES[id]?.[stage-1];if(!anchors&&!beetle)return null;
  const factor=368/192,eyes=[];
- for(let i=0;i<anchors.length;i+=3)eyes.push([anchors[i]*factor,anchors[i+1]*factor,anchors[i+2]*factor,anchors[i+2]*factor*1.12]);
+ if(beetle)eyes.push(...beetle.eyes);else for(let i=0;i<anchors.length;i+=3)eyes.push([anchors[i]*factor,anchors[i+1]*factor,anchors[i+2]*factor,anchors[i+2]*factor*1.12]);
  const hx=eyes.reduce((s,e)=>s+e[0],0)/eyes.length,hy=eyes.reduce((s,e)=>s+e[1],0)/eyes.length;
  const family=livingFamily(id),small=stage<3,headRadius=small?90:60;
- const feet=stage===1?[[hx-35,hy+55,24,28],[hx+35,hy+55,24,28]]:
-  family==='tentacle'?[[90,290,42,60],[150,312,34,48],[230,310,34,48],[295,287,36,55]]:
-  family==='water'?[[95,235,50,50],[275,238,50,50]]:
-  [[108,316,32,38],[165,329,28,35],[236,327,30,36],[296,313,27,37]];
- const wings=stage>1&&['bird','wing','water'].includes(family)?[[80,190,67,75],[292,196,62,79]]:[];
- return {head:[hx,hy,headRadius,headRadius],eyes,feet,wings,skin:'#ded3b6',family,seed:livingSeed(id)};
+ const tips=window.PetBodyRigs?.limbs[id]?.[stage-1];if(!tips)return null;
+ const feet=[];
+ for(let i=0;i<tips.length;i+=2){
+  const x=tips[i]*factor,y=tips[i+1]*factor;
+  const radius=stage===1?14:family==='tentacle'?22:family==='insect'||id==='hornbeetle'?16:15;
+  feet.push([x,y,radius*factor,(stage===1?17:27)*factor,x,y-(stage===1?16:25)*factor]);
+ }
+ const wings=(window.PetBodyRigs?.wings[id]?.[stage-1]||[]).map(p=>p.map(v=>v*factor));
+ const rig={head:beetle?.head||[hx,hy,headRadius,headRadius],eyes,feet,wings,skin:beetle?.skin||'#ded3b6',family,seed:livingSeed(id),hatchling:stage===1};
+ livingRigCache.set(key,rig);return rig;
 }
 function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  const seed=livingSeed(id),offset=(seed%173)/31,family=livingFamily(id);
  const p=BeetleRig.pose(stage,seconds+offset,show,reduced,walking);
  if(reduced)return p;
- const active=show!==null,g=active?Math.sin(Math.PI*show):0;
- const cycle=(seconds+offset)%(5.5+seed%4),idle=cycle<.5||cycle>2.9?0:Math.sin((cycle-.5)/2.4*Math.PI);
- const beat=active?show*Math.PI*(4+stage*2+seed%3):seconds*2+offset;
- // Anticipation, a species-family gesture, and settling are separate beats.
- p.head=Math.sin(beat*.55)*(active?.16*g:.065*idle);
- p.wave=active?g*(.7+.5*Math.sin(beat)):idle*.5;
- p.step=stage===1?0:Math.sin(beat)*(active?1.8*g:walking?.9:.28*idle);
- p.breathe=Math.sin(seconds*2+offset)*1.8;
- if(family==='gentle'){p.head*=.65;p.wave*=1.25;p.step*=.6;}
- if(family==='bouncy'){p.wave*=1.25;p.step*=1.2;}
- if(['bird','wing'].includes(family)){
-  p.wave=0;p.wing=stage===1?0:Math.sin(beat*(family==='wing'?2:1))*(active?2.5*g:.55*idle);
- }
- if(family==='water'||family==='tentacle'){
-  p.wave=0;p.step=Math.sin(beat)*(active?2*g:.6);p.wing=Math.cos(beat)*(active?1.8*g:.5);
- }
- if(family==='insect'){p.step*=1.25;p.wave*=1.25;}
- // Shell stays planted; only the exposed head and small paws respond.
- if(stage===1){p.step=0;p.head*=.8;p.wave*=.8;}
+ const active=show!==null,g=active?Math.sin(Math.PI*Math.max(0,Math.min(1,show))):1;
+ const beat=active?show*Math.PI*(4+stage+seed%3):(seconds+offset)*(walking?5.5+stage*.13:2.8+(seed%5)*.14+stage*.17);
+ const idleGreeting=.5+.5*Math.sin((seconds+offset)*2.05);
+ // Different amplitudes / cadence for all five bodies. Idle motion is visible
+ // too: a paw lifts, joints rotate and wings fan from their actual shoulders.
+ p.head=Math.sin(beat*.45)*(active?.12*g:.055);
+ p.wave=active?g*([0,.8,1.05,1.35,1.15,1.5][stage])*(.7+.3*Math.sin(beat)):idleGreeting*(stage===1?.62:.36);
+ p.step=stage===1?0:Math.sin(beat)*(active?1.35*g:walking?1.05:.72);
+ p.breathe=Math.sin(beat*.5)*(active?2.2*g:1.6);
+ p.wing=Math.sin(beat*(family==='wing'?1.45:1))*(active?1.6*g:walking?1.1:.85);
+ if(family==='gentle'){p.head*=.7;p.wave*=1.05;p.step*=.85;}
+ if(family==='bouncy'){p.step*=1.15;p.wave*=1.1;}
+ if(family==='tentacle'){p.wave=0;p.step=Math.sin(beat)*g*1.25;}
+ if(family==='water'){p.wave*=.4;p.wing*=1.1;}
+ if(family==='bird'){p.wave*=.25;}
+ if(stage===1){p.step=0;p.head*=.75;p.wing*=.65;p.wave=active?g*(.9+.35*Math.sin(beat)):idleGreeting*.95;}
  return p;
 }
 window.PetLivingRig={eyes:PET_EYES,get:livingRig,pose:livingPose,family:livingFamily,seed:livingSeed};

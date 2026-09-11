@@ -1298,13 +1298,11 @@ function useMythicParkAudio() {
 
   const playPetAccent = useCallback((row) => {
     if (!enabledRef.current) return;
-    // Speech must be requested in the click handler, before awaiting audio unlock.
-    const speaking=row.pet.voiceMode!=='call-only'&&window.PetOwnerVoice?.speak(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction);
+    window.PetOwnerVoice?.stop();
+    const request=window.PetOwnerVoice?.token();
     start().then((ok) => {
-      if (ok && engineRef.current) {
-        const clip=speaking&&window.PetCharacterVoice?.resolve(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction);
-        if(clip)engineRef.current.duck?.(Math.max(6,clip.duration+.4));
-        else engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex,speaking);
+      if (ok && engineRef.current && window.PetOwnerVoice?.isCurrent(request)) {
+        engineRef.current.playAccent(row.pet.species.id,row.pet.displayStageIndex,false,row.pet.voiceAction);
       }
     });
   }, [start]);

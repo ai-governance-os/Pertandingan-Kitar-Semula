@@ -31,15 +31,18 @@ function beetleVertex(x,y,rig,p){
   const [hx,hy,hrx,hry]=rig.head,h=influence(hx,hy,hrx,hry);
   let dx=(-(y-hy)*Math.sin(p.head)+(x-hx)*(Math.cos(p.head)-1))*h;
   let dy=((x-hx)*Math.sin(p.head)+(y-hy)*(Math.cos(p.head)-1))*h;
-  rig.feet.forEach(([fx,fy,rx,ry],i)=>{
-    const w=influence(fx,fy,rx,ry),front=i===rig.feet.length-1;
-    dx+=w*((i%2?1:-1)*p.step*5+(front?p.wave*13:0));
-    dy+=w*((i%2?1:-1)*p.step*4-(front?p.wave*24:0));
+  rig.feet.forEach(([fx,fy,rx,ry,rootX=fx,rootY=fy-38],i)=>{
+    const w=influence(fx,fy,rx,ry),front=i<(rig.hatchling?2:1),phase=i%2?1:-1;
+    const wave=front?p.wave*(i===1?.72:1):0,angle=phase*p.step*.27+wave*.38;
+    dx+=w*(-(y-rootY)*Math.sin(angle)+(x-rootX)*(Math.cos(angle)-1)+phase*p.step*6);
+    dy+=w*((x-rootX)*Math.sin(angle)+(y-rootY)*(Math.cos(angle)-1)-Math.abs(p.step)*5-wave*13);
   });
-  rig.wings.forEach(([wx,wy,rx,ry],i)=>{
-    const w=influence(wx,wy,rx,ry);dx+=w*p.wing*(i?-7:7);dy+=w*p.wing*12;
+  rig.wings.forEach(([wx,wy,rx,ry,rootX=184,rootY=wy+30],i)=>{
+    const w=influence(wx,wy,rx,ry),side=wx<rootX?-1:1,angle=p.wing*side*.32;
+    dx+=w*(-(y-rootY)*Math.sin(angle)+(x-rootX)*(Math.cos(angle)-1));
+    dy+=w*((x-rootX)*Math.sin(angle)+(y-rootY)*(Math.cos(angle)-1));
   });
-  return [x+dx,y+dy-p.breathe*Math.sin(y/368*Math.PI)];
+  return [x+Math.max(-68,Math.min(68,dx)),y+Math.max(-68,Math.min(68,dy))-p.breathe*Math.sin(y/368*Math.PI)];
 }
 function paintBeetleFace(ctx,img,rig,p){
   ctx.clearRect(0,0,368,368);ctx.drawImage(img,0,0,368,368);

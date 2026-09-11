@@ -20,17 +20,15 @@ function signaturePose(kind,t,reduced=false){
 }
 function PetSignatureStage({row,onClose,onPetInteract}){
  const {useState,useRef,useEffect}=React;
- const [mode,setMode]=useState(null),[token,setToken]=useState(0),[loaded,setLoaded]=useState(false),[error,setError]=useState(false),[sound,setSound]=useState(()=>!!window.PetCharacterVoice?.resolve(row.name,5,'hornbeetle','greet'));
- const voiced=!!window.PetCharacterVoice?.resolve(row.name,5,'hornbeetle','greet');
+ const [mode,setMode]=useState(null),[token,setToken]=useState(0),[loaded,setLoaded]=useState(false),[error,setError]=useState(false),[sound,setSound]=useState(true);
  const [voiceStatus,setVoiceStatus]=useState('');
  const [phase,setPhase]=useState('等你来互动'),[reduced,setReduced]=useState(false);
  const canvas=useRef(null),atlas=useRef(null),close=useRef(null),dialog=useRef(null),modeRef=useRef(null);
  const owner=window.PetOwnerVoice?.name(row.name)||row.name;
  useEffect(()=>{
   const previous=document.activeElement;close.current?.focus();
-  for(const action of Object.keys(SIGNATURE_SHOWS))window.PetCharacterVoice?.warm(row.name,5,'hornbeetle',action);
-  const voiceChanged=e=>setVoiceStatus(e.detail.state==='playing'?'中文配音播放中':e.detail.state==='blocked'||e.detail.state==='error'?'配音未能播放，请重新点互动':'');
-  window.addEventListener('pet-character-voice',voiceChanged);
+  const voiceChanged=e=>{if(e.detail.id==='hornbeetle')setVoiceStatus(e.detail.state==='playing'?'天角仙鸣叫中':'');};
+  window.addEventListener('pet-creature-call',voiceChanged);
   const media=matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setReduced(media.matches);change();media.addEventListener?.('change',change);
   const img=new Image();atlas.current=img;img.onload=()=>setLoaded(true);img.onerror=()=>setError(true);img.src=SIGNATURE_ATLAS;
   function key(e){
@@ -43,14 +41,14 @@ function PetSignatureStage({row,onClose,onPetInteract}){
   }
   dialog.current?.addEventListener('keydown',key);
   const el=dialog.current;
-  return()=>{img.onload=img.onerror=null;media.removeEventListener?.('change',change);el?.removeEventListener('keydown',key);window.removeEventListener('pet-character-voice',voiceChanged);window.PetOwnerVoice?.stop();previous?.focus?.();};
+  return()=>{img.onload=img.onerror=null;media.removeEventListener?.('change',change);el?.removeEventListener('keydown',key);window.removeEventListener('pet-creature-call',voiceChanged);window.PetOwnerVoice?.stop();previous?.focus?.();};
  },[]);
  useEffect(()=>{
   if(!loaded||!canvas.current)return;
   const ctx=canvas.current.getContext('2d');if(!ctx){setError(true);return;}
   let raf=0,start=null,last=-1,pausedAt=null,previousPhase='',disposed=false;
-  const show=mode?SIGNATURE_SHOWS[mode]:null,clip=mode&&sound?window.PetCharacterVoice?.resolve(row.name,5,'hornbeetle',mode):null;
-  const duration=Math.max(reduced?1100:show?.duration||0,(clip?.duration||0)*1000+350);
+  const show=mode?SIGNATURE_SHOWS[mode]:null;
+  const duration=reduced?1100:show?.duration||0;
   function paint(now){
    if(disposed||document.hidden)return;
    if(start===null)start=now;
@@ -81,7 +79,7 @@ function PetSignatureStage({row,onClose,onPetInteract}){
   modeRef.current=kind;setMode(kind);setToken(n=>n+1);setPhase('准备');
   if(sound){
    if(!window.EcoMythicAudio?.readPreference())setVoiceStatus('乐园已静音，请先开启乐园声音');
-   onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:5,voiceMode:voiced?'character':'call-only',voiceAction:voiced?kind:undefined}});
+   onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:5,voiceMode:'call-only',voiceAction:kind}});
   }
  }
  function stop(){window.PetOwnerVoice?.stop();modeRef.current=null;setMode(null);setPhase('我在这里，等你');}
@@ -98,7 +96,7 @@ function PetSignatureStage({row,onClose,onPetInteract}){
    <div className="signature-controls">
     <div className="signature-status" role="status"><span className={mode?'busy':''}/>{error?'素材暂时无法载入，请关闭后重试':phase}{mode&&<button onClick={stop}>结束互动</button>}</div>
     <div className="signature-actions">{Object.entries(SIGNATURE_SHOWS).map(([id,s],i)=><button key={id} disabled={!loaded||error||!!mode} onClick={()=>play(id)}><span className="signature-action-number">0{i+1}</span><b>{s.name}</b><small>{id==='greet'?'向你打招呼':id==='flight'?'展开虹彩双翼':'闭眼享受陪伴'}</small></button>)}</div>
-    <div className="signature-meta"><button aria-pressed={sound} onClick={()=>{setSound(!sound);if(sound)window.PetOwnerVoice?.stop();}}>{voiced?'中文配音':'短鸣试听'}：{sound?'开':'关'}</button><span role="status">{voiceStatus||(reduced?'已遵循减少动态设置':voiced?'预生成中文配音 · 样音版':'对白为字幕 · 短鸣非角色配音')}</span></div>
+    <div className="signature-meta"><button aria-pressed={sound} onClick={()=>{setSound(!sound);if(sound)window.PetOwnerVoice?.stop();}}>神兽鸣叫：{sound?'开':'关'}</button><span role="status">{voiceStatus||(reduced?'已遵循减少动态设置':'对白仅作字幕 · 不含人声')}</span></div>
     <div className="signature-unlock"><span>{row.pet.exp>=120?'传奇已达成':`再赚 ${Math.max(0,120-row.pet.exp)} 张，抵达传奇`}</span><b>{row.pet.exp} / 120</b><i><em style={{width:Math.min(100,row.pet.exp/120*100)+'%'}}/></i><small>试演不增加奖励卡，也不提前解锁形态。</small></div>
    </div>
   </section>

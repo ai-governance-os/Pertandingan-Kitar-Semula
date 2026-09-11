@@ -1,5 +1,8 @@
 # Playful Mandarin child-voice audition — 2026-09-12
 
+**Withdrawn:** the user chose animal-only calls. These historical files are no
+longer loaded or played by the app. The notes below describe the earlier pilot.
+
 Single AI-generated audition for Li Guande / 李冠德's hornbeetle. It is explicitly
 played with the "试听新版童趣音" button; it does not replace the six stage lines or
 three action lines. Those older voices remain labelled for comparison. Timbre is

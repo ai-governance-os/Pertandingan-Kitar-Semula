@@ -1,6 +1,5 @@
 /* Six real forms; the original park's colour/scale shortcuts no longer apply. */
 .character-voice-preview{min-height:44px;border:1px solid #b9cbb7;border-radius:22px;background:#eaf2e5;color:#305b42;padding:8px 16px;margin-top:6px;font:inherit;cursor:pointer}.character-voice-preview:focus-visible{outline:3px solid #b99b53;outline-offset:3px}
-.child-voice-audition{display:grid;gap:7px;margin:12px 0;padding:14px;border:1px solid #d7bd7f;border-radius:16px;background:#fff4d9;color:#315341;overflow-wrap:anywhere}.child-voice-audition>b{font-size:15px}.child-voice-audition>small{font-size:12px;line-height:1.6}.child-voice-audition>button{width:100%;margin:0;background:#245942;color:#fff;min-height:48px}
 .signature-entry{display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%;margin:14px 0 5px;border:1px solid #d5bb7e;border-radius:16px;padding:12px 14px;background:linear-gradient(110deg,#153d35,#255448);color:#fff8df;text-align:left;cursor:pointer;font:inherit;min-height:58px}
 .signature-entry>span{font-size:10px;letter-spacing:.1em;color:#ddca91}.signature-entry>b{font-size:16px}.signature-entry>small{margin-left:auto;font-size:11px;color:#d5e6d5}
 .signature-backdrop{position:fixed;inset:0;z-index:650;display:grid;place-items:center;background:#071e22d9;backdrop-filter:blur(18px);padding:16px}
@@ -58,6 +57,7 @@
 .evolution-owner small { display:block;font-size:11px;font-weight:500;color:#657c73;margin-top:3px; }
 .evolution-hero { position:relative;height:250px;display:grid;place-items:center;padding-bottom:40px;background:radial-gradient(ellipse at 50% 55%,#d7e8e599,transparent 66%);isolation:isolate; }
 .evolution-hero.form-5 { background:radial-gradient(ellipse at 50% 55%,#ffeabca6,transparent 67%); }
+.evolution-hero-trigger{position:absolute;inset:0;z-index:3;border:0;background:transparent;cursor:pointer;border-radius:16px}.evolution-hero-trigger:disabled{cursor:default}
 .evolution-hero-beast { width:210px;height:210px;max-width:76%;filter:drop-shadow(0 8px 9px #28514429); }
 .evolution-state-chip { position:absolute;top:10px;left:0;font-size:10px;color:#466359;border:1px solid #335d3f26;background:#fff9;border-radius:20px;padding:5px 9px;z-index:2; }
 .evolution-form-number { position:absolute;right:0;top:5px;font-size:30px;color:#2e605d27;font-weight:900; }

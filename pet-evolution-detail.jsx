@@ -4,24 +4,19 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   const [viewStage,setViewStage]=useState(5);
   const [playToken,setPlayToken]=useState(0);
   const [playing,setPlaying]=useState(false);
-  const [deviceVoice,setDeviceVoice]=useState(()=>window.PetOwnerVoice?.isDeviceEnabled()||false);
   const [celebration,setCelebration]=useState('');
   const [libraryOpen,setLibraryOpen]=useState(false);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const [voiceStatus,setVoiceStatus]=useState('');
-  const [auditionPlaying,setAuditionPlaying]=useState(false);
-  const characterClip=window.PetCharacterVoice?.resolve(row.name,viewStage,p.species.id);
-  const auditionClip=window.PetCharacterVoice?.resolve(row.name,viewStage,p.species.id,'audition');
-  const performanceDuration=Math.max(3000,(characterClip?.duration||0)*1000+350);
+  const heroRef=useRef(null);
+  const performanceDuration=[3000,3400,3800,4200,4500,5000][viewStage];
   useEffect(()=>{
-    setVoiceStatus('');setAuditionPlaying(false);window.PetCharacterVoice?.warm(row.name,viewStage,p.species.id);
+    setVoiceStatus('');
     const changed=e=>{
-      const sample=e.detail.key===auditionClip?.key;
-      if(e.detail.key&&e.detail.key!==characterClip?.key&&!sample)return;
-      setAuditionPlaying(sample&&e.detail.state==='playing');
-      setVoiceStatus(e.detail.state==='playing'?(sample?'正在播放新版童趣样音':'正在播放旧版阶段配音'):e.detail.state==='blocked'||e.detail.state==='error'?'配音未能播放，请点试听重试':'');
+      if(e.detail.id!==p.species.id)return;
+      setVoiceStatus(e.detail.state==='playing'?'神兽正在鸣叫 · 不含人声':'');
     };
-    window.addEventListener('pet-character-voice',changed);return()=>window.removeEventListener('pet-character-voice',changed);
+    window.addEventListener('pet-creature-call',changed);return()=>window.removeEventListener('pet-creature-call',changed);
   },[row.name,viewStage,p.species.id]);
   const previousStage=useRef(p.stageIndex),dialogRef=useRef(null),closeRef=useRef(null);
   const locked=viewStage>p.stageIndex;
@@ -52,6 +47,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   },[p.stageIndex]);
   function choose(index){window.PetOwnerVoice?.stop();setViewStage(index);setPlayToken(0);setPlaying(false);setCelebration('');}
   function play(){
+    heroRef.current?.scrollIntoView({block:'center',behavior:'auto'});
     setPlaying(true);setPlayToken(n=>n+1);
     onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});
   }
@@ -69,23 +65,13 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         <button ref={closeRef} className="evolution-close" onClick={onClose} aria-label="关闭神兽图鉴">×</button>
       </header>
       <div className="evolution-owner"><TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={25}/><span>{row.name}<small>{row.teamName} · {profile.temperament}</small></span></div>
-      {auditionClip&&<section className="child-voice-audition" aria-label="新版童趣声音试听">
-        <b>童趣男声 · 新版样音</b><small>约 6 秒 · AI 合成声音 · 尚未替换各阶段对白</small>
-        <button className="character-voice-preview" type="button" aria-pressed={auditionPlaying} onClick={()=>{
-          if(auditionPlaying){window.PetOwnerVoice?.stop();return;}
-          if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}
-          setVoiceStatus('正在载入新版童趣样音…');
-          onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage,voiceAction:'audition'}});
-        }}>{auditionPlaying?'停止试听':'试听新版童趣音'}</button>
-        <small>“{auditionClip.text}”</small>
-        {voiceStatus&&<small role="status">{voiceStatus}</small>}
-      </section>}
       {p.species.id==='hornbeetle'&&window.PetSignatureStage&&<button className="signature-entry" onClick={()=>{window.PetOwnerVoice?.stop();setPlayToken(0);setPlaying(false);setSignatureOpen(true);}}><span>新动作试演</span><b>虹翼之约</b><small>挥爪 · 展翼 · 摸摸回应 →</small></button>}
-      <div className={'evolution-hero form-'+viewStage}>
+      <div ref={heroRef} className={'evolution-hero form-'+viewStage}>
         <span className="evolution-state-chip">{locked?'未来预览 · 尚未解锁':viewStage===p.displayStageIndex?'当前外形':'本月已达成'}</span>
         <span className="evolution-form-number">0{viewStage+1}<small>/ 06</small></span>
-        <EvolvedBeast key={p.species.id+':'+viewStage} speciesId={p.species.id} stage={viewStage} className="evolution-hero-beast" alt={p.species.zh+' · '+profile.features[viewStage]} loading="eager" playToken={playToken} duration={performanceDuration} onFinished={()=>setPlaying(false)}/>
-        <div className="evolution-hero-caption"><b>{PetEvolution.names[viewStage]}</b><span>{profile.features[viewStage]}</span></div>
+        <EvolvedBeast key={p.species.id+':'+viewStage} speciesId={p.species.id} stage={viewStage} className="evolution-hero-beast" alt={p.species.zh+' · '+profile.features[viewStage]} loading="eager" playToken={playToken} duration={performanceDuration} motionScale={.35} onFinished={()=>setPlaying(false)}/>
+        <button className="evolution-hero-trigger" type="button" aria-label={playing?'神兽正在表演':'点击神兽播放动作'} disabled={playing} onClick={play}/>
+        <div className="evolution-hero-caption"><b>{PetEvolution.names[viewStage]}</b><span>{profile.features[viewStage]} · {viewStage===0?'点阶段预览孵化后的动作':'点我看手脚动作'}</span></div>
       </div>
       <div className="evolution-stage-buttons" aria-label="选择进化阶段">
         {EcoData.PET_STAGES.map((s,i)=><button key={i} type="button" aria-pressed={viewStage===i} className={viewStage===i?'selected':''} onClick={()=>choose(i)}>
@@ -93,9 +79,9 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         </button>)}
       </div>
       {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
-          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>{characterClip?'中文角色配音 · 天角仙样音版':'每阶专属对白字幕 · 神兽短鸣随乐园静音设置'}</small><br/>
-          {characterClip?<button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});}}>{auditionClip?'对比旧版阶段配音':'试听本阶段中文配音'}</button>:<button type="button" aria-pressed={deviceVoice} onClick={()=>setDeviceVoice(PetOwnerVoice.setDeviceEnabled(!deviceVoice))} style={{marginTop:6,minHeight:44,border:'1px solid #ccdace',borderRadius:22,padding:'8px 16px',background:'#f1f6ef',color:'#476353',font:'inherit'}}>系统朗读（非角色配音）：{deviceVoice?'开':'关'}</button>}
-          {!auditionClip&&voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
+          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>对白仅作字幕 · {window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫'} · 不含人声</small><br/>
+          <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});}}>听听本阶段鸣叫</button>
+          {voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
       </p>}
       <button className="evolution-play" type="button" onClick={play} disabled={playing}>
         <span className="material-symbols-rounded" aria-hidden="true">{playing?'auto_awesome':'play_arrow'}</span>

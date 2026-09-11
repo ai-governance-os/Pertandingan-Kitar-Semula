@@ -134,7 +134,6 @@ function drawPetShow(ctx,image,id,stage,t,color,reduced,motionScale=1) {
 }
 
 function EvolvedBeast(props) {
-  if(props.speciesId==='hornbeetle'&&props.stage>0&&window.HornbeetleActor)return <HornbeetleActor {...props}/>;
   if(props.stage>0&&window.PetLivingRig?.get(props.speciesId,props.stage))return <LivingPetActor {...props}/>;
   return <StaticEvolvedBeast {...props}/>;
 }

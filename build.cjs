@@ -38,6 +38,7 @@ const SOURCES = [
   'admin-view.jsx',
   'ai-scan-view.jsx',
   'hornbeetle-rig.jsx',
+  'pet-body-rigs.js',
   'pet-living-profiles.js',
   'living-pet-actor.jsx',
   'pet-performance.jsx',

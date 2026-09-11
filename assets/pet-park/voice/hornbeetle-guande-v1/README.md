@@ -1,5 +1,8 @@
 # Mandarin voice audition pack — 2026-09-12
 
+**Withdrawn:** the app now uses animal-only calls. These historical files are
+not fetched or played; the notes below describe the earlier audition pack.
+
 Generated via the connected HeyGen speech tool (Starfish-compatible public voices).
 These are actual synthesized Mandarin speech files, not browser speechSynthesis
 or procedural chirps. No custom voice cloning was used. No pitch processing was

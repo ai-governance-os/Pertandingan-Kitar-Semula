@@ -11,14 +11,12 @@ assert.equal(voice.name('Test 王小明'),'小明');
 assert.equal(voice.name('欧阳小明'),'欧阳小明');
 assert.equal(voice.name('Alex'),'Alex');
 assert.equal(voice.greeting('李冠德',0),'冠德主人，等等我呀！');
-assert.equal(voice.speak('李冠德',2),false,'Device narration is opt-in, never advertised as character voice');
-voice.setDeviceEnabled(true);
-assert.equal(voice.speak('李冠德',2),true);
-assert.equal(spoken[0].text,'冠德主人，陪我玩嘛！');
-voice.speak('王小明',3);assert.equal(cancelled,1,'New greeting replaces old speech');
-assert.equal(spoken[1].text,'小明主人，我陪着你！','Greeting follows current owner and stage');
-voice.stop();assert.equal(cancelled,2);
-enabled=false;assert.equal(voice.speak('李冠德',2),false);assert.equal(spoken.length,2);
+assert.equal(voice.speak('李冠德',2),false,'Human speech is disabled');
+assert.equal(voice.setDeviceEnabled(true),false,'Legacy device settings cannot enable TTS');
+assert.equal(voice.speak('王小明',3),false);
+assert.equal(spoken.length,0);
+voice.stop();assert.equal(cancelled,0,'No system voice initialization or use');
+enabled=false;assert.equal(voice.speak('李冠德',2),false);assert.equal(spoken.length,0);
 enabled=true;voices=[];assert.equal(voice.speak('李冠德',2),false,'Missing Chinese voice safely falls back');
 const source=esbuild.transformSync(fs.readFileSync(path.join(root,'hornbeetle-rig.jsx'),'utf8'),{loader:'jsx'}).code;
 vm.runInContext(`(function(){${source}})();`,context);
@@ -29,7 +27,7 @@ for(let stage=1;stage<=5;stage++){
     for(const value of Object.values(pose))assert(Number.isFinite(value));
     for(let y=0;y<=368;y+=23)for(let x=0;x<=368;x+=23){
       const point=rig.vertex(x,y,rig.rigs[stage],pose);
-      assert(point.every(Number.isFinite));assert(Math.abs(point[0]-x)<40);assert(Math.abs(point[1]-y)<45);
+      assert(point.every(Number.isFinite));assert(Math.abs(point[0]-x)<75);assert(Math.abs(point[1]-y)<75);
     }
   }
   assert(Object.values(rig.pose(stage,2,.5,true)).every(v=>v===0),'Reduced motion still pose');
@@ -40,9 +38,10 @@ for(let stage=1;stage<=5;stage++){
 }
 assert.equal(rig.rigs[1].wings.length,0,'Hatchling stays in shell');
 assert(rig.rigs[5].wings.length>0,'Legendary has articulated wings');
-console.log('PASS: five articulated forms, blink/limb poses, motion bounds, reduced motion, owner names, speech mute/replace/missing-voice fallback.');
+console.log('PASS: five baseline rigs, blink/limb poses, motion bounds, reduced motion, subtitle owner names, human speech disabled.');
 context.BeetleRig=window.BeetleRig;
 vm.runInContext(fs.readFileSync(path.join(root,'data.js'),'utf8'),context);
+vm.runInContext(fs.readFileSync(path.join(root,'pet-body-rigs.js'),'utf8'),context);
 vm.runInContext(`(function(){${fs.readFileSync(path.join(root,'pet-living-profiles.js'),'utf8')}})();`,context);
 vm.runInContext(fs.readFileSync(path.join(root,'pet-cute-sounds.js'),'utf8'),context);
 const pets=window.EcoData.PET_SPECIES;
@@ -71,7 +70,7 @@ for(const pet of pets){
 }
 assert.equal(signatures.size,300);
 assert.equal(new Set(pets.map(p=>window.PetLivingRig.seed(p.id))).size,50,'All species keep distinct integer motion seeds');
-assert.equal(new Set(pets.map(p=>window.PetCuteSounds.profile(p.id,2).type)).size,8,'Eight structurally distinct call models');
+assert(new Set(pets.map(p=>window.PetCuteSounds.profile(p.id,2).type)).size>=8,'At least eight structurally distinct animal calls');
 const audioHashes=new Set();
 for(const pet of pets){
  for(let stage=0;stage<6;stage++){

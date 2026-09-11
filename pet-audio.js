@@ -395,11 +395,11 @@ const EcoMythicAudio = (() => {
       musicBus.gain.setTargetAtTime(MUSIC_BUS_LEVEL, now + Math.max(0.8, seconds - 0.55), 0.22);
     }
 
-    function playAccent(speciesId, stageIndex = 0, quiet = false) {
+    function playAccent(speciesId, stageIndex = 0, quiet = false, action) {
       if (!context || !accentBus || muted || context.state !== "running") return;
       const now = context.currentTime + 0.025;
       duck(stageIndex >= 2 ? 3 : 1.6);
-      if(window.PetCuteSounds){PetCuteSounds.schedule(context,accentBus,speciesId,stageIndex,quiet);return;}
+      if(window.PetCuteSounds){PetCuteSounds.schedule(context,accentBus,speciesId,stageIndex,quiet,action);return;}
 
       if(speciesId === 'hornbeetle' && stageIndex > 0){
         // A short fictional creature chirrup, not a recording of a real beetle.

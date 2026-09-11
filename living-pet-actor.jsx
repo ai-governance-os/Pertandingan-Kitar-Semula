@@ -1,5 +1,5 @@
-// Idle expression bursts are cheap 2D draws; only the selected pet runs a mesh.
-// All 49 additional species keep their existing six-stage props and choreography.
+// All fifty species share the same articulated renderer, including the beetle.
+// Offscreen actors pause; only an active show renders at full frame rate.
 function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='lazy',playToken=0,onStarted,onFinished,duration=3000,motionScale=1,walking=false}){
  const image=React.useRef(null),canvas=React.useRef(null),host=React.useRef(null),callbacks=React.useRef({});
  callbacks.current={onStarted,onFinished};
@@ -11,19 +11,20 @@ function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='l
   const rig=PetLivingRig.get(speciesId,stage),media=window.matchMedia('(prefers-reduced-motion: reduce)');
   const aura=EcoData.PET_SPECIES.find(s=>s.id===speciesId)?.aura||'#f0d997';
   let raf=0,last=-Infinity,start=null,disposed=false,visible=true,finished=!playToken,painted=false,initialized=false;
+  const thumbnail=host.current?.clientWidth<80;
   out.width=out.height=playToken?768:384;
   function tick(now){
    if(disposed)return;
    if(start===null){start=now;if(playToken){setPlaying(true);callbacks.current.onStarted?.();}}
    if(!finished&&now-start>=duration){finished=true;out.width=out.height=384;painted=true;setPlaying(false);callbacks.current.onFinished?.();}
-   if(now-last>=1000/(finished?(walking?10:15):30)){
+   if(now-last>=1000/(finished?(thumbnail?8:walking?12:18):30)){
     last=now;const t=finished?null:Math.min(1,(now-start)/duration);
     const p=PetLivingRig.pose(speciesId,stage,now/1000,t,media.matches,walking);
     if(!finished||!media.matches||p.blink>0||painted||walking){
      BeetleRig.paintFace(fc,img,rig,p);
      if(!finished)window.drawLivingPetShow(ctx,face,speciesId,stage,t,aura,media.matches,motionScale);
-     else BeetleRig.draw(ctx,face,rig,p,{grid:10});
-     painted=p.blink>0;initialized=true;setReady(true);
+     else BeetleRig.draw(ctx,face,rig,p,{grid:thumbnail?8:walking?10:14});
+     painted=p.blink>0;if(!initialized){initialized=true;setReady(true);}
     } else if(!initialized){ctx.drawImage(img,0,0,out.width,out.height);initialized=true;setReady(true);}
    }
    if(visible&&!document.hidden&&(!media.matches||!finished))raf=requestAnimationFrame(tick);
