@@ -239,7 +239,7 @@ function CinematicStageArt({
 }) {
   const classes = `${className} stage-${stageIndex}`.trim();
   return <EvolvedBeast speciesId={row.pet.species.id} stage={stageIndex} className={classes}
-    alt={alt} style={style} loading={loading} playToken={playToken} onFinished={onFinished}/>;
+    alt={alt} style={style} loading={loading} playToken={playToken} walking={className.includes('cinematic-beast-art')} onFinished={onFinished}/>;
 }
 
 function cinematicStageWidth(row, layout) {
@@ -1053,7 +1053,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     const rect=image?.getBoundingClientRect();
     const host=parkRef.current.getBoundingClientRect();
     setParkShow({row,token:showToken+1,origin:{x:rect?rect.left+rect.width/2:host.left+host.width/2,y:rect?rect.top+rect.height/2:host.top+host.height/2,width:rect?.width||70}});
-    setReaction(`${row.name} · ${row.pet.displayStageIndex<2?'弹跳打招呼':'环园大巡游'}`);
+    setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId) : `${row.name} · 弹跳打招呼`);
     clearTimeout(reactionTimerRef.current);
     // Loading failure still permits opening the details. The normal completion
     // comes from the actor so slow image loading cannot truncate the show.
@@ -1298,9 +1298,11 @@ function useMythicParkAudio() {
 
   const playPetAccent = useCallback((row) => {
     if (!enabledRef.current) return;
+    // Speech must be requested in the click handler, before awaiting audio unlock.
+    const speaking=window.PetOwnerVoice?.speak(row.name,row.pet.displayStageIndex,row.pet.species.id);
     start().then((ok) => {
       if (ok && engineRef.current) {
-        engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex);
+        engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex,speaking);
       }
     });
   }, [start]);
@@ -1414,6 +1416,7 @@ function PetGardenView({ state, setState, authed = false, isAdmin = false, requi
           state={state}
           setState={setState}
           row={selected}
+          onPetInteract={mythicAudio.playPetAccent}
           authed={authed}
           isAdmin={isAdmin}
           requireAuth={requireAuth}

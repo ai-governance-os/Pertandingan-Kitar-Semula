@@ -1,4 +1,4 @@
-function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAuth,onClose}) {
+function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAuth,onClose,onPetInteract}) {
   const {useState,useEffect,useRef}=React;
   const p=row.pet,profile=PetEvolution.profile(p.species.id);
   const [viewStage,setViewStage]=useState(5);
@@ -33,8 +33,12 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
     }
     previousStage.current=p.stageIndex;
   },[p.stageIndex]);
-  function choose(index){setViewStage(index);setPlayToken(0);setPlaying(false);setCelebration('');}
-  function play(){setPlaying(true);setPlayToken(n=>n+1);}
+  function choose(index){window.PetOwnerVoice?.stop();setViewStage(index);setPlayToken(0);setPlaying(false);setCelebration('');}
+  function play(){
+    setPlaying(true);setPlayToken(n=>n+1);
+    onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});
+  }
+  useEffect(()=>()=>window.PetOwnerVoice?.stop(),[]);
   function rename(){
     if(!requireAuth())return;
     const name=window.prompt('给 '+row.name+' 的神兽取个名字：',p.nickname||'');
@@ -59,6 +63,9 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
           <span>{PetEvolution.names[i]}</span><b>{s.minExp}</b><small>{i===p.displayStageIndex?'现在':i<=p.stageIndex?'已达成':'奖励卡'}</small>
         </button>)}
       </div>
+      {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
+        “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>每阶专属对白 · 中文轻声配音，跟随乐园静音设置</small>
+      </p>}
       <button className="evolution-play" type="button" onClick={play} disabled={playing}>
         <span className="material-symbols-rounded" aria-hidden="true">{playing?'auto_awesome':'play_arrow'}</span>
         <span>{playing?'正在表演：':locked?'试播未来招式：':'表演给我看：'}{profile.acts[viewStage]}</span>

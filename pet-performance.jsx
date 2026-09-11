@@ -47,7 +47,12 @@ function drawPetProp(ctx, kind, x, y, size, rotation, color) {
 
 // Continuous mesh deformation gives heads, wing tips, tails and paws separate
 // movement without cutting the creature into visible rectangular layers.
-function drawPetMesh(ctx, image, pose, profile) {
+function drawPetMesh(ctx, image, pose, profile, speciesId) {
+  const rig=window.PetLivingRig?.get(speciesId,pose.stage);
+  if(rig){
+    const p=PetLivingRig.pose(speciesId,pose.stage,pose.t*3,pose.t,!!pose.reduced,true);
+    BeetleRig.draw(ctx,image,rig,p,{size:320,clear:false});return;
+  }
   const size=320, grid=10, step=size/grid, sourceStep=image.naturalWidth/grid;
   const flying=['soar','loop','dart','fan','salute','breach','beetle','stag','owl','butterfly','bee','bat','flamingo'].includes(profile.motion);
   const swimming=['swim','coil','breach','slide','otter','axolotl','jelly','manta','squid','carp','penguin'].includes(profile.motion);
@@ -103,7 +108,8 @@ function drawPetShow(ctx,image,id,stage,t,color,reduced,motionScale=1) {
     ctx.restore();
   }
   ctx.save();ctx.translate(256+p.x,256+p.y);ctx.rotate(p.angle);ctx.scale(zoom/p.stretch,zoom*p.stretch);ctx.translate(-160,-160);
-  drawPetMesh(ctx,image,p,profile);ctx.restore();
+  p.reduced=reduced;
+  drawPetMesh(ctx,image,p,profile,id);ctx.restore();
   const count=[1,2,3,5,7,11][stage],radius=65+stage*13;
   for(let i=0;i<count;i++){
     const a=(i/count)*Math.PI*2 + (reduced?0:t*(1+stage*.2)) + p.seed*.6;
@@ -127,7 +133,12 @@ function drawPetShow(ctx,image,id,stage,t,color,reduced,motionScale=1) {
   ctx.restore();
 }
 
-function EvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='lazy',playToken=0,onFinished,onStarted,duration=3000,motionScale=1}) {
+function EvolvedBeast(props) {
+  if(props.speciesId==='hornbeetle'&&props.stage>0&&window.HornbeetleActor)return <HornbeetleActor {...props}/>;
+  if(props.stage>0&&window.PetLivingRig?.get(props.speciesId,props.stage))return <LivingPetActor {...props}/>;
+  return <StaticEvolvedBeast {...props}/>;
+}
+function StaticEvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='lazy',playToken=0,onFinished,onStarted,duration=3000,motionScale=1}) {
   const {useRef,useEffect,useState}=React;
   const canvasRef=useRef(null),imageRef=useRef(null),finishRef=useRef(onFinished);
   const [playing,setPlaying]=useState(false);
@@ -163,3 +174,4 @@ function EvolvedBeast({speciesId,stage=0,className='',alt='',style={},loading='l
   </span>;
 }
 window.EvolvedBeast=EvolvedBeast;
+window.drawLivingPetShow=drawPetShow;

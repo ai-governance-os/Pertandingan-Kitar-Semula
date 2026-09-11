@@ -1,7 +1,7 @@
 // One identity, six collectible forms and six choreographed interactions.
 // IDs match EcoData; names and owners always come from the live roster.
 const EVOLUTION_PROFILES = {
-  hornbeetle: { prop:"leaf", motion:"beetle", temperament:"爱举树叶的勇敢小甲虫", features:["翡翠甲纹蛋","独角探壳","短角小独角仙","橡果袋与分叉角","展开翅甲与金护甲","通天巨角与虹彩翼"], acts:["角纹叩蛋","顶壳举嫩叶","低头挑起叶片","举角传橡果","开甲振翅飞","巨角托起森林"] },
+  hornbeetle: { prop:"leaf", motion:"beetle", temperament:"爱举树叶的勇敢小甲虫", features:["翡翠甲纹蛋","独角探壳","短角小独角仙","橡果袋与分叉角","展开翅甲与金护甲","通天巨角与虹彩翼"], acts:["角纹叩蛋","眨眼探壳挥爪","歪头举足问好","佩果点头行礼","金甲振翼招手","虹翼展翅致意"] },
   moonrabbit: { prop:"moon", motion:"rabbit", temperament:"喜欢把月光分给朋友", features:["月玉纹蛋","长耳探壳","短腿玉兔","月牙项链","月披风与玉臼","月冠长耳与灵月"], acts:["月光敲壳","耳朵接月牙","蹦跳追月影","捧月鞠躬","捣药抛月珠","月宫踏星舞"] },
   lotusotter: { prop:"pearl", motion:"otter", temperament:"爱把珍珠送给你", features:["莲纹水蛋","小獭搭壳","圆脸水獭","莲花项圈","贝甲与珍珠碗","莲冠与流水缎"], acts:["水珠托蛋","小爪接水珠","仰泳抱珍珠","搓珠献莲花","翻身抛珠接","莲海珍珠礼"] },
   coralpanda: { prop:"bubble", motion:"panda", temperament:"爱收集漂亮贝壳", features:["珊瑚斑蛋","环尾探壳","短尾小熊猫","珊瑚坠","礁甲与海螺杖","珊瑚角冠与巨尾"], acts:["贝纹闪闪","抱壳吹泡","追尾扑贝壳","抱螺听海声","举杖唤珊瑚","珊瑚花园礼"] },

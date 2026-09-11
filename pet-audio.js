@@ -373,6 +373,7 @@ const EcoMythicAudio = (() => {
 
     function setMuted(shouldMute) {
       muted = !!shouldMute;
+      if(muted)window.PetOwnerVoice?.stop();
       if (!context || context.state === "closed") return;
       if (!muted) {
         start();
@@ -394,10 +395,27 @@ const EcoMythicAudio = (() => {
       musicBus.gain.setTargetAtTime(MUSIC_BUS_LEVEL, now + Math.max(0.8, seconds - 0.55), 0.22);
     }
 
-    function playAccent(speciesId, stageIndex = 0) {
+    function playAccent(speciesId, stageIndex = 0, quiet = false) {
       if (!context || !accentBus || muted || context.state !== "running") return;
       const now = context.currentTime + 0.025;
       duck(stageIndex >= 2 ? 3 : 1.6);
+      if(window.PetCuteSounds){PetCuteSounds.schedule(context,accentBus,speciesId,stageIndex,quiet);return;}
+
+      if(speciesId === 'hornbeetle' && stageIndex > 0){
+        // A short fictional creature chirrup, not a recording of a real beetle.
+        const base=stageIndex<3?650:440;
+        [0,.2,.48].forEach((offset,i)=>{
+          const at=now+offset,osc=context.createOscillator(),amp=context.createGain();
+          osc.type='triangle';osc.frequency.setValueAtTime(base*(i===1?1.25:1),at);
+          osc.frequency.exponentialRampToValueAtTime(base*(i===2?.65:1.65),at+.11);
+          osc.frequency.exponentialRampToValueAtTime(base*.82,at+.2);
+          amp.gain.setValueAtTime(.0001,at);amp.gain.exponentialRampToValueAtTime(.13,at+.025);
+          amp.gain.exponentialRampToValueAtTime(.0001,at+.23);
+          osc.connect(amp);amp.connect(accentBus);osc.start(at);osc.stop(at+.25);
+          osc.onended=()=>{osc.disconnect();amp.disconnect();};
+        });
+        return;
+      }
 
       if (stageIndex < 2) {
         scheduleBell(stageIndex === 0 ? 392 : 523.25, now, 0.085, accentBus);
@@ -418,6 +436,7 @@ const EcoMythicAudio = (() => {
     }
 
     function pauseForVisibility() {
+      window.PetOwnerVoice?.stop();
       stopScheduler();
       if (!context || context.state !== "running") return Promise.resolve(false);
       return context.suspend().then(() => {
@@ -431,6 +450,7 @@ const EcoMythicAudio = (() => {
     }
 
     function destroy() {
+      window.PetOwnerVoice?.stop();
       destroyed = true;
       stopScheduler();
       if (context && context.state !== "closed") {
