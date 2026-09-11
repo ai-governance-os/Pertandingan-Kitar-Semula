@@ -469,6 +469,7 @@ const EcoMythicAudio = (() => {
       start,
       setMuted,
       playAccent,
+      duck,
       pauseForVisibility,
       resumeFromVisibility,
       destroy,

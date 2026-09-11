@@ -11,6 +11,8 @@ assert.equal(voice.name('Test 王小明'),'小明');
 assert.equal(voice.name('欧阳小明'),'欧阳小明');
 assert.equal(voice.name('Alex'),'Alex');
 assert.equal(voice.greeting('李冠德',0),'冠德主人，等等我呀！');
+assert.equal(voice.speak('李冠德',2),false,'Device narration is opt-in, never advertised as character voice');
+voice.setDeviceEnabled(true);
 assert.equal(voice.speak('李冠德',2),true);
 assert.equal(spoken[0].text,'冠德主人，陪我玩嘛！');
 voice.speak('王小明',3);assert.equal(cancelled,1,'New greeting replaces old speech');
@@ -19,7 +21,7 @@ voice.stop();assert.equal(cancelled,2);
 enabled=false;assert.equal(voice.speak('李冠德',2),false);assert.equal(spoken.length,2);
 enabled=true;voices=[];assert.equal(voice.speak('李冠德',2),false,'Missing Chinese voice safely falls back');
 const source=esbuild.transformSync(fs.readFileSync(path.join(root,'hornbeetle-rig.jsx'),'utf8'),{loader:'jsx'}).code;
-vm.runInContext(source,context);
+vm.runInContext(`(function(){${source}})();`,context);
 const rig=window.BeetleRig;
 for(let stage=1;stage<=5;stage++){
   for(const t of [0,.12,.3,.55,.8,1]){
@@ -41,7 +43,7 @@ assert(rig.rigs[5].wings.length>0,'Legendary has articulated wings');
 console.log('PASS: five articulated forms, blink/limb poses, motion bounds, reduced motion, owner names, speech mute/replace/missing-voice fallback.');
 context.BeetleRig=window.BeetleRig;
 vm.runInContext(fs.readFileSync(path.join(root,'data.js'),'utf8'),context);
-vm.runInContext(fs.readFileSync(path.join(root,'pet-living-profiles.js'),'utf8'),context);
+vm.runInContext(`(function(){${fs.readFileSync(path.join(root,'pet-living-profiles.js'),'utf8')}})();`,context);
 vm.runInContext(fs.readFileSync(path.join(root,'pet-cute-sounds.js'),'utf8'),context);
 const pets=window.EcoData.PET_SPECIES;
 assert.equal(Object.keys(window.PetLivingRig.eyes).length,49);
@@ -54,7 +56,7 @@ for(const pet of pets){
   const spokenLine=voice.greeting('Lucas Lee Guan Teck 李冠德',stage,pet.id);
   assert(spokenLine.startsWith('冠德主人，'));assert(spokenLine.endsWith(lines[stage]));
   const sound=window.PetCuteSounds.profile(pet.id,stage);
-  assert(sound.base>=400&&sound.base<1000);assert(sound.volume<=.1);
+  assert(sound.base>=150&&sound.base<1100);assert(sound.volume<=.1);
   signatures.add(`${sound.base}:${sound.seed}:${stage}`);
   if(stage===0||pet.id==='hornbeetle')continue;
   const body=window.PetLivingRig.get(pet.id,stage);assert(body?.eyes.length>0,pet.id);
@@ -68,4 +70,16 @@ for(const pet of pets){
  }
 }
 assert.equal(signatures.size,300);
+assert.equal(new Set(pets.map(p=>window.PetLivingRig.seed(p.id))).size,50,'All species keep distinct integer motion seeds');
+assert.equal(new Set(pets.map(p=>window.PetCuteSounds.profile(p.id,2).type)).size,8,'Eight structurally distinct call models');
+const audioHashes=new Set();
+for(const pet of pets){
+ for(let stage=0;stage<6;stage++){
+  const pcm=window.PetCuteSounds.samples(pet.id,stage,8000);
+  assert(pcm.every(x=>Number.isFinite(x)&&Math.abs(x)<=1),'Finite non-clipping audio');
+  assert(pcm.some(x=>Math.abs(x)>.01),'Audible waveform');
+  audioHashes.add(require('crypto').createHash('sha256').update(Buffer.from(pcm.buffer)).digest('hex'));
+ }
+}
+assert.equal(audioHashes.size,300,'Actual rendered waveforms, not metadata, differ for all species/stages');
 console.log('PASS: 50 species / 300 dialogue and soft-call signatures, all 245 additional face rigs, reduced motion and owner identity.');

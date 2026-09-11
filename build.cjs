@@ -27,6 +27,7 @@ const SOURCES = [
   'pet-audio.js',
   'pet-cute-sounds.js',
   'pet-dialogue.js',
+  'pet-character-voice.js',
   'pet-owner-voice.js',
   'pet-evolution.js',
   // React components (JSX)
@@ -42,6 +43,7 @@ const SOURCES = [
   'pet-performance.jsx',
   'park-performance.jsx',
   'pet-library.jsx',
+  'pet-signature-stage.jsx',
   'pet-evolution-detail.jsx',
   'pet-view.jsx',
   'reward-corner-view.jsx',

@@ -1,6 +1,9 @@
-// Device speech, no roster edits and no generated audio files containing names.
+// Generated character speech first; device narration remains explicitly opt-in.
 window.PetOwnerVoice = (() => {
   let current=null;
+  let deviceEnabled=false;
+  try{deviceEnabled=localStorage.getItem('eco-pet-device-voice')==='true';}catch{}
+  function setDeviceEnabled(value){deviceEnabled=!!value;stop();try{localStorage.setItem('eco-pet-device-voice',String(deviceEnabled));}catch{}return deviceEnabled;}
   function name(studentName){
     const text=String(studentName||'').trim(),zh=text.match(/[\u3400-\u9fff]+/g)?.join('');
     // Three-character names in this roster use a one-character family name.
@@ -11,8 +14,12 @@ window.PetOwnerVoice = (() => {
     const owner=name(studentName),line=window.PetDialogue?.line(speciesId,stage)||'你来啦！';
     return `${owner}主人，${line}`;
   }
-  function stop(){if(current){window.speechSynthesis?.cancel();current=null;}}
-  function speak(studentName,stage=1,speciesId='hornbeetle'){
+  function stop(){window.PetCharacterVoice?.stop();window.PetCuteSounds?.stop();if(current){window.speechSynthesis?.cancel();current=null;}}
+  function speak(studentName,stage=1,speciesId='hornbeetle',action){
+    if(window.PetCharacterVoice?.resolve(studentName,stage,speciesId,action)){
+      stop();return window.PetCharacterVoice.play(studentName,stage,speciesId,action);
+    }
+    if(!deviceEnabled)return false;
     const api=window.speechSynthesis;
     if(!api||!window.SpeechSynthesisUtterance)return false;
     if(window.EcoMythicAudio&&!window.EcoMythicAudio.readPreference())return false;
@@ -31,5 +38,5 @@ window.PetOwnerVoice = (() => {
   }
   // Trigger device voice discovery before the first click (some browsers load asynchronously).
   window.speechSynthesis?.getVoices();
-  return {name,greeting,speak,stop};
+  return {name,greeting,speak,stop,setDeviceEnabled,isDeviceEnabled:()=>deviceEnabled};
 })();

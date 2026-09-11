@@ -1299,10 +1299,11 @@ function useMythicParkAudio() {
   const playPetAccent = useCallback((row) => {
     if (!enabledRef.current) return;
     // Speech must be requested in the click handler, before awaiting audio unlock.
-    const speaking=window.PetOwnerVoice?.speak(row.name,row.pet.displayStageIndex,row.pet.species.id);
+    const speaking=row.pet.voiceMode!=='call-only'&&window.PetOwnerVoice?.speak(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction);
     start().then((ok) => {
       if (ok && engineRef.current) {
-        engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex,speaking);
+        if(speaking&&window.PetCharacterVoice?.resolve(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction))engineRef.current.duck?.(6);
+        else engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex,speaking);
       }
     });
   }, [start]);

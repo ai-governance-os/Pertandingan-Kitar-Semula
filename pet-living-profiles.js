@@ -61,7 +61,7 @@ const PET_LIVING_FAMILIES={
  gentle:'baize mossbear jadeelephant misttapir stormram bamboo',
 };
 function livingFamily(id){return Object.keys(PET_LIVING_FAMILIES).find(k=>PET_LIVING_FAMILIES[k].split(' ').includes(id))||'beast';}
-function livingSeed(id){return [...id].reduce((n,c)=>n*31+c.charCodeAt(0),7)>>>0;}
+function livingSeed(id){return [...id].reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,7);}
 function livingRig(id,stage){
  const anchors=PET_EYES[id]?.[stage-1];if(!anchors)return null;
  const factor=368/192,eyes=[];
@@ -80,11 +80,24 @@ function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  const p=BeetleRig.pose(stage,seconds+offset,show,reduced,walking);
  if(reduced)return p;
  const active=show!==null,g=active?Math.sin(Math.PI*show):0;
- p.head*=family==='bird'?1.35:family==='gentle'?.65:1;
- p.wave*=.65+(seed%7)*.065;
- p.step*=family==='gentle'?.55:family==='bouncy'?1.25:1;
- if(['bird','wing'].includes(family))p.wing=stage===1?0:(active?g*Math.sin(seconds*(family==='wing'?24:12)):Math.sin(seconds*2)*.12);
- if(family==='water'||family==='tentacle'){p.wave*=.4;p.step=Math.sin(seconds*3+offset)*(active?.85:.18);p.wing=Math.sin(seconds*4+offset)*(active?.75:.08);}
+ const cycle=(seconds+offset)%(5.5+seed%4),idle=cycle<.5||cycle>2.9?0:Math.sin((cycle-.5)/2.4*Math.PI);
+ const beat=active?show*Math.PI*(4+stage*2+seed%3):seconds*2+offset;
+ // Anticipation, a species-family gesture, and settling are separate beats.
+ p.head=Math.sin(beat*.55)*(active?.16*g:.065*idle);
+ p.wave=active?g*(.7+.5*Math.sin(beat)):idle*.5;
+ p.step=stage===1?0:Math.sin(beat)*(active?1.8*g:walking?.9:.28*idle);
+ p.breathe=Math.sin(seconds*2+offset)*1.8;
+ if(family==='gentle'){p.head*=.65;p.wave*=1.25;p.step*=.6;}
+ if(family==='bouncy'){p.wave*=1.25;p.step*=1.2;}
+ if(['bird','wing'].includes(family)){
+  p.wave=0;p.wing=stage===1?0:Math.sin(beat*(family==='wing'?2:1))*(active?2.5*g:.55*idle);
+ }
+ if(family==='water'||family==='tentacle'){
+  p.wave=0;p.step=Math.sin(beat)*(active?2*g:.6);p.wing=Math.cos(beat)*(active?1.8*g:.5);
+ }
+ if(family==='insect'){p.step*=1.25;p.wave*=1.25;}
+ // Shell stays planted; only the exposed head and small paws respond.
+ if(stage===1){p.step=0;p.head*=.8;p.wave*=.8;}
  return p;
 }
 window.PetLivingRig={eyes:PET_EYES,get:livingRig,pose:livingPose,family:livingFamily,seed:livingSeed};

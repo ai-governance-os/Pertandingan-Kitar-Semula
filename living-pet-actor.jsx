@@ -19,11 +19,10 @@ function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='l
    if(now-last>=1000/(finished?(walking?10:15):30)){
     last=now;const t=finished?null:Math.min(1,(now-start)/duration);
     const p=PetLivingRig.pose(speciesId,stage,now/1000,t,media.matches,walking);
-    if(!finished||p.blink>0||painted||walking){
+    if(!finished||!media.matches||p.blink>0||painted||walking){
      BeetleRig.paintFace(fc,img,rig,p);
      if(!finished)window.drawLivingPetShow(ctx,face,speciesId,stage,t,aura,media.matches,motionScale);
-     else if(walking)BeetleRig.draw(ctx,face,rig,p,{grid:8});
-     else {ctx.clearRect(0,0,out.width,out.height);ctx.drawImage(face,0,0,out.width,out.height);}
+     else BeetleRig.draw(ctx,face,rig,p,{grid:10});
      painted=p.blink>0;initialized=true;setReady(true);
     } else if(!initialized){ctx.drawImage(img,0,0,out.width,out.height);initialized=true;setReady(true);}
    }

@@ -19,11 +19,11 @@ function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
   const fly=active&&stage>=4?beetlePulse(show,.38,.92):0;
   return {
     blink:Math.max(blink,active?beetlePulse(show,.1,.17):0),
-    head:Math.sin(seconds*.9)*.012+greet*Math.sin(show*9)*.065,
+    head:Math.sin(seconds*.9)*.045+greet*Math.sin(show*9)*.14,
     breathe:Math.sin(seconds*2)*1.1,
-    wave:greet*(.55+.45*Math.sin(show*Math.PI*(stage===1?8:12))),
+    wave:greet*(.8+.65*Math.sin(show*Math.PI*(stage===1?8:12))),
     step:stage===1?0:Math.sin(seconds*(walking||active?8:2))*(walking||active?1:.2),
-    wing:fly*Math.sin(seconds*48),happy:greet,
+    wing:fly*Math.sin(seconds*18)*2,happy:greet,
   };
 }
 function beetleVertex(x,y,rig,p){
