@@ -1302,7 +1302,8 @@ function useMythicParkAudio() {
     const speaking=row.pet.voiceMode!=='call-only'&&window.PetOwnerVoice?.speak(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction);
     start().then((ok) => {
       if (ok && engineRef.current) {
-        if(speaking&&window.PetCharacterVoice?.resolve(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction))engineRef.current.duck?.(6);
+        const clip=speaking&&window.PetCharacterVoice?.resolve(row.name,row.pet.displayStageIndex,row.pet.species.id,row.pet.voiceAction);
+        if(clip)engineRef.current.duck?.(Math.max(6,clip.duration+.4));
         else engineRef.current.playAccent(row.pet.species.id, row.pet.displayStageIndex,speaking);
       }
     });

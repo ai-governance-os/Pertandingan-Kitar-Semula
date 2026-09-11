@@ -2,6 +2,7 @@
 // pitch manipulation. This initial audition pack covers only Li Guande's beetle.
 window.PetCharacterVoice=(()=>{
  const base='assets/pet-park/voice/hornbeetle-guande-v1/';
+ const audition={src:'assets/pet-park/voice/hornbeetle-guande-child-v2/audition.m4a',duration:6.23,key:'audition-child-v2',text:'冠德主人！嘿嘿，陪我玩嘛！看我的虹翼，我们出发！'};
  const stages=[4.023,2.116,2.639,2.038,1.829,2.639];
  const stageText=['等等我呀！','抱抱！','陪我玩嘛！','我陪着你！','我们出发！','换我守护你！'];
  const actions={greet:{duration:1.803,text:'冠德主人，我来啦！'},flight:{duration:2.404,text:'冠德主人，看我的虹翼！'},cuddle:{duration:2.743,text:'冠德主人，最喜欢你啦。'}};
@@ -10,6 +11,8 @@ window.PetCharacterVoice=(()=>{
  function resolve(studentName,stage,speciesId,action){
   const zh=String(studentName||'').match(/[\u3400-\u9fff]+/g)?.join('');
   if(speciesId!=='hornbeetle'||zh!=='李冠德'||!Number.isInteger(stage)||stage<0||stage>5)return null;
+  // An explicit audition, not a replacement for six different stage lines.
+  if(action==='audition')return {...audition};
   if(action){const a=actions[action];return stage===5&&a?{...a,src:base+'action-'+action+'.mp3',key:'action-'+action}:null;}
   const line=window.PetDialogue?.line(speciesId,stage);if(line!==stageText[stage])return null;
   return {src:base+'stage-'+stage+'.mp3',duration:stages[stage],key:'stage-'+stage,text:'冠德主人，'+line};

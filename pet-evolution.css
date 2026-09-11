@@ -1,5 +1,6 @@
 /* Six real forms; the original park's colour/scale shortcuts no longer apply. */
 .character-voice-preview{min-height:44px;border:1px solid #b9cbb7;border-radius:22px;background:#eaf2e5;color:#305b42;padding:8px 16px;margin-top:6px;font:inherit;cursor:pointer}.character-voice-preview:focus-visible{outline:3px solid #b99b53;outline-offset:3px}
+.child-voice-audition{display:grid;gap:7px;margin:12px 0;padding:14px;border:1px solid #d7bd7f;border-radius:16px;background:#fff4d9;color:#315341;overflow-wrap:anywhere}.child-voice-audition>b{font-size:15px}.child-voice-audition>small{font-size:12px;line-height:1.6}.child-voice-audition>button{width:100%;margin:0;background:#245942;color:#fff;min-height:48px}
 .signature-entry{display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%;margin:14px 0 5px;border:1px solid #d5bb7e;border-radius:16px;padding:12px 14px;background:linear-gradient(110deg,#153d35,#255448);color:#fff8df;text-align:left;cursor:pointer;font:inherit;min-height:58px}
 .signature-entry>span{font-size:10px;letter-spacing:.1em;color:#ddca91}.signature-entry>b{font-size:16px}.signature-entry>small{margin-left:auto;font-size:11px;color:#d5e6d5}
 .signature-backdrop{position:fixed;inset:0;z-index:650;display:grid;place-items:center;background:#071e22d9;backdrop-filter:blur(18px);padding:16px}

@@ -31,7 +31,24 @@ for(const clip of clips){
  hashes.add(crypto.createHash('sha256').update(bytes).digest('hex'));
 }
 assert.equal(hashes.size,9,'Nine actual distinct audio files');
+const sample=voice.resolve('Lucas Lee Guan Teck 李冠德',0,'hornbeetle','audition');
+assert(sample&&sample.key==='audition-child-v2');
+assert.equal(sample.text,'冠德主人！嘿嘿，陪我玩嘛！看我的虹翼，我们出发！');
+assert(sample.duration>6&&sample.duration<7);
+const sampleBytes=fs.readFileSync(path.join(root,sample.src));
+assert(sampleBytes.length>10000&&sample.src.endsWith('.m4a'));
+assert.equal(sampleBytes.toString('ascii',4,8),'ftyp','Real M4A container');
+assert(sampleBytes.includes(Buffer.from('soun'))&&!sampleBytes.includes(Buffer.from('vide')),'Audio only, no presenter video');
+assert(!hashes.has(crypto.createHash('sha256').update(sampleBytes).digest('hex')));
+for(let stage=0;stage<6;stage++)assert.equal(voice.resolve('李冠德',stage,'hornbeetle','audition').src,sample.src);
+assert.equal(voice.resolve('王小明',0,'hornbeetle','audition'),null);
+assert.equal(voice.resolve('李冠德',0,'moonrabbit','audition'),null);
+assert.equal(voice.resolve('冠德',0,'hornbeetle','audition'),null);
 (async()=>{
+ assert(voice.play('李冠德',0,'hornbeetle','audition'));const auditionAudio=instances.at(-1);await Promise.resolve();
+ assert.equal(auditionAudio.src,sample.src);assert(events.some(e=>e.detail.key===sample.key&&e.detail.state==='playing'));
+ voice.stop();assert(auditionAudio.paused);
+ enabled=false;assert.equal(voice.play('李冠德',0,'hornbeetle','audition'),false);enabled=true;
  assert(voice.play('李冠德',1,'hornbeetle'));const first=instances.at(-1);await Promise.resolve();assert(events.some(e=>e.detail.state==='playing'));
  assert(voice.play('李冠德',2,'hornbeetle'));assert(first.paused,'New voice replaces the old one');
  voice.stop();assert(instances.at(-1).paused,'Stop pauses active audio');
@@ -39,5 +56,5 @@ assert.equal(hashes.size,9,'Nine actual distinct audio files');
  const n=instances.length;assert.equal(voice.play('王小明',1,'hornbeetle'),false);assert.equal(instances.length,n);
  blocked=true;voice.play('李冠德',3,'hornbeetle');await Promise.resolve();await Promise.resolve();assert(events.some(e=>e.detail.state==='blocked'),'Blocked audio reports retry state');
  blocked=false;voice.play('李冠德',4,'hornbeetle');const errorAudio=instances.at(-1);errorAudio.onerror();assert(events.some(e=>e.detail.state==='error'));assert(errorAudio.paused);
- console.log('PASS: nine distinct bundled MP3s, six exact stage lines, three action lines, owner/species guards, mute/replace/stop/error handling.');
+ console.log('PASS: audio-only child audition plus nine original clips; exact script, owner/species guards, mute/replace/stop/error handling.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
