@@ -222,6 +222,7 @@ function defaultState() {
     starTypes: clone(DEFAULT_STAR_TYPES),
     starLedger: [],
     teacherQuotaDebits: [], // Positive awards removed from the visible ledger still consume quota.
+    teacherQuotaResets: [], // Admin resets change allowance, never student balances.
     rewardCategories: clone(DEFAULT_REWARD_CATEGORIES),
     rewardItems: clone(DEFAULT_REWARD_ITEMS),
     rewardRedemptions: [],
@@ -288,6 +289,7 @@ function normalizeState(input) {
   state.starTypes = mergeStarTypes(input.starTypes);
   state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
   state.teacherQuotaDebits = Array.isArray(input.teacherQuotaDebits) ? input.teacherQuotaDebits : [];
+  state.teacherQuotaResets = Array.isArray(input.teacherQuotaResets) ? input.teacherQuotaResets : [];
   state.rewardCategories = mergeRewardCategories(input.rewardCategories);
   state.rewardItems = normalizeRewardItems(input.rewardItems, state.rewardCategories);
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
@@ -685,6 +687,7 @@ function resetSeason(state) {
   // A season reset must not replenish this month's teacher allowance.
   fresh.settings = { ...fresh.settings, teacherMonthlyLimits: { ...(state.settings?.teacherMonthlyLimits || {}) } };
   fresh.teacherQuotaDebits = [...(state.teacherQuotaDebits || []), ...(state.starLedger || []).filter(e => Number(e.stars) > 0)];
+  fresh.teacherQuotaResets = [...(state.teacherQuotaResets || [])];
   fresh.categories = state.categories;
   fresh.teams = state.teams;
   fresh.scoringVersion = SCORING_VERSION;
@@ -725,13 +728,28 @@ function teacherMonthlyQuota(state, teacherId, asOfTs = Date.now()) {
   const configured = state.settings?.teacherMonthlyLimits?.[teacherId];
   const limit = Number.isSafeInteger(configured) && configured >= 0 ? configured : TEACHER_MONTHLY_QUOTA;
   const seen = new Set();
-  const used = [...(state.starLedger || []), ...(state.teacherQuotaDebits || [])].reduce((total, e) => {
+  const totalIssued = [...(state.starLedger || []), ...(state.teacherQuotaDebits || [])].reduce((total, e) => {
     if (e.teacherId !== teacherId || !(Number(e.stars) > 0) || teacherQuotaMonth(Number(e.ts) || 0) !== month) return total;
     if (e.id && seen.has(e.id)) return total;
     if (e.id) seen.add(e.id);
     return total + Number(e.stars);
   }, 0);
-  return { month, limit, used, remaining: Math.max(0, limit - used) };
+  const reset = (state.teacherQuotaResets || []).find(r => r.teacherId === teacherId && r.month === month && r.ts <= asOfTs);
+  const used = Math.max(0, totalIssued - (Number(reset?.totalIssued) || 0));
+  return { month, limit, used, totalIssued, lastResetAt: reset?.ts || null, remaining: Math.max(0, limit - used) };
+}
+
+function resetTeacherMonthlyQuota(state, teacherIds, adminId) {
+  if (!Array.isArray(teacherIds) || !teacherIds.length || !adminId || adminId === "unknown") return state;
+  const now = Date.now();
+  const resets = [...new Set(teacherIds)].filter(id => typeof id === "string" && id && id !== "unknown").map(teacherId => {
+    const quota = teacherMonthlyQuota(state, teacherId, now);
+    return { id: makeId("quota_reset"), teacherId, adminId, ts: now, month: quota.month, totalIssued: quota.totalIssued };
+  });
+  if (!resets.length) return state;
+  const next = { ...state, teacherQuotaResets: [...resets, ...(state.teacherQuotaResets || [])] };
+  save(next);
+  return next;
 }
 
 function setTeacherMonthlyLimit(state, teacherId, value) {
@@ -1369,7 +1387,7 @@ Object.assign(window, {
     addAiScan, updateAiScanDecision,
     // Star ledger helpers
     addStarEvent, removeStarEvent, studentStarBalance, studentAllTimeStarBalance,
-    teacherMonthlyQuota, teacherQuotaMonth, setTeacherMonthlyLimit, TEACHER_MONTHLY_QUOTA,
+    teacherMonthlyQuota, teacherQuotaMonth, setTeacherMonthlyLimit, resetTeacherMonthlyQuota, TEACHER_MONTHLY_QUOTA,
     studentStarReport, teamStarStats, monthStartTs, currentRewardMonthLabel,
     // Reward corner helpers
     rewardCategory, rewardCategoryForItem, rewardCategoryRangeLabel, rewardItemCost,

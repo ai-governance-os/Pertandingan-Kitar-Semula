@@ -26,6 +26,13 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
     setQuotaDrafts(drafts => { const nextDrafts = { ...drafts }; delete nextDrafts[id]; return nextDrafts; });
     setQuotaNotice(`${id} 每月额度已设为 ${Number(value)} 张，本月已用数量保持不变。`);
   }
+  function resetTeacherQuota(ids) {
+    if (!isAdmin) return;
+    const target = ids.length === 1 ? ids[0] : `全部 ${ids.length} 个账号`;
+    if (!window.confirm(`确定重置 ${target} 的本月已用额度？\n将恢复至各账号已保存的完整月度额度，允许本月额外发卡。\n学生奖卡、神兽成长与历史记录不变；下月仍于 1 日自动重置。`)) return;
+    setState(current => EcoData.resetTeacherMonthlyQuota(current, ids, teacherId));
+    setQuotaNotice(`已重置 ${target} 的可用额度。学生奖卡与历史记录保持不变。`);
+  }
   const [confirmReset, setConfirmReset] = useStateA(false);
   const [newStudentName, setNewStudentName] = useStateA("");
   const [newStudentTeamId, setNewStudentTeamId] = useStateA(() => state.teams[0]?.id || "");
@@ -206,20 +213,29 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
         {isAdmin && <div className="admin-section">
           <h2>🎟️ 老师月度奖励额度</h2>
           <p className="section-sub">默认每账号 150 张。修改立即生效并延续至以后月份；每月 1 日按马来西亚时间重置已用数量，不累积。设为 0 可暂停发卡。扣卡、删除记录不会补回额度。ADMIN 发卡也计入自己的额度。</p>
+          <button className="chunky-btn" style={{marginBottom:14}} onClick={() => resetTeacherQuota(teacherIds)}>重置全部账号本月额度</button>
           <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap:12}}>
             {teacherIds.map(id => {
               const q = EcoData.teacherMonthlyQuota(state, id, quotaNow);
               return <div key={id} style={{padding:14, border:"1px solid #d4e1d8", borderRadius:14, minWidth:0}}>
                 <strong style={{overflowWrap:"anywhere"}}>{id}</strong>
-                <p>{q.month} · 已用 {q.used} / {q.limit} · 剩余 {q.remaining}</p>
+                <p>{q.month} · {q.lastResetAt ? "重置后已用" : "已用"} {q.used} / {q.limit} · 剩余 {q.remaining}</p>
+                {q.lastResetAt && <small style={{display:"block", marginBottom:8}}>本月累计发出 {q.totalIssued} 张（重置不删除发卡记录）</small>}
                 <label style={{display:"block"}}>每月额度（张）
                   <input aria-label={`${id} 每月奖励额度`} type="number" min="0" step="1" value={quotaDrafts[id] ?? q.limit} onChange={e => setQuotaDrafts(d => ({...d, [id]:e.target.value}))} style={{display:"block", width:"100%", boxSizing:"border-box", minHeight:44, margin:"8px 0"}} />
                 </label>
                 <button className="chunky-btn" onClick={() => saveTeacherQuota(id)}>保存额度</button>
+                <button className="chunky-btn" style={{marginTop:8}} onClick={() => resetTeacherQuota([id])}>重置本月已用额度</button>
               </div>;
             })}
           </div>
           <p role="status">{quotaNotice}</p>
+          <details><summary>额度重置记录</summary>
+            {(state.teacherQuotaResets || []).slice(0, 30).map(r => <p key={r.id} style={{overflowWrap:"anywhere"}}>
+              {new Date(r.ts).toLocaleString("zh-CN", {timeZone:"Asia/Kuala_Lumpur"})} · {r.adminId} 重置 {r.teacherId} · 当月累计发出 {r.totalIssued} 张
+            </p>)}
+            {!(state.teacherQuotaResets || []).length && <p>暂无手动重置记录</p>}
+          </details>
         </div>}
 
         <div className="admin-section">

@@ -172,9 +172,10 @@ function TeacherQuotaStatus({ state, teacherId, teacherIds }) {
   return <section className="entry-panel" aria-label="老师月度奖卡额度">
     <strong>🎟️ {quota.month} · 我的发卡额度</strong>
     <p style={{margin:"8px 0", color:quota.remaining === 0 ? "#a63030" : "#245744"}}>
-      已用 <b>{quota.used}</b> / {quota.limit} 张 · 剩余 <b>{quota.remaining}</b> 张
+      {quota.lastResetAt ? "重置后已用" : "已用"} <b>{quota.used}</b> / {quota.limit} 张 · 剩余 <b>{quota.remaining}</b> 张
     </p>
     <progress value={Math.min(quota.used, quota.limit)} max={quota.limit} style={{width:"100%", accentColor:"#318568"}} />
+    {quota.lastResetAt && <small style={{display:"block"}}>本月累计发出 {quota.totalIssued} 张 · 管理员已手动重置额度</small>}
     <small style={{display:"block", lineHeight:1.6}}>每月 1 日 00:00（马来西亚时间）重置，不累积。扣卡或删除记录不返还额度；单次发几张由老师决定，但不能超过剩余额度。</small>
     {teacherIds && <details style={{marginTop:10}}><summary>查看各账号本月额度</summary>
       {teacherIds.map(id => { const q = EcoData.teacherMonthlyQuota(state, id, now); return <p key={id} style={{margin:"8px 0", overflowWrap:"anywhere"}}>{id}：已用 {q.used} / {q.limit} · 剩余 {q.remaining}</p>; })}
