@@ -2,7 +2,7 @@
 // Student flow: pick group → pick item → see scripted advice → award star (optional).
 // AI fallback: if not in catalog, scan with AI; teacher can save result back to catalog.
 
-function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn && fn() }) {
+function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn && fn(), teacherId = "unknown" }) {
   const { useState, useMemo, useRef } = React;
 
   const [group, setGroup] = useState("all");
@@ -40,9 +40,11 @@ function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn 
       starType: "eco_recycle", stars,
       reasonZh: `识别 ${item.nameZh} · 正确分类`,
       reasonEn: `Identified ${item.nameEn} · correctly sorted`,
-      evidenceType: "catalog_pick", referenceId: item.id, teacherId: "JBC9008",
+      evidenceType: "catalog_pick", referenceId: item.id, teacherId,
     };
-    setState(EcoData.addStarEvent(state, event));
+    const next = EcoData.addStarEvent(state, event);
+    if (next === state) return;
+    setState(next);
     alert(`🌟 ${student.name} +${stars} ⭐`);
   }
 
@@ -172,6 +174,7 @@ function CatalogView({ state, setState, authed = true, requireAuth = (fn) => fn 
             </button>
           ) : (
             <CatalogAIFallback
+              teacherId={teacherId}
               state={state}
               setState={setState}
               student={student}
@@ -264,7 +267,7 @@ function CatalogDetail({ item, binLabels, student, authed = true, onAwardStar, o
   );
 }
 
-function CatalogAIFallback({ state, setState, student, team, onClose }) {
+function CatalogAIFallback({ state, setState, student, team, onClose, teacherId = "unknown" }) {
   const { useState, useRef } = React;
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -323,9 +326,11 @@ function CatalogAIFallback({ state, setState, student, team, onClose }) {
       starType: "eco_recycle", stars,
       reasonZh: result.analysis.main_recommendation?.summary_zh || "AI 帮助分类",
       reasonEn: result.analysis.main_recommendation?.summary_en || "AI-assisted sorting",
-      evidenceType: "ai_scan", referenceId: null, teacherId: "JBC9008",
+      evidenceType: "ai_scan", referenceId: null, teacherId,
     };
-    setState(EcoData.addStarEvent(state, event));
+    const next = EcoData.addStarEvent(state, event);
+    if (next === state) return;
+    setState(next);
     alert(`🌟 ${student.name} +${stars} ⭐`);
   }
 

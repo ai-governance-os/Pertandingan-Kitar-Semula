@@ -62,6 +62,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
           <p>奖卡按 A/B/C/D 等级兑换，老师可随时更新每级奖品和库存 · Reward tiers with editable stock</p>
         </div>
 
+        {authed && <TeacherQuotaStatus state={state} teacherId={teacherId} />}
         <div className="entry-panel">
           <div className="panel-title" style={{marginBottom:2}}>
             <strong>🏆 学生星星排行 · Star Leaderboard</strong>

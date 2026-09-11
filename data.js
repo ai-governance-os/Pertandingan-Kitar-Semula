@@ -221,6 +221,7 @@ function defaultState() {
     aiScans: [],
     starTypes: clone(DEFAULT_STAR_TYPES),
     starLedger: [],
+    teacherQuotaDebits: [], // Positive awards removed from the visible ledger still consume quota.
     rewardCategories: clone(DEFAULT_REWARD_CATEGORIES),
     rewardItems: clone(DEFAULT_REWARD_ITEMS),
     rewardRedemptions: [],
@@ -286,6 +287,7 @@ function normalizeState(input) {
   // and the `group` field appear for existing users without wiping their saved state.
   state.starTypes = mergeStarTypes(input.starTypes);
   state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
+  state.teacherQuotaDebits = Array.isArray(input.teacherQuotaDebits) ? input.teacherQuotaDebits : [];
   state.rewardCategories = mergeRewardCategories(input.rewardCategories);
   state.rewardItems = normalizeRewardItems(input.rewardItems, state.rewardCategories);
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
@@ -680,6 +682,9 @@ function absenceReport(state, { includeArchived = false } = {}) {
 
 function resetSeason(state) {
   const fresh = defaultState();
+  // A season reset must not replenish this month's teacher allowance.
+  fresh.settings = { ...fresh.settings, teacherMonthlyLimits: { ...(state.settings?.teacherMonthlyLimits || {}) } };
+  fresh.teacherQuotaDebits = [...(state.teacherQuotaDebits || []), ...(state.starLedger || []).filter(e => Number(e.stars) > 0)];
   fresh.categories = state.categories;
   fresh.teams = state.teams;
   fresh.scoringVersion = SCORING_VERSION;
@@ -707,8 +712,57 @@ function updateAiScanDecision(state, scanId, patch) {
 
 // ─────────────────────────── Star ledger ───────────────────────────
 
+const TEACHER_MONTHLY_QUOTA = 150;
+
+// School calendar: Malaysia (UTC+8), independent of the device timezone.
+function teacherQuotaMonth(ts = Date.now()) {
+  const d = new Date(ts + 8 * 60 * 60 * 1000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function teacherMonthlyQuota(state, teacherId, asOfTs = Date.now()) {
+  const month = teacherQuotaMonth(asOfTs);
+  const configured = state.settings?.teacherMonthlyLimits?.[teacherId];
+  const limit = Number.isSafeInteger(configured) && configured >= 0 ? configured : TEACHER_MONTHLY_QUOTA;
+  const seen = new Set();
+  const used = [...(state.starLedger || []), ...(state.teacherQuotaDebits || [])].reduce((total, e) => {
+    if (e.teacherId !== teacherId || !(Number(e.stars) > 0) || teacherQuotaMonth(Number(e.ts) || 0) !== month) return total;
+    if (e.id && seen.has(e.id)) return total;
+    if (e.id) seen.add(e.id);
+    return total + Number(e.stars);
+  }, 0);
+  return { month, limit, used, remaining: Math.max(0, limit - used) };
+}
+
+function setTeacherMonthlyLimit(state, teacherId, value) {
+  if (!teacherId || value === "" || !Number.isSafeInteger(Number(value)) || Number(value) < 0) {
+    alert("额度必须是 0 或正整数 · Enter a non-negative whole number.");
+    return state;
+  }
+  const next = { ...state, settings: { ...state.settings, teacherMonthlyLimits: {
+    ...(state.settings?.teacherMonthlyLimits || {}), [teacherId]: Number(value),
+  } } };
+  save(next);
+  return next;
+}
+
 function addStarEvent(state, event) {
-  const stars = Number(event.stars) || 0;
+  const stars = Number(event.stars);
+  if (!Number.isSafeInteger(stars) || stars === 0) {
+    alert("奖卡数量必须是非零整数 · Enter a whole number of cards.");
+    return state;
+  }
+  if (!event.teacherId || event.teacherId === "unknown") {
+    alert("请重新登入老师账号后再发卡 · Please sign in again.");
+    return state;
+  }
+  if (event.id && [...(state.starLedger || []), ...(state.teacherQuotaDebits || [])].some(e => e.id === event.id)) return state;
+  const now = Date.now();
+  const quota = teacherMonthlyQuota(state, event.teacherId, now);
+  if (stars > quota.remaining) {
+    alert(`本月发卡额度不足：已用 ${quota.used} / ${quota.limit} 张，剩余 ${quota.remaining} 张。每月 1 日重置；扣卡不返还额度。\nMonthly quota exceeded. Remaining: ${quota.remaining} cards.`);
+    return state;
+  }
   if (stars < 0 && !String(event.reasonZh || event.reasonEn || "").trim()) {
     alert("扣星必须写原因 · Deduction requires a reason.");
     return state;
@@ -716,7 +770,7 @@ function addStarEvent(state, event) {
   const clean = {
     ...event,
     id: event.id || makeId("star"),
-    ts: event.ts || Date.now(),
+    ts: now,
     stars,
   };
   const next = { ...state, starLedger: [clean, ...(state.starLedger || [])] };
@@ -725,7 +779,15 @@ function addStarEvent(state, event) {
 }
 
 function removeStarEvent(state, eventId) {
-  const next = { ...state, starLedger: (state.starLedger || []).filter(e => e.id !== eventId) };
+  const event = (state.starLedger || []).find(e => e.id === eventId);
+  const debits = state.teacherQuotaDebits || [];
+  const next = {
+    ...state,
+    starLedger: (state.starLedger || []).filter(e => e.id !== eventId),
+    teacherQuotaDebits: event?.stars > 0 && !debits.some(e => e.id === eventId)
+      ? [...debits, { id: event.id, teacherId: event.teacherId, ts: event.ts, stars: event.stars }]
+      : debits,
+  };
   save(next);
   return next;
 }
@@ -1307,6 +1369,7 @@ Object.assign(window, {
     addAiScan, updateAiScanDecision,
     // Star ledger helpers
     addStarEvent, removeStarEvent, studentStarBalance, studentAllTimeStarBalance,
+    teacherMonthlyQuota, teacherQuotaMonth, setTeacherMonthlyLimit, TEACHER_MONTHLY_QUOTA,
     studentStarReport, teamStarStats, monthStartTs, currentRewardMonthLabel,
     // Reward corner helpers
     rewardCategory, rewardCategoryForItem, rewardCategoryRangeLabel, rewardItemCost,

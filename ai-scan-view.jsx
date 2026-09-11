@@ -135,8 +135,9 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
       reasonEn: rec.summary_en || "Eco star awarded after AI scan",
       evidenceType: "ai_scan", referenceId: scanId, teacherId,
     };
-    let next = EcoData.addAiScan(state, scan);
-    next = EcoData.addStarEvent(next, event);
+    let next = EcoData.addStarEvent(state, event);
+    if (next === state) return;
+    next = EcoData.addAiScan(next, scan);
     setState(next);
     alert(`🌟 ${student.name} +${stars} ⭐`);
     reset();
@@ -156,6 +157,7 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
           <p>拍照分析物品，学习正确分类 · Snap to learn how to recycle it.</p>
         </div>
 
+        <TeacherQuotaStatus state={state} teacherId={teacherId} />
         {!aiReady && (
           <div className="ai-warning">
             ⚠️ AI 未启用 · AI not enabled.<br/>

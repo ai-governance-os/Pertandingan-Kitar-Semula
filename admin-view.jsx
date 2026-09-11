@@ -7,7 +7,25 @@ function AdminView(props) {
   return <AdminViewInner {...props} />;
 }
 
-function AdminViewInner({ state, setState, isAdmin = false }) {
+function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown", teacherIds = [] }) {
+  const [quotaDrafts, setQuotaDrafts] = useStateA({});
+  const [quotaNotice, setQuotaNotice] = useStateA("");
+  const [quotaNow, setQuotaNow] = useStateA(Date.now);
+  React.useEffect(() => {
+    const refresh = () => setQuotaNow(Date.now());
+    const timer = setInterval(refresh, 1000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
+  }, []);
+  function saveTeacherQuota(id) {
+    if (!isAdmin) return;
+    const value = quotaDrafts[id] ?? EcoData.teacherMonthlyQuota(state, id).limit;
+    const next = EcoData.setTeacherMonthlyLimit(state, id, value);
+    if (next === state) return;
+    setState(next);
+    setQuotaDrafts(drafts => { const nextDrafts = { ...drafts }; delete nextDrafts[id]; return nextDrafts; });
+    setQuotaNotice(`${id} 每月额度已设为 ${Number(value)} 张，本月已用数量保持不变。`);
+  }
   const [confirmReset, setConfirmReset] = useStateA(false);
   const [newStudentName, setNewStudentName] = useStateA("");
   const [newStudentTeamId, setNewStudentTeamId] = useStateA(() => state.teams[0]?.id || "");
@@ -183,6 +201,26 @@ function AdminViewInner({ state, setState, isAdmin = false }) {
             <button className="chunky-btn primary" onClick={addSession}>+ 新 Session</button>
           </div>
         </div>
+
+        <TeacherQuotaStatus state={state} teacherId={teacherId} />
+        {isAdmin && <div className="admin-section">
+          <h2>🎟️ 老师月度奖励额度</h2>
+          <p className="section-sub">默认每账号 150 张。修改立即生效并延续至以后月份；每月 1 日按马来西亚时间重置已用数量，不累积。设为 0 可暂停发卡。扣卡、删除记录不会补回额度。ADMIN 发卡也计入自己的额度。</p>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap:12}}>
+            {teacherIds.map(id => {
+              const q = EcoData.teacherMonthlyQuota(state, id, quotaNow);
+              return <div key={id} style={{padding:14, border:"1px solid #d4e1d8", borderRadius:14, minWidth:0}}>
+                <strong style={{overflowWrap:"anywhere"}}>{id}</strong>
+                <p>{q.month} · 已用 {q.used} / {q.limit} · 剩余 {q.remaining}</p>
+                <label style={{display:"block"}}>每月额度（张）
+                  <input aria-label={`${id} 每月奖励额度`} type="number" min="0" step="1" value={quotaDrafts[id] ?? q.limit} onChange={e => setQuotaDrafts(d => ({...d, [id]:e.target.value}))} style={{display:"block", width:"100%", boxSizing:"border-box", minHeight:44, margin:"8px 0"}} />
+                </label>
+                <button className="chunky-btn" onClick={() => saveTeacherQuota(id)}>保存额度</button>
+              </div>;
+            })}
+          </div>
+          <p role="status">{quotaNotice}</p>
+        </div>}
 
         <div className="admin-section">
           <h2>全年总览</h2>
