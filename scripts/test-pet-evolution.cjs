@@ -53,9 +53,16 @@ for(const species of updated.data.PET_SPECIES)for(let stage=0;stage<6;stage++)fo
   for(let i=0;i<=100;i++){
     const pose=evo.parkPose(species.id,stage,i/100,width,height,origin,size);
     assert(Number.isFinite(pose.x)&&Number.isFinite(pose.y)&&pose.scale>0);
+    assert(Number.isFinite(pose.tilt||0)&&typeof pose.phase==='string');
     assert(pose.x>=0&&pose.x<=width&&pose.y>=0&&pose.y<=height);
     const still=evo.parkPose(species.id,stage,i/100,width,height,origin,size,true);
     assert.equal(still.x,origin.x);assert.equal(still.y,origin.y);assert.equal(still.scale,origin.scale);
   }
+  if(stage>=2){
+    const phases=[.12,.32,.64,.82].map(t=>evo.parkPose(species.id,stage,t,width,height,origin,size).phase);
+    assert.deepEqual(phases,['accelerate','turn','hero','return'],species.id+' uses staged travel, not a uniform orbit');
+    const departure=evo.parkPose(species.id,stage,.31,width,height,origin,size),hero=evo.parkPose(species.id,stage,.72,width,height,origin,size);
+    assert(Math.hypot(departure.x-hero.x,departure.y-hero.y)>size*.12,species.id+' turns through a distinct hero location');
+  }
 }
-console.log('PASS: all 300 park shows return to origin, stay in mobile/desktop bounds, and respect reduced motion.');
+console.log('PASS: all 300 park shows return to origin, stay in mobile/desktop bounds, use staged curved travel, and respect reduced motion.');

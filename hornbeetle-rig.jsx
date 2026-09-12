@@ -11,7 +11,7 @@ const BEETLE_RIGS = {
 const beetleClamp = x => Math.max(0,Math.min(1,x));
 function beetlePulse(t,a,b){return t<a||t>b?0:Math.sin((t-a)/(b-a)*Math.PI);}
 function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
-  if(reduced)return {blink:0,head:0,breathe:0,wave:0,step:0,wing:0,happy:0};
+  if(reduced)return {blink:0,head:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,paw:0,mouth:0};
   const cycle=seconds%7.3;
   const blink=Math.max(beetlePulse(cycle,1.7,1.96),beetlePulse(cycle,5.12,5.36));
   const active=show!==null;
@@ -24,6 +24,7 @@ function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
     wave:greet*(.8+.65*Math.sin(show*Math.PI*(stage===1?8:12))),
     step:stage===1?0:Math.sin(seconds*(walking||active?8:2))*(walking||active?1:.2),
     wing:fly*Math.sin(seconds*18)*2,happy:greet,
+    tail:0,appendage:0,ornament:0,paw:0,mouth:0,
   };
 }
 function beetleVertex(x,y,rig,p){
@@ -42,6 +43,24 @@ function beetleVertex(x,y,rig,p){
     dx+=w*(-(y-rootY)*Math.sin(angle)+(x-rootX)*(Math.cos(angle)-1));
     dy+=w*((x-rootX)*Math.sin(angle)+(y-rootY)*(Math.cos(angle)-1));
   });
+  // The regions below are deliberately separate from the wing / leg rig.
+  // A tailless creature can therefore still perform with its crest, horn,
+  // ears or medal, while a swimmer uses fins / tentacles rather than a shake.
+  const feature=rig.features;
+  const articulate=(region,amount,weight,limit)=>{
+    if(!region||!amount)return;
+    const [cx,cy,rx,ry,rootX=cx,rootY=cy]=region;
+    const w=influence(cx,cy,rx,ry)*weight;
+    const angle=Math.max(-limit,Math.min(limit,amount*limit));
+    dx+=w*(-(y-rootY)*Math.sin(angle)+(x-rootX)*(Math.cos(angle)-1));
+    dy+=w*((x-rootX)*Math.sin(angle)+(y-rootY)*(Math.cos(angle)-1));
+  };
+  if(feature){
+    articulate(feature.tail,p.tail,1,.48);
+    articulate(feature.head,(p.head||0)*1.35,1,.22);
+    articulate(feature.ornament,p.ornament,1,.34);
+    articulate(feature.appendage,p.appendage,1,.56);
+  }
   return [x+Math.max(-68,Math.min(68,dx)),y+Math.max(-68,Math.min(68,dy))-p.breathe*Math.sin(y/368*Math.PI)];
 }
 function paintBeetleFace(ctx,img,rig,p){
@@ -62,6 +81,22 @@ function paintBeetleFace(ctx,img,rig,p){
     g.addColorStop(0,`rgba(242,157,113,${p.happy*.34})`);g.addColorStop(1,'rgba(242,157,113,0)');
     ctx.fillStyle=g;ctx.fillRect(x-rx*1.6,y+ry*.4,rx*2,ry*1.6);
   });
+  // A brief visible mouth response replaces the rejected synthetic speech.
+  // It is only drawn during the creature call beats, never as an idle overlay.
+  if(p.mouth>.05&&rig.features?.mouth){
+    const [x,y,rx,ry]=rig.features.mouth,type=rig.features.profile.mouth;
+    ctx.save();ctx.translate(x,y);ctx.globalAlpha=Math.min(.92,p.mouth*1.15);
+    ctx.fillStyle='#513b3c';ctx.strokeStyle='#513b3c';ctx.lineWidth=Math.max(1.6,rx*.23);ctx.lineCap='round';
+    if(type==='beak'){
+      ctx.beginPath();ctx.moveTo(-rx,-ry*.35);ctx.lineTo(rx,0);ctx.lineTo(-rx,ry*.35);ctx.closePath();ctx.fill();
+    }else if(type==='mandible'){
+      ctx.beginPath();ctx.arc(-rx*.34,0,rx*.65,-.25,1.45);ctx.moveTo(rx*.34,0);ctx.arc(rx*.34,0,rx*.65,1.7,3.38);ctx.stroke();
+    }else{
+      ctx.beginPath();ctx.ellipse(0,0,rx,Math.max(ry*1.15,rx*.42),0,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha*=.75;ctx.fillStyle='#f494a0';ctx.beginPath();ctx.ellipse(0,ry*.35,rx*.5,ry*.42,0,0,Math.PI);ctx.fill();
+    }
+    ctx.restore();
+  }
 }
 function drawBeetleRig(ctx,source,rig,p,options={}){
   const grid=options.grid||16,step=368/grid;

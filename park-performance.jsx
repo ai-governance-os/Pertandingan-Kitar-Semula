@@ -18,7 +18,7 @@ function ParkPetPerformance({show,hostRef,onFinished}) {
     const trail=[];
     const draw=t=>{
       const p=PetEvolution.parkPose(id,stage,t,rect.width,rect.height,origin,size,reduced);
-      actor.style.transform='translate('+(p.x-size/2)+'px,'+(p.y-size/2)+'px) scale('+p.scale+')';
+      actor.style.transform='translate('+(p.x-size/2)+'px,'+(p.y-size/2)+'px) rotate('+(p.tilt||0)+'rad) scale('+p.scale+')';
       if(pathRef.current){
         if(!reduced&&t>.1&&t<.9){trail.push([p.x,p.y+size*.2]);if(trail.length>24)trail.shift();}
         else if(trail.length)trail.shift();
@@ -42,7 +42,7 @@ function ParkPetPerformance({show,hostRef,onFinished}) {
   return <div className="park-performance-layer" aria-hidden="true" style={{'--show-color':show.row.pet.species.aura}}>
     <svg className="park-performance-trail"><path ref={pathRef}/></svg>
     <div ref={actorRef} className="park-performance-actor" data-show-species={id}>
-      <EvolvedBeast speciesId={id} stage={stage} playToken={show.token} loading="eager" duration={duration} motionScale={.25} onStarted={()=>startRef.current()} onFinished={()=>{}}/>
+      <EvolvedBeast speciesId={id} stage={stage} playToken={show.token} loading="eager" duration={duration} motionScale={.25} walking onStarted={()=>startRef.current()} onFinished={()=>{}}/>
       <span className="park-performance-owner" title={show.row.name}>{show.row.name.split(' ').slice(-1)[0]} · {show.row.pet.nickname||show.row.pet.species.zh}</span>
     </div>
   </div>;

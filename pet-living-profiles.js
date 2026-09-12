@@ -79,14 +79,15 @@ function livingRig(id,stage){
   feet.push([x,y,radius*factor,(stage===1?17:27)*factor,x,y-(stage===1?16:25)*factor]);
  }
  const wings=(window.PetBodyRigs?.wings[id]?.[stage-1]||[]).map(p=>p.map(v=>v*factor));
- const rig={head:beetle?.head||[hx,hy,headRadius,headRadius],eyes,feet,wings,skin:beetle?.skin||'#ded3b6',family,seed:livingSeed(id),hatchling:stage===1};
+ const features=window.PetFeatureRigs?.get(id,stage,eyes,feet,wings);
+ const rig={head:beetle?.head||[hx,hy,headRadius,headRadius],eyes,feet,wings,features,skin:beetle?.skin||'#ded3b6',family,seed:livingSeed(id),hatchling:stage===1};
  livingRigCache.set(key,rig);return rig;
 }
 function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  const seed=livingSeed(id),offset=(seed%173)/31,family=livingFamily(id);
  const p=BeetleRig.pose(stage,seconds+offset,show,reduced,walking);
  if(reduced)return p;
- const active=show!==null,g=active?Math.sin(Math.PI*Math.max(0,Math.min(1,show))):1;
+ const active=show!==null,progress=active?Math.max(0,Math.min(1,show)):0,g=active?Math.sin(Math.PI*progress):1;
  const beat=active?show*Math.PI*(4+stage+seed%3):(seconds+offset)*(walking?5.5+stage*.13:2.8+(seed%5)*.14+stage*.17);
  const idleGreeting=.5+.5*Math.sin((seconds+offset)*2.05);
  // Different amplitudes / cadence for all five bodies. Idle motion is visible
@@ -101,7 +102,25 @@ function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  if(family==='tentacle'){p.wave=0;p.step=Math.sin(beat)*g*1.25;}
  if(family==='water'){p.wave*=.4;p.wing*=1.1;}
  if(family==='bird'){p.wave*=.25;}
- if(stage===1){p.step=0;p.head*=.75;p.wing*=.65;p.wave=active?g*(.9+.35*Math.sin(beat)):idleGreeting*.95;}
+  if(stage===1){p.step=0;p.head*=.75;p.wing*=.65;p.wave=active?g*(.9+.35*Math.sin(beat)):idleGreeting*.95;}
+ // Tap choreography has three readable beats: a small anticipation, the named
+ // primary body part, then its secondary companion.  The image rig maps those
+ // words to its measured regions, so "tail" is never secretly a wing flap.
+ const brief=window.PetFeatureRigs?.profile(id);
+ const pulse=(from,to)=>{const q=(progress-from)/(to-from);return q<=0||q>=1?0:Math.sin(q*Math.PI);};
+ const primary=active?pulse(.16,.56):Math.sin((seconds+offset)*1.8)*.12;
+ const secondary=active?pulse(.46,.86):Math.sin((seconds+offset)*1.43+.7)*.09;
+ const mouth=active?(pulse(.20,.31)+pulse(.39,.50)+pulse(.60,.71))*.92:0;
+ p.primary=primary*(stage===1?.75:1+stage*.08);
+ p.secondary=secondary*(stage===1?.65:1+stage*.07);
+ p.mouth=mouth;
+ if(brief){
+   const amount=(trait,value)=>{
+     const key=trait==='tail'?'tail':trait==='paw'?'wave':trait==='fin'||trait==='tentacle'?'appendage':trait==='ornament'?'ornament':'head';
+     p[key]=(p[key]||0)+value;
+   };
+   amount(brief.primary,p.primary);amount(brief.secondary,p.secondary);
+ }
  return p;
 }
 window.PetLivingRig={eyes:PET_EYES,get:livingRig,pose:livingPose,family:livingFamily,seed:livingSeed};

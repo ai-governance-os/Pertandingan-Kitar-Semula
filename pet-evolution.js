@@ -184,30 +184,59 @@ function parkPerformancePose(id,stage,t,width,height,origin,size,reduced=false){
   t=Math.max(0,Math.min(1,t));
   const smooth=n=>{n=Math.max(0,Math.min(1,n));return n*n*(3-2*n);};
   const lerp=(a,b,q)=>a+(b-a)*q;
+  const cubic=(a,b,c,d,q)=>{
+    const u=1-q;return {
+      x:u*u*u*a.x+3*u*u*q*b.x+3*u*q*q*c.x+q*q*q*d.x,
+      y:u*u*u*a.y+3*u*u*q*b.y+3*u*q*q*c.y+q*q*q*d.y
+    };
+  };
   const seed=Object.keys(EVOLUTION_PROFILES).indexOf(id)+1;
   const motion=evolutionProfile(id).motion;
   const fly=['soar','loop','dart','fan','salute','breach','beetle','stag','owl','butterfly','bee','bat','flamingo'].includes(motion);
   const swim=['swim','coil','otter','axolotl','jelly','manta','squid','carp'].includes(motion);
-  const intro=smooth(t/.14),outro=smooth((t-.86)/.14),visible=intro*(1-outro);
-  const scale=lerp(origin.scale,stage<2?1.15:1.05,visible);
-  if(reduced)return {x:origin.x,y:origin.y,scale:origin.scale};
+  const anticipation=smooth(t/.1),outro=smooth((t-.9)/.1),visible=anticipation*(1-outro);
+  const scale=lerp(origin.scale,stage<2?1.14:1.06,visible);
+  if(reduced)return {x:origin.x,y:origin.y,scale:origin.scale,tilt:0,phase:'still'};
   const left=Math.min(width*.28,size*.82),right=width-left;
-  const top=Math.min(height*.4,size*.85+150),bottom=Math.max(top+1,height-size*.8-115);
-  const cx=width/2,cy=(top+bottom)/2,rx=(right-left)/2,ry=(bottom-top)/2;
+  // Active canvas art intentionally overhangs its actor box.  Reserve space
+  // for that overhang plus the live reaction / bottom controls so the show is
+  // never hidden behind a mobile toast at the bottom edge of the park.
+  const top=Math.min(height*.4,size*.85+150),bottom=Math.max(top+1,height-size*1.75-145);
+  const cx=width/2,cy=(top+bottom)/2;
+  const clampPoint=point=>({x:Math.max(left,Math.min(right,point.x)),y:Math.max(top,Math.min(bottom,point.y))});
   if(stage<2){
-    const centerX=lerp(origin.x,cx,visible),centerY=lerp(origin.y,cy,visible);
-    const hops=Math.abs(Math.sin(t*Math.PI*(stage===0?3:4)));
-    return {x:centerX+Math.sin(t*Math.PI*4)*(stage===0?28:48)*visible,y:centerY-hops*(stage===0?35:65)*visible,scale};
+    // Eggs peek and hatchlings make a short curved greeting; neither is sent
+    // on a distracting miniature orbit around the whole playground.
+    const reach=stage===0?34:Math.min(92,width*.2),lift=stage===0?28:Math.min(72,height*.15);
+    const destination=clampPoint({x:origin.x+(seed%2?1:-1)*reach,y:origin.y-lift});
+    const q=t<.5?smooth(t/.5):smooth((t-.5)/.5);
+    const a=t<.5?origin:destination,b=t<.5?destination:origin;
+    const bow={x:(a.x+b.x)/2+(seed%2?1:-1)*reach*.28,y:Math.min(a.y,b.y)-lift*.35};
+    const p=cubic(a,bow,bow,b,q);
+    return {...p,scale,tilt:(p.x-origin.x)*.0018,phase:t<.12?'anticipate':t<.5?'greet':'return'};
   }
-  const q=Math.max(0,Math.min(1,(t-.14)/.72));
-  const direction=seed%2?1:-1,angle=seed*2.399+direction*Math.PI*2*q;
-  const reach=stage===2?.75:stage===3?.9:1;
-  const wave=(swim?Math.sin(q*Math.PI*4)*14:fly?0:-Math.abs(Math.sin(q*Math.PI*(6+seed%3)))*20)*Math.sin(Math.PI*q);
-  const loopX=cx+Math.cos(angle)*rx*reach;
-  const loopY=cy+Math.sin(angle)*ry*reach+wave;
-  const entry={x:cx+Math.cos(seed*2.399)*rx*reach,y:cy+Math.sin(seed*2.399)*ry*reach};
-  if(t<.14)return {x:lerp(origin.x,entry.x,intro),y:lerp(origin.y,entry.y,intro),scale};
-  if(t>.86)return {x:lerp(entry.x,origin.x,outro),y:lerp(entry.y,origin.y,outro),scale};
-  return {x:Math.max(left,Math.min(right,loopX)),y:Math.max(top,Math.min(bottom,loopY)),scale};
+  // A staged S-path has an anticipation, acceleration, broad turn, a brief
+  // hero beat and a decelerated return.  It reads as a creature choosing a
+  // route through the park, not an SVG orbit repeated by every species.
+  const direction=seed%2?1:-1,rangeX=Math.min((right-left)*.33,Math.max(92,width*.21));
+  const rise=fly?Math.min((bottom-top)*.36,118):swim?Math.min((bottom-top)*.12,42):Math.min((bottom-top)*.14,36);
+  const drift=swim?Math.min((bottom-top)*.22,76):fly?Math.min((bottom-top)*.15,52):Math.min((bottom-top)*.09,30);
+  const a=clampPoint({x:origin.x+direction*rangeX*.55,y:origin.y-rise});
+  const b=clampPoint({x:cx-direction*rangeX*.18,y:cy-(fly?rise*.42:0)+Math.sin(seed)*drift});
+  const c=clampPoint({x:origin.x-direction*rangeX*.32,y:origin.y-(fly?rise*.38:swim?drift*.22:8)});
+  let p,phase;
+  if(t<.1){p=origin;phase='anticipate';}
+  else if(t<.31){
+    const q=smooth((t-.1)/.21);p=cubic(origin,{x:origin.x+direction*rangeX*.08,y:origin.y-rise*.12},{x:a.x-direction*rangeX*.12,y:a.y+rise*.14},a,q);phase='accelerate';
+  }else if(t<.62){
+    const q=smooth((t-.31)/.31);p=cubic(a,{x:a.x+direction*rangeX*.28,y:a.y-drift},{x:b.x+direction*rangeX*.18,y:b.y+drift},b,q);phase='turn';
+  }else if(t<.78){
+    const q=smooth((t-.62)/.16);p=cubic(b,{x:b.x-direction*rangeX*.13,y:b.y-drift*.45},{x:c.x+direction*rangeX*.16,y:c.y-rise*.16},c,q);phase='hero';
+  }else if(t<.9){
+    const q=smooth((t-.78)/.12);p=cubic(c,{x:c.x-direction*rangeX*.15,y:c.y+rise*.12},{x:origin.x+direction*rangeX*.12,y:origin.y-rise*.05},origin,q);phase='return';
+  }else {p=origin;phase='settle';}
+  if(t>=.1&&t<.9)p=clampPoint(p);
+  const tilt=phase==='accelerate'?direction*(fly?-.105:.055):phase==='turn'?direction*(fly?.13:.08):phase==='return'?-direction*.06:0;
+  return {...p,scale,tilt,phase};
 }
 window.PetEvolution = { profiles:EVOLUTION_PROFILES, names:PET_FORM_NAMES, profile:evolutionProfile, asset:evolutionAsset, pose:evolutionPose, parkPose:parkPerformancePose };
