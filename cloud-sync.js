@@ -15,6 +15,7 @@ const CloudSync = {
   lastAppliedRemoteAt: 0,
   lastLocalChangeAt: 0,
   STATE_KEY: "main",
+  REWARD_RECOVERY_DATE: "2026-09-11",
 
   // ── Observer pattern for state changes ───────────────────
   onChange(fn) {
@@ -64,7 +65,13 @@ const CloudSync = {
         throw error;
       }
       if (data && data.data && Object.keys(data.data).length > 0) {
-        this.applyRemote(data.data, data.updated_at, true);
+        const local = EcoData.load();
+        const recovered = this.recoverMissingRewardEvents(data.data, local);
+        this.applyRemote(recovered.state, data.updated_at, true);
+        if (recovered.count > 0) {
+          await this.writeNow(recovered.state);
+          console.info(`Recovered ${recovered.count} reward event(s) from ${this.REWARD_RECOVERY_DATE}.`);
+        }
       } else {
         // Cloud is empty — seed from local
         const local = EcoData.load();
@@ -104,6 +111,36 @@ const CloudSync = {
   remoteTime(updatedAt) {
     const ms = Date.parse(updatedAt || "");
     return Number.isFinite(ms) ? ms : Date.now();
+  },
+
+  localDate(ts) {
+    const date = new Date(typeof ts === "string" ? ts : Number(ts));
+    if (!Number.isFinite(date.getTime())) return "";
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kuala_Lumpur",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  },
+
+  // Incident recovery: rescue only the missing 11 Sep reward events from a
+  // teacher device before the normal initial cloud mirror replaces local data.
+  recoverMissingRewardEvents(remote, local) {
+    const remoteLedger = Array.isArray(remote?.starLedger) ? remote.starLedger : [];
+    const localLedger = Array.isArray(local?.starLedger) ? local.starLedger : [];
+    const remoteIds = new Set(remoteLedger.map(event => event?.id).filter(Boolean));
+    const missing = localLedger.filter(event =>
+      event?.id &&
+      !remoteIds.has(event.id) &&
+      this.localDate(event.ts) === this.REWARD_RECOVERY_DATE
+    );
+
+    if (missing.length === 0) return { state: remote, count: 0 };
+    return {
+      state: { ...remote, starLedger: [...missing, ...remoteLedger] },
+      count: missing.length,
+    };
   },
 
   shouldApplyRemote(remoteMs) {
