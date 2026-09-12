@@ -11,7 +11,7 @@ const BEETLE_RIGS = {
 const beetleClamp = x => Math.max(0,Math.min(1,x));
 function beetlePulse(t,a,b){return t<a||t>b?0:Math.sin((t-a)/(b-a)*Math.PI);}
 function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
-  if(reduced)return {blink:0,head:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,paw:0,mouth:0};
+  if(reduced)return {blink:0,head:0,nod:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,paw:0,mouth:0};
   const cycle=seconds%7.3;
   const blink=Math.max(beetlePulse(cycle,1.7,1.96),beetlePulse(cycle,5.12,5.36));
   const active=show!==null;
@@ -24,14 +24,17 @@ function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
     wave:greet*(.8+.65*Math.sin(show*Math.PI*(stage===1?8:12))),
     step:stage===1?0:Math.sin(seconds*(walking||active?8:2))*(walking||active?1:.2),
     wing:fly*Math.sin(seconds*18)*2,happy:greet,
-    tail:0,appendage:0,ornament:0,paw:0,mouth:0,
+    tail:0,appendage:0,ornament:0,paw:0,mouth:0,nod:0,
   };
 }
 function beetleVertex(x,y,rig,p){
   const influence=(cx,cy,rx,ry)=>Math.exp(-2*((x-cx)**2/(rx*rx)+(y-cy)**2/(ry*ry)));
   const [hx,hy,hrx,hry]=rig.head,h=influence(hx,hy,hrx,hry);
-  let dx=(-(y-hy)*Math.sin(p.head)+(x-hx)*(Math.cos(p.head)-1))*h;
-  let dy=((x-hx)*Math.sin(p.head)+(y-hy)*(Math.cos(p.head)-1))*h;
+  // `head` is the character response (ears, horns and crest follow it), while
+  // `nod` adds a real down/up acknowledgement of the whole head mass.
+  const headAngle=(p.head||0)*.55+(p.nod||0)*.28;
+  let dx=(-(y-hy)*Math.sin(headAngle)+(x-hx)*(Math.cos(headAngle)-1))*h;
+  let dy=((x-hx)*Math.sin(headAngle)+(y-hy)*(Math.cos(headAngle)-1))*h+(p.nod||0)*15*h;
   rig.feet.forEach(([fx,fy,rx,ry,rootX=fx,rootY=fy-38],i)=>{
     const w=influence(fx,fy,rx,ry),front=i<(rig.hatchling?2:1),phase=i%2?1:-1;
     const wave=front?p.wave*(i===1?.72:1):0,angle=phase*p.step*.27+wave*.38;

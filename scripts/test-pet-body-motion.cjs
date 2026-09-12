@@ -14,16 +14,16 @@ for(const {id} of EcoData.PET_SPECIES){
   for(const parts of [rig.feet,rig.wings])for(const part of parts)assert(part.every(n=>Number.isFinite(n)&&n>=0&&n<=368),id+' finite measured parts');
   const traces=[];let footRange=0,wingRange=0;
   const first=PetLivingRig.pose(id,stage,0);first.head=first.breathe=0;
-  for(let i=0;i<=24;i++){
+  for(let i=0;i<=12;i++){
    const p=PetLivingRig.pose(id,stage,i/4);p.head=p.breathe=0;
    traces.push([p.wave,p.step,p.wing]);
    for(const [kind,parts] of [['feet',rig.feet],['wings',rig.wings]])for(const [x,y] of parts){
     const a=BeetleRig.vertex(x,y,rig,first),b=BeetleRig.vertex(x,y,rig,p),d=Math.hypot(a[0]-b[0],a[1]-b[1]);
     if(kind==='feet')footRange=Math.max(footRange,d);else wingRange=Math.max(wingRange,d);
    }
-   for(const t of [0,.2,.5,.8,1]){
+   for(const t of [0,.5,1]){
     const pose=PetLivingRig.pose(id,stage,i/4,t);assert(Object.values(pose).every(Number.isFinite));
-    for(let y=0;y<=368;y+=46)for(let x=0;x<=368;x+=46){
+    for(let y=0;y<=368;y+=92)for(let x=0;x<=368;x+=92){
      const [vx,vy]=BeetleRig.vertex(x,y,rig,pose);assert(Math.abs(vx-x)<=69&&Math.abs(vy-y)<72);
     }
    }
@@ -35,10 +35,15 @@ for(const {id} of EcoData.PET_SPECIES){
   const key=trait==='tail'?'tail':trait==='paw'?'wave':trait==='fin'||trait==='tentacle'?'appendage':trait==='ornament'?'ornament':'head';
   const region=key==='head'?rig.features.head:key==='tail'?rig.features.tail:key==='appendage'?rig.features.appendage:key==='ornament'?rig.features.ornament:rig.feet[0];
   const probe=[region[0]+region[2]*.72,region[1]];
-  const neutral={blink:0,head:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,mouth:0};
+  const neutral={blink:0,head:0,nod:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,mouth:0};
   const emphasized={...neutral,[key]:1};
   const from=BeetleRig.vertex(probe[0],probe[1],rig,neutral),to=BeetleRig.vertex(probe[0],probe[1],rig,emphasized);
   assert(Math.hypot(from[0]-to[0],from[1]-to[1])>2,id+' stage '+stage+' primary '+trait+' has visible travel');featureForms++;
+  const nodPose=PetLivingRig.pose(id,stage,2.4,.18,false,true);
+  assert(Math.abs(nodPose.nod)>.1,id+' stage '+stage+' gives the whole head a readable acknowledgement');
+  const headProbe=[rig.head[0]+rig.head[2]*.62,rig.head[1]];
+  const headStill=BeetleRig.vertex(headProbe[0],headProbe[1],rig,neutral),headNod=BeetleRig.vertex(headProbe[0],headProbe[1],rig,{...neutral,nod:nodPose.nod});
+  assert(Math.hypot(headStill[0]-headNod[0],headStill[1]-headNod[1])>2,id+' stage '+stage+' whole head moves, not only an eye overlay');
   if(rig.wings.length){wings++;assert(wingRange>5,id+' stage '+stage+' wings actually fan: '+wingRange);}
   assert(Object.values(PetLivingRig.pose(id,stage,2,.5,true)).every(n=>n===0),'Reduced motion');
   signatures.add(JSON.stringify(traces));

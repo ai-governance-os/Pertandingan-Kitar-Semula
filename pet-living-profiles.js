@@ -111,6 +111,12 @@ function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  const primary=active?pulse(.16,.56):Math.sin((seconds+offset)*1.8)*.12;
  const secondary=active?pulse(.46,.86):Math.sin((seconds+offset)*1.43+.7)*.09;
  const mouth=active?(pulse(.20,.31)+pulse(.39,.50)+pulse(.60,.71))*.92:0;
+ // Every creature acknowledges its owner with a visible head performance,
+ // even when its signature is a tail, fin or paw.  Seed / form alter the
+ // cadence so the class does not nod in a robotic unison.
+ const nodDirection=seed%2?1:-1;
+ const nodPattern=active?(pulse(.08,.25)*.62-pulse(.31,.51)*.94+pulse(.58,.82)*.72):Math.sin((seconds+offset)*(1.35+(seed%4)*.09))*.13;
+ p.nod=nodDirection*nodPattern*(stage===1?.7:1+stage*.05);
  p.primary=primary*(stage===1?.75:1+stage*.08);
  p.secondary=secondary*(stage===1?.65:1+stage*.07);
  p.mouth=mouth;
