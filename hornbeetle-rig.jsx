@@ -11,7 +11,7 @@ const BEETLE_RIGS = {
 const beetleClamp = x => Math.max(0,Math.min(1,x));
 function beetlePulse(t,a,b){return t<a||t>b?0:Math.sin((t-a)/(b-a)*Math.PI);}
 function beetlePose(stage,seconds,show=null,reduced=false,walking=false){
-  if(reduced)return {blink:0,head:0,nod:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,paw:0,mouth:0};
+  if(reduced)return {blink:0,head:0,nod:0,breathe:0,wave:0,step:0,wing:0,happy:0,tail:0,appendage:0,ornament:0,paw:0,mouth:0,earLeft:0,earRight:0,horn:0,feelerLeft:0,feelerRight:0};
   const cycle=seconds%7.3;
   const blink=Math.max(beetlePulse(cycle,1.7,1.96),beetlePulse(cycle,5.12,5.36));
   const active=show!==null;
@@ -63,6 +63,28 @@ function beetleVertex(x,y,rig,p){
     articulate(feature.head,(p.head||0)*1.35,1,.22);
     articulate(feature.ornament,p.ornament,1,.34);
     articulate(feature.appendage,p.appendage,1,.56);
+    for(const [i,part] of (feature.headParts||[]).entries()){
+      const [tx,ty]=part.tip,[bx,by]=part.root,vx=tx-bx,vy=ty-by,len=Math.hypot(vx,vy);
+      if(!len)continue;
+      const along=((x-bx)*vx+(y-by)*vy)/(len*len),u=Math.max(0,Math.min(1,along));
+      // A soft capsule follows the real appendage, with zero rotation at its
+      // attachment. Unlike an eye-centered blob it reaches long ears / antlers.
+      const distance2=(x-bx-u*vx)**2+(y-by-u*vy)**2;
+      const attach=Math.max(0,Math.min(1,along/.55));
+      let w=Math.exp(-1.1*distance2/(part.width*part.width))*attach*attach*(3-2*attach);
+      if(w<.002)continue;
+      const left=tx<hx||(tx===hx&&i%2===0),sign=left?-1:1;
+      const channel=part.kind==='ear'?(left?p.earLeft:p.earRight):part.kind==='horn'?p.horn:left?p.feelerLeft:p.feelerRight;
+      const maxAngle=part.kind==='horn'?.24:part.kind==='ear'?(len<20?.62:.46):.42;
+      const gain=part.kind==='horn'?1:Math.min(1.8,Math.max(1,18/len));
+      const angle=Math.max(-maxAngle,Math.min(maxAngle,(channel||0)*maxAngle*gain))*sign;
+      if(!angle)continue;
+      // Do not stretch an adjacent eye when an ear folds. Mantles and eye
+      // stalks move together with the face, so they intentionally skip this.
+      if(part.kind!=='mantle')for(const [ex,ey,erx,ery] of rig.eyes)w*=1-influence(ex,ey,erx*1.5,ery*1.35)*.98;
+      dx+=w*(-(y-by)*Math.sin(angle)+(x-bx)*(Math.cos(angle)-1));
+      dy+=w*((x-bx)*Math.sin(angle)+(y-by)*(Math.cos(angle)-1));
+    }
   }
   return [x+Math.max(-68,Math.min(68,dx)),y+Math.max(-68,Math.min(68,dy))-p.breathe*Math.sin(y/368*Math.PI)];
 }
@@ -101,12 +123,73 @@ function paintBeetleFace(ctx,img,rig,p){
     ctx.restore();
   }
 }
-function drawBeetleRig(ctx,source,rig,p,options={}){
+const beetleMeshLayers=new Map();
+let beetleGpu,beetleGpuUnavailable=false;
+function drawBeetleSkinGPU(source,xs,ys,points,size){
+  if(beetleGpuUnavailable)return null;
+  try{
+    if(!beetleGpu){
+      // One shared context for the entire park. Rasterizing connected triangles
+      // together avoids both dark seams and bright dots in translucent fur.
+      const canvas=document.createElement('canvas'),gl=canvas.getContext('webgl',{alpha:true,antialias:true,premultipliedAlpha:true,preserveDrawingBuffer:true});
+      if(!gl){beetleGpuUnavailable=true;return null;}
+      canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();beetleGpuUnavailable=true;});
+      canvas.addEventListener('webglcontextrestored',()=>{beetleGpu=null;beetleGpuUnavailable=false;});
+      const shader=(type,code)=>{const s=gl.createShader(type);gl.shaderSource(s,code);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error('Skin shader');return s;};
+      const vs=shader(gl.VERTEX_SHADER,'attribute vec4 aSkin; varying vec2 uv; void main(){gl_Position=vec4(aSkin.xy,0.0,1.0);uv=aSkin.zw;}');
+      const fs=shader(gl.FRAGMENT_SHADER,'precision mediump float; varying vec2 uv; uniform sampler2D skin; void main(){gl_FragColor=texture2D(skin,uv);}');
+      const program=gl.createProgram();gl.attachShader(program,vs);gl.attachShader(program,fs);gl.linkProgram(program);
+      if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error('Skin program');
+      gl.deleteShader(vs);gl.deleteShader(fs);gl.useProgram(program);
+      const buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+      const attr=gl.getAttribLocation(program,'aSkin');gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,4,gl.FLOAT,false,16,0);
+      const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);gl.uniform1i(gl.getUniformLocation(program,'skin'),0);
+      beetleGpu={canvas,gl,vertices:null};
+    }
+    const {canvas,gl}=beetleGpu,count=(xs.length-1)*(ys.length-1)*24;
+    if(canvas.width!==size||canvas.height!==size){canvas.width=canvas.height=size;}
+    gl.viewport(0,0,size,size);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+    if(beetleGpu.vertices?.length!==count)beetleGpu.vertices=new Float32Array(count);
+    const vertices=beetleGpu.vertices;let at=0;
+    const put=(c,r)=>{const [x,y]=points[r][c];vertices[at++]=(x+16)/200-1;vertices[at++]=1-(y+16)/200;vertices[at++]=xs[c]/368;vertices[at++]=ys[r]/368;};
+    for(let r=0;r<ys.length-1;r++)for(let c=0;c<xs.length-1;c++){put(c,r);put(c+1,r);put(c+1,r+1);put(c,r);put(c+1,r+1);put(c,r+1);}
+    gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.DYNAMIC_DRAW);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,source);gl.drawArrays(gl.TRIANGLES,0,count/4);
+    return canvas;
+  }catch{beetleGpuUnavailable=true;return null;}
+}
+function drawBeetleRig(target,source,rig,p,options={}){
+  const size=options.size||target.canvas.width;
   const grid=options.grid||16,step=368/grid;
-  if(options.clear!==false)ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-  ctx.save();ctx.scale((options.size||ctx.canvas.width)/400,(options.size||ctx.canvas.height)/400);ctx.translate(16,16);
-  const point=(c,r)=>beetleVertex(c*step,r*step,rig,p);
-  const points=Array.from({length:grid+1},(_,r)=>Array.from({length:grid+1},(_,c)=>point(c,r)));
+  if(options.clear!==false)target.clearRect(0,0,target.canvas.width,target.canvas.height);
+  // Keep extra vertices at real ear / horn tips even in tiny park actors.
+  // A coarse uniform thumbnail grid used to miss entire adult ears.
+  rig.meshAxes=rig.meshAxes||new Map();
+  if(!rig.meshAxes.has(grid)){
+    const axes=[0,1].map(axis=>{
+      const values=Array.from({length:grid+1},(_,i)=>i*step);
+      for(const part of rig.features?.headParts||[]){
+        const points=[part.tip[axis]];
+        if(Math.hypot(part.tip[0]-part.root[0],part.tip[1]-part.root[1])>65)points.push((part.tip[axis]+part.root[axis])/2);
+        for(const n of points)if(n>2&&n<366&&!values.some(v=>Math.abs(v-n)<3))values.push(n);
+      }
+      return values.sort((a,b)=>a-b);
+    });
+    rig.meshAxes.set(grid,axes);
+  }
+  const [xs,ys]=rig.meshAxes.get(grid);
+  const points=ys.map(y=>xs.map(x=>beetleVertex(x,y,rig,p)));
+  const skin=drawBeetleSkinGPU(source,xs,ys,points,Math.ceil(size));
+  if(skin){target.drawImage(skin,0,0,size,size);return;}
+  // Canvas fallback for browsers with graphics acceleration disabled.
+  const key=Math.ceil(size);
+  if(!beetleMeshLayers.has(key)){const layer=document.createElement('canvas');layer.width=layer.height=key;beetleMeshLayers.set(key,layer);}
+  const layer=beetleMeshLayers.get(key),ctx=layer.getContext('2d');
+  ctx.clearRect(0,0,key,key);ctx.globalCompositeOperation='source-over';
+  ctx.save();ctx.scale(size/400,size/400);ctx.translate(16,16);
   function triangle(s,d){
     const det=(s[1][0]-s[0][0])*(s[2][1]-s[0][1])-(s[2][0]-s[0][0])*(s[1][1]-s[0][1]);
     const ax=((d[1][0]-d[0][0])*(s[2][1]-s[0][1])-(d[2][0]-d[0][0])*(s[1][1]-s[0][1]))/det;
@@ -114,19 +197,19 @@ function drawBeetleRig(ctx,source,rig,p,options={}){
     const ay=((d[1][1]-d[0][1])*(s[2][1]-s[0][1])-(d[2][1]-d[0][1])*(s[1][1]-s[0][1]))/det;
     const by=((s[1][0]-s[0][0])*(d[2][1]-d[0][1])-(s[2][0]-s[0][0])*(d[1][1]-d[0][1]))/det;
     ctx.save();ctx.beginPath();
-    // Subpixel overlap avoids hairline cracks between adjacent skin triangles.
     const mx=(d[0][0]+d[1][0]+d[2][0])/3,my=(d[0][1]+d[1][1]+d[2][1])/3;
-    d.forEach(([x,y],i)=>{const l=Math.hypot(x-mx,y-my)||1;const px=x+(x-mx)/l*.35,py=y+(y-my)/l*.35;i?ctx.lineTo(px,py):ctx.moveTo(px,py);});
+    d.forEach(([x,y],i)=>{const len=Math.hypot(x-mx,y-my)||1,px=x+(x-mx)/len*.25,py=y+(y-my)/len*.25;i?ctx.lineTo(px,py):ctx.moveTo(px,py);});
     ctx.closePath();ctx.clip();
     ctx.transform(ax,ay,bx,by,d[0][0]-ax*s[0][0]-bx*s[0][1],d[0][1]-ay*s[0][0]-by*s[0][1]);
     ctx.drawImage(source,0,0);ctx.restore();
   }
-  for(let r=0;r<grid;r++)for(let c=0;c<grid;c++){
-    const x=c*step,y=r*step;
-    triangle([[x,y],[x+step,y],[x+step,y+step]],[points[r][c],points[r][c+1],points[r+1][c+1]]);
-    triangle([[x,y],[x+step,y+step],[x,y+step]],[points[r][c],points[r+1][c+1],points[r+1][c]]);
+  for(let r=0;r<ys.length-1;r++)for(let c=0;c<xs.length-1;c++){
+    const x=xs[c],y=ys[r],x2=xs[c+1],y2=ys[r+1];
+    triangle([[x,y],[x2,y],[x2,y2]],[points[r][c],points[r][c+1],points[r+1][c+1]]);
+    triangle([[x,y],[x2,y2],[x,y2]],[points[r][c],points[r+1][c+1],points[r+1][c]]);
   }
   ctx.restore();
+  target.drawImage(layer,0,0,size,size);
 }
 function HornbeetleActor({stage,className='',alt='',style={},loading='lazy',playToken=0,onStarted,onFinished,duration=3000,walking=false}){
   const canvas=React.useRef(null),image=React.useRef(null),callbacks=React.useRef({});

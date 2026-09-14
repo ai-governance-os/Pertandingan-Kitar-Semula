@@ -1,5 +1,5 @@
 // Viewport-sized choreography: no scrolling the park or modifying student state.
-function ParkPetPerformance({show,hostRef,onFinished}) {
+function ParkPetPerformance({show,hostRef,onFinished,yakultWinner=show.row.yakult?.winner}) {
   const {useRef,useLayoutEffect}=React;
   const actorRef=useRef(null),pathRef=useRef(null),frameRef=useRef(0);
   const finishRef=useRef(onFinished);finishRef.current=onFinished;
@@ -43,6 +43,7 @@ function ParkPetPerformance({show,hostRef,onFinished}) {
     <svg className="park-performance-trail"><path ref={pathRef}/></svg>
     <div ref={actorRef} className="park-performance-actor" data-show-species={id}>
       <EvolvedBeast speciesId={id} stage={stage} playToken={show.token} loading="eager" duration={duration} motionScale={.25} walking onStarted={()=>startRef.current()} onFinished={()=>{}}/>
+      {yakultWinner && <YakultEquipment stage={stage} celebrate/>}
       <span className="park-performance-owner" title={show.row.name}>{show.row.name.split(' ').slice(-1)[0]} · {show.row.pet.nickname||show.row.pet.species.zh}</span>
     </div>
   </div>;

@@ -256,6 +256,7 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
           </div>
         </div>
 
+        {isAdmin && <YakultAdminReview state={state} setState={setState} teacherId={teacherId}/>}
         {isAdmin && (
           <div className="admin-section">
             <h2>⭐ 老师星星记录 · Star Ledger (Admin only)</h2>

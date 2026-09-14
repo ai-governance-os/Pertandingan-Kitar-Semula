@@ -117,6 +117,17 @@ function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
  const nodDirection=seed%2?1:-1;
  const nodPattern=active?(pulse(.08,.25)*.62-pulse(.31,.51)*.94+pulse(.58,.82)*.72):Math.sin((seconds+offset)*(1.35+(seed%4)*.09))*.13;
  p.nod=nodDirection*nodPattern*(stage===1?.7:1+stage*.05);
+ // Independent attachment channels: ears listen one after the other, horns
+ // salute from their roots, and soft feelers follow through a beat later.
+ // These run while idle too; a tail-primary species no longer has frozen ears.
+ const listenTime=seconds+offset,listenCycle=2.6+(seed%7)*.17;
+ const twitch=delay=>{const q=((listenTime+delay)%listenCycle)/listenCycle;return q>.14&&q<.4?Math.sin((q-.14)/.26*Math.PI*2)*Math.sin((q-.14)/.26*Math.PI):0;};
+ const earGain=[0,1.1,1.05,.95,1,1.08][stage];
+ p.earLeft=(active?pulse(.05,.3)*.95-pulse(.3,.58)*.8+pulse(.61,.9)*.6:Math.sin(listenTime*1.7)*.3+twitch(0)*.75)*earGain;
+ p.earRight=(active?pulse(.15,.4)*.85-pulse(.43,.71)*.9+pulse(.7,.98)*.45:Math.sin(listenTime*1.7+.8)*.3+twitch(.32)*.75)*earGain;
+ p.horn=active?(pulse(.08,.3)*.65-pulse(.31,.62)+pulse(.64,.94)*.7):Math.sin(listenTime*(1.45+stage*.06))*.5;
+ p.feelerLeft=active?Math.sin(progress*Math.PI*(4+stage%3))*g:Math.sin(listenTime*(2.2+seed%3*.15))*.6;
+ p.feelerRight=active?Math.sin(progress*Math.PI*(4+stage%3)-.7)*g:Math.sin(listenTime*(2.2+seed%3*.15)-.8)*.6;
  p.primary=primary*(stage===1?.75:1+stage*.08);
  p.secondary=secondary*(stage===1?.65:1+stage*.07);
  p.mouth=mouth;

@@ -1104,6 +1104,8 @@ function petState(state, studentId, now = Date.now()) {
 }
 
 function petReport(state, now = Date.now()) {
+  const yakult = window.EcoYakult?.report(state, now);
+  const yakultById = new Map((yakult?.students || []).map(student => [student.id, student]));
   const members = state.teams.flatMap(t =>
     teamMembers(state, t.id).map(m => ({
       ...m,
@@ -1115,7 +1117,7 @@ function petReport(state, now = Date.now()) {
     }))
   );
   return members
-    .map(m => ({ ...m, pet: petState(state, m.id, now) }))
+    .map(m => ({ ...m, yakult: yakultById.get(m.id), pet: petState(state, m.id, now) }))
     .sort((a, b) => b.pet.exp - a.pet.exp || a.name.localeCompare(b.name));
 }
 

@@ -66,10 +66,10 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
       </header>
       <div className="evolution-owner"><TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={25}/><span>{row.name}<small>{row.teamName} · {profile.temperament}</small></span></div>
       {p.species.id==='hornbeetle'&&window.PetSignatureStage&&<button className="signature-entry" onClick={()=>{window.PetOwnerVoice?.stop();setPlayToken(0);setPlaying(false);setSignatureOpen(true);}}><span>新动作试演</span><b>虹翼之约</b><small>挥爪 · 展翼 · 摸摸回应 →</small></button>}
-      <div ref={heroRef} className={'evolution-hero form-'+viewStage}>
+      <div ref={heroRef} className={'evolution-hero form-'+viewStage+(row.yakult?.winner?' yakult-crowned':'')}>
         <span className="evolution-state-chip">{locked?'未来预览 · 尚未解锁':viewStage===p.displayStageIndex?'当前外形':'本月已达成'}</span>
         <span className="evolution-form-number">0{viewStage+1}<small>/ 06</small></span>
-        <EvolvedBeast key={p.species.id+':'+viewStage} speciesId={p.species.id} stage={viewStage} className="evolution-hero-beast" alt={p.species.zh+' · '+profile.features[viewStage]} loading="eager" playToken={playToken} duration={performanceDuration} motionScale={.35} onFinished={()=>setPlaying(false)}/>
+        <div className="yakult-evolution-actor"><EvolvedBeast key={p.species.id+':'+viewStage} speciesId={p.species.id} stage={viewStage} className="evolution-hero-beast" alt={p.species.zh+' · '+profile.features[viewStage]} loading="eager" playToken={playToken} duration={performanceDuration} motionScale={.35} onFinished={()=>setPlaying(false)}/>{row.yakult?.winner && <YakultEquipment key={'yakult-'+playToken+':'+viewStage} stage={viewStage} celebrate={playing}/>}</div>
         <button className="evolution-hero-trigger" type="button" aria-label={playing?'神兽正在表演':'点击神兽播放动作'} disabled={playing} onClick={play}/>
         <div className="evolution-hero-caption"><b>{PetEvolution.names[viewStage]}</b><span>{profile.features[viewStage]} · {viewStage===0?'点阶段预览孵化后的动作':'点我看手脚动作'}</span></div>
       </div>
@@ -103,6 +103,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         <p>做好环保、学习或助人行动，请老师确认。实际发卡数以老师记录为准；试播不会改变奖励卡。成长按现有本月规则计算，兑换奖品不会扣掉成长值。</p>
       </details>
       {p.isRegressed&&<p className="evolution-care-note">现在有点没精神，暂时显示上一阶段外形；成长值仍保留，获得新奖励卡就恢复。</p>}
+      <YakultPetHonour row={row} state={state}/>
       {authed&&<button type="button" className="evolution-rename" onClick={rename}>给神兽取名字</button>}
       {isAdmin&&<button type="button" className="evolution-rename" onClick={()=>setLibraryOpen(true)}>ADMIN · 从 50 种神兽中选伙伴</button>}
     </section>

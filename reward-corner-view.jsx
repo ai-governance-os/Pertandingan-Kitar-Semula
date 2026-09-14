@@ -6,6 +6,8 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
   const [teamFilter, setTeamFilter] = useState("all");
   const [starModal, setStarModal] = useState(null);
   const [redeemFor, setRedeemFor] = useState(null);
+  const yakultNow = useYakultClock();
+  const yakultReport = useMemo(() => EcoYakult.report(state, Math.max(yakultNow, Date.now())), [state, yakultNow]);
 
   const categories = state.rewardCategories || EcoData.DEFAULT_REWARD_CATEGORIES;
   const report = useMemo(() => EcoData.studentStarReport(state), [state]);
@@ -18,13 +20,13 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
     setStarModal({ student, direction });
   }
 
-  function saveStar({ student, starTypeId, stars, reasonZh, reasonEn }) {
+  function saveStar({ student, starTypeId, stars, reasonZh, reasonEn, yakult }) {
     const event = {
       id: "star_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
       ts: Date.now(),
       studentId: student.id, studentName: student.name, teamId: student.teamId,
       starType: starTypeId, stars,
-      reasonZh, reasonEn,
+      reasonZh, reasonEn, ...(yakult ? { yakult: true } : {}),
       evidenceType: "teacher_quickaward", referenceId: null, teacherId,
     };
     const next = EcoData.addStarEvent(state, event);
@@ -63,6 +65,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
         </div>
 
         {authed && <TeacherQuotaStatus state={state} teacherId={teacherId} />}
+        <details className="entry-panel yakult-rewards-board"><summary><span className="yakult-wordmark">Yakult</span> 本月之星与排行榜 <small>{yakultReport.winners.length ? `${yakultReport.winners.length} 位之星 · ${yakultReport.highest} 张` : '冠冕虚位以待'}</small></summary><YakultBoard report={yakultReport}/></details>
         <div className="entry-panel">
           <div className="panel-title" style={{marginBottom:2}}>
             <strong>🏆 学生星星排行 · Star Leaderboard</strong>
@@ -237,6 +240,8 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
   });
   const [reasonZh, setReasonZh] = useState("");
   const [reasonEn, setReasonEn] = useState("");
+  const [yakult, setYakult] = useState(false);
+  const isYakultAward = !isDeduction && (yakult || EcoYakult.matchesReason({ reasonZh, reasonEn }));
 
   function pickType(id) {
     setStarTypeId(id);
@@ -251,7 +256,8 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
     if (isDeduction && !reasonZh.trim() && !reasonEn.trim()) {
       alert("扣星必须填原因 · Deduction requires a reason."); return;
     }
-    onSave({ student, starTypeId, stars: value, reasonZh, reasonEn });
+    if ((isDeduction && value > 0) || (!isDeduction && value < 0)) { alert('请使用对应的加星或扣星入口。'); return; }
+    onSave({ student, starTypeId, stars: value, reasonZh: yakult && !EcoYakult.matchesReason({ reasonZh, reasonEn }) ? `Yakult · ${reasonZh || '购买奖励'}` : reasonZh, reasonEn, yakult });
   }
 
   return (
@@ -263,6 +269,7 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
           <small className="student-team-line"><TeamBadge src={student.teamBadgeSrc} name={student.teamName} size={24} /> {student.teamName} · 本月现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
         </h2>
 
+        {!isDeduction && <div className="yakult-award-tag"><button type="button" aria-pressed={yakult} onClick={() => setYakult(!yakult)}><span className="yakult-wordmark">Yakult</span>{yakult ? '已选择 Yakult 奖励 ✓' : '标记为 Yakult 奖励'}</button><small role="status">{isYakultAward ? `这笔 ${Math.max(0, Number(stars) || 0)} 张将计入本月 Yakult 排名，请将其它原因的奖励分开记录。` : '也可在原因填写 Yakult，系统会自动识别。'}</small></div>}
         <div className="star-modal-groups">
           {groups.map(gid => (
             <div className="star-modal-group" key={gid}>

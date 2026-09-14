@@ -1011,7 +1011,7 @@ function PetPark3D({ report, onPick }) {
   );
 }
 
-function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick, onPetInteract }) {
+function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick, onPetInteract, onYakultOpen }) {
   const { useEffect, useRef, useState } = React;
   const scrollerRef = useRef(null);
   const parkRef = useRef(null);
@@ -1078,7 +1078,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
 
   return (
     <section ref={parkRef} className="cinematic-park" aria-label="十九位学生共享的神兽乐园">
-      {parkShow&&<ParkPetPerformance key={parkShow.token} show={parkShow} hostRef={parkRef} onFinished={finishInteraction}/>}
+      {parkShow&&<ParkPetPerformance key={parkShow.token} show={parkShow} hostRef={parkRef} onFinished={finishInteraction} yakultWinner={!!report.find(row=>row.id===parkShow.row.id)?.yakult?.winner}/>}
       <div
         className="cinematic-park-scroller"
         ref={scrollerRef}
@@ -1126,7 +1126,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                   '--egg-hue': `${CINEMATIC_EGG_HUES[speciesId] || 0}deg`,
                 }}
                 onClick={e => interact(row,e.currentTarget)}
-                aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。点按互动`}
+                aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。${row.yakult?.winner ? '本月 Yakult 之星。' : ''}点按互动`}
               >
                 <span className="cinematic-beast-body">
                   <CinematicStageArt
@@ -1137,10 +1137,12 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                     loading="eager"
                     playToken={0}
                   />
+                  {row.yakult?.winner && <YakultEquipment stage={displayStage}/>}
                   <span className="cinematic-owner-tag">
                     <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={20} className="cinematic-team-badge" />
                     <b>{row.name}</b>
                     <span>{row.pet.nickname || row.pet.species.zh} · {PetEvolution.names[displayStage]}</span>
+                    {row.yakult?.winner && <strong className="yakult-owner-title">Yakult 之星</strong>}
                   </span>
                 </span>
               </button>
@@ -1190,6 +1192,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
       </div>
 
       <div className="cinematic-view-switch" role="group" aria-label="乐园显示方式">
+        <button type="button" className="yakult-park-entry" onClick={onYakultOpen} aria-label="打开 Yakult 排行榜"><span aria-hidden="true">✦</span> Yakult</button>
         <button type="button" className={!rosterOpen ? "active" : ""} onClick={() => setRosterOpen(false)}>
           <span className="material-symbols-rounded" aria-hidden="true">forest</span>
           乐园
@@ -1223,7 +1226,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                 />
                 <span>
                   <b>{row.name}</b>
-                  <small>{row.pet.species.zh} · {row.pet.stage.zh}</small>
+                  <small>{row.pet.species.zh} · {row.pet.stage.zh}{row.yakult?.winner ? ' · Yakult 之星' : ''}</small>
                 </span>
                 <em>{row.pet.exp} ⭐</em>
               </button>
@@ -1378,8 +1381,11 @@ function PetGardenView({ state, setState, authed = false, isAdmin = false, requi
   const { useEffect, useMemo, useState } = React;
   const [teamFilter, setTeamFilter] = useState("all");
   const [selectedId, setSelectedId] = useState(null);
+  const [yakultOpen, setYakultOpen] = useState(false);
+  const yakultNow = useYakultClock();
   const mythicAudio = useMythicParkAudio();
-  const report = useMemo(() => EcoData.petReport(state), [state]);
+  const report = useMemo(() => EcoData.petReport(state, Math.max(yakultNow, Date.now())), [state, yakultNow]);
+  const yakultReport = useMemo(() => EcoYakult.report(state, Math.max(yakultNow, Date.now())), [state, yakultNow]);
   const selected = selectedId ? report.find(row => row.id === selectedId) : null;
 
   useEffect(() => {
@@ -1402,6 +1408,7 @@ function PetGardenView({ state, setState, authed = false, isAdmin = false, requi
         setTeamFilter={setTeamFilter}
         onPick={setSelectedId}
         onPetInteract={mythicAudio.playPetAccent}
+        onYakultOpen={() => setYakultOpen(true)}
       />
 
       <MythicMusicToggle
@@ -1411,6 +1418,7 @@ function PetGardenView({ state, setState, authed = false, isAdmin = false, requi
         onToggle={mythicAudio.toggle}
       />
 
+      {yakultOpen && <YakultLeaderboardDialog report={yakultReport} onClose={() => setYakultOpen(false)} onPick={id => { setYakultOpen(false); setSelectedId(id); }}/>}
       {selected && (
         <EvolutionDetailModal
           state={state}

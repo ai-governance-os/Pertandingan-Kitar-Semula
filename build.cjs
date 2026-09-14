@@ -22,6 +22,7 @@ const HERE = __dirname;
 const SOURCES = [
   // data layer (plain JS, no JSX)
   'data.js',
+  'yakult.js',
   'cloud-sync.js',
   'ai-client.js',
   'pet-audio.js',
@@ -33,6 +34,7 @@ const SOURCES = [
   // React components (JSX)
   'tweaks-panel.jsx',
   'components.jsx',
+  'yakult-ui.jsx',
   'mobile-view.jsx',
   'bigscreen-view.jsx',
   'admin-view.jsx',
