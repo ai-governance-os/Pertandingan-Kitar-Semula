@@ -1,17 +1,28 @@
-# Pet human voice trial
+# Pet cartoon child voice auditions, round 2
 
 Two Mandarin auditions generated with the connected HeyGen speech tool on
-2026-09-15. They are candidates for listening feedback, not approved final
-anime character voices. No student names or student recordings were sent.
+2026-09-15 using voices returned by its Starfish-compatible catalog. They are
+candidates for listening feedback on perceived age, Mandarin pronunciation and
+expression, not approved final anime voices. No student names or student
+recordings were sent. These are new character-voice generations, with no
+post-processing pitch shift or movie dialogue/actor cloning.
 
 | File | Voice | Voice ID | Speed | Duration |
 | --- | --- | --- | --- | --- |
-| male.mp3 | Theo - Excited | 44a6e603e3714f1fbba1370aac82f7af | 1.05 | 6.975 s |
-| female.mp3 | Ceecee - Excited | 1cd326303dc3411eaa9fcda84ee7b921 | 1.05 | 6.243 s |
+| male-v2.mp3 | Animated Joyboy | Hjjlh9YYCj8Ou4hl3QNO | 1.02 | 6.792 s |
+| female-v2.mp3 | Vietnamese Kid Pal | sZpLvqANm4QQvpDhRiGd | 1.04 | 5.878 s |
 
-Locale: zh-CN. Both recordings say:
+Locale: zh-CN. Boy script:
 
-> 主人，你终于来啦！今天也一起加油吧！收集奖励卡，换我来守护你！
+> 嘿！你可算来啦！哼，今天的小挑战，我才不怕呢！来呀，一起冲！
+
+Girl script:
+
+> 嘿！你可算来啦！嘻嘻，今天的小挑战，我才不怕呢！走咯，一起冲！
+
+The catalog labels both base voices female and English. App gender settings
+select character roles, not the performer's gender. Perceived child age and
+the fit of these multilingual voices for Mandarin still need listening review.
 
 The provider returned URLs ending in .wav, but the downloaded bytes are MP3;
 the checked-in filenames reflect the actual format.
@@ -19,7 +30,7 @@ the checked-in filenames reflect the actual format.
 Students default to unassigned creature sounds. An admin can explicitly choose
 male or female in the pet detail panel. The selection belongs to the student
 ID in `state.pets[id].voiceGender` and survives species swaps and evolution.
-This first trial uses the same greeting at all stages. Other species-specific
+This trial uses the same greeting at all stages. Other species-specific
 dialogue remains available as subtitles for unassigned pets.
 
 The standalone `pet-voice-preview.html` uses fictional demo owners and does not

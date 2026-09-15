@@ -15,7 +15,7 @@ test('no network/audio on startup, unassigned owners, invalid gender or old stri
  const s=setup();for(const x of [s.row(),s.row('unknown'),s.row('__proto__'),'李冠德']){assert.equal(s.pack.resolve(x),null);assert.equal(s.voice.speak(x),false);}assert.equal(s.audios.length,0);
 });
 test('voice matches explicit owner setting across all 50 species and six stages',()=>{
- const s=setup();for(const {id}of s.data.PET_SPECIES)for(let stage=0;stage<6;stage++)for(const gender of ['male','female'])assert.equal(s.pack.resolve(s.row(gender,'a',id,stage)).url,'assets/voices/trial/'+gender+'.mp3');
+ const s=setup();for(const {id}of s.data.PET_SPECIES)for(let stage=0;stage<6;stage++)for(const gender of ['male','female'])assert.equal(s.pack.resolve(s.row(gender,'a',id,stage)).url,'assets/voices/trial/'+gender+'-v2.mp3');
 });
 test('setting persists after reload and follows owner through species swap',()=>{
  const s=setup(),d=s.data;let state=d.defaultState();const [a,b]=state.teams.flatMap(t=>t.members).map(m=>m.id),initial=d.petSpeciesMap(state);
@@ -49,5 +49,5 @@ test('end of audio releases source and watchdog without fallback',()=>{
  const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});s.audios[0].onplaying();s.audios[0].onended();assert.equal(failed,0);assert.equal(s.events.at(-1).detail.state,'ended');assert.equal(s.timers.size,0);
 });
 test('both bundled audio assets contain MP3 bytes',()=>{
- for(const gender of ['male','female']){const b=fs.readFileSync(path.join(root,'assets/voices/trial',gender+'.mp3'));assert(b.length>1000);assert(b.toString('ascii',0,3)==='ID3'||(b[0]===255&&(b[1]&224)===224));}
+ for(const gender of ['male','female']){const b=fs.readFileSync(path.join(root,'assets/voices/trial',gender+'-v2.mp3'));assert(b.length>1000);assert(b.toString('ascii',0,3)==='ID3'||(b[0]===255&&(b[1]&224)===224));}
 });
