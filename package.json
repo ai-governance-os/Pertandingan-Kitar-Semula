@@ -5,10 +5,14 @@
   "description": "环保小兵 · Eco Warrior League — SJK(C) Chung Hwa Belemang recycling competition app",
   "scripts": {
     "build": "node build.cjs",
-    "dev":   "node build.cjs --watch",
-    "pdf":   "node build-pdf.cjs"
+    "dev": "node build.cjs --watch",
+    "test:sync": "node --test scripts/test-cloud-sync.cjs",
+    "pdf": "node build-pdf.cjs"
   },
   "devDependencies": {
     "esbuild": "^0.23.1"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0"
   }
 }

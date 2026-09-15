@@ -160,10 +160,21 @@ window.SUPABASE_CONFIG = {
 | 资料 | 存哪 | 备份方式 |
 |---|---|---|
 | 全部状态 | localStorage `eco_warrior_v2` | Supabase `app_state` 单行 JSON |
+| 待上传修改 | localStorage `eco_warrior_sync_outbox_v1` | 联网或重新打开网页后自动补传 |
 | AI 扫描照片 | **不保存**（只保存分析 JSON） | — |
 | OpenAI key | Supabase Edge Function secret | 只在 Supabase 后台 |
 
-→ 删除 Supabase 那行 / 清浏览器 localStorage = 完全重置
+→ 清除浏览器 localStorage 会移除本机副本及待上传修改；已有云端资料会在重新连接时下载。
+
+### 云同步状态与恢复
+
+- **云端已同步**：最近的云端读取或上传成功，实时连接已确认。
+- **云同步 · 备用**：实时连接暂时不可用，仍可保存；页面显示时每 15 秒检查更新。
+- **离线待恢复 / 修改待上传**：修改保存在本机，联网或返回页面后自动补传。待上传时不要清除浏览器资料。
+- **自动重连中 / 同步错误**：请求失败后自动逐步延长重试间隔；点击状态按钮也可立即重试。错误详情可在按钮提示中查看。
+
+补传前先读取最新云端资料，按记录 ID 合并新增和删除；若其他设备刚刚保存，会重新读取再提交。同一个字段同时修改时，本机的明确修改优先。
+同步回归测试：`npm run test:sync`。Supabase 客户端版本固定在 `package-lock.json`，由 `npm run build` 生成同站点的 `supabase.bundle.js`。
 
 ---
 

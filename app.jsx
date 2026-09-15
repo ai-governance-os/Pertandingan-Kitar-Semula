@@ -108,16 +108,20 @@ function LoginModal({ open, onClose, onAuth }) {
 
 function SyncStatusPill({ mode, dark, errorMsg, onClick }) {
   const labels = {
-    cloud: "云同步中",
+    cloud: "云端已同步",
     local: "本机模式",
     connecting: "连接中",
     error: "同步错误",
+    polling: "云同步 · 备用",
+    offline: "离线待恢复",
+    retrying: "自动重连中",
+    pending: "修改待上传",
   };
   return (
-    <div className={`sync-status ${mode} ${dark ? "on-dark" : ""}`} onClick={onClick} title={errorMsg || ""}>
+    <button type="button" className={`sync-status ${mode} ${dark ? "on-dark" : ""}`} onClick={onClick} title={errorMsg || ""}>
       <span className="dot" />
       <span>{labels[mode] || labels.local}</span>
-    </div>
+    </button>
   );
 }
 
@@ -142,10 +146,10 @@ function App() {
 
   // Cloud sync runs for everyone so viewers see live data.
   useEffect(() => {
-    CloudSync.init(window.SUPABASE_CONFIG);
     const offChange = CloudSync.onChange(s => setState(EcoData.load()));
     const offStatus = CloudSync.onStatus((m, err) => { setSyncMode(m); setSyncErr(err); });
-    return () => { offChange(); offStatus(); };
+    CloudSync.init(window.SUPABASE_CONFIG);
+    return () => { offChange(); offStatus(); CloudSync.disconnect(); };
   }, []);
 
   useEffect(() => {
@@ -193,8 +197,8 @@ function App() {
         dark={isDark}
         onClick={() => {
           if (syncMode === "local") window.open("setup-guide.html", "_blank");
-          else if (syncMode === "error") alert("同步错误 / Ralat:\n\n" + (syncErr || "Unknown"));
-          else alert(syncMode === "cloud" ? "云同步运行中" : "正在连接云端");
+          else if (syncMode !== "cloud") CloudSync.retry();
+          else alert("云端同步正常，修改已上传。");
         }}
       />
 

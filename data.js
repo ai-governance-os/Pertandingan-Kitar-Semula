@@ -366,7 +366,7 @@ function mapLegacyCategory(id) {
 function save(state) {
   const next = { ...state, entries: state.weighIns || [] };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  if (window.CloudSync && window.CloudSync.mode === "cloud" && !window.CloudSync.applyingRemote) {
+  if (window.CloudSync?.enabled && !window.CloudSync.applyingRemote) {
     window.CloudSync.push(next);
   }
 }

@@ -1400,6 +1400,11 @@ button { font-family: inherit; cursor: pointer; }
 .sync-status.connecting .dot { background: var(--gold); animation: pulseDot 0.8s ease-in-out infinite; }
 .sync-status.error { color: var(--dragon-deep); background: #FFE0D6; border-color: var(--dragon-deep);}
 .sync-status.error .dot { background: var(--dragon-deep); }
+.sync-status.polling { color: var(--eco-deep); border-color: rgba(58,157,93,0.3); }
+.sync-status.polling .dot { background: var(--eco-green); }
+.sync-status:is(.offline,.retrying,.pending) { color: #946418; border-color: rgba(183,121,31,0.3); }
+.sync-status:is(.retrying,.pending) .dot { background: var(--gold); animation: pulseDot 1.2s ease-in-out infinite; }
+.sync-status:focus-visible { outline: 3px solid var(--eco-green); outline-offset: 3px; }
 
 .sync-status.on-dark { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.15);}
 .sync-status.on-dark:hover { background: rgba(255,255,255,0.2);}

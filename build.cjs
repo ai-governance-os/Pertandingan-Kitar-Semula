@@ -56,6 +56,15 @@ const SOURCES = [
 ];
 
 async function build() {
+  await esbuild.build({
+    entryPoints: [path.join(HERE, 'supabase-client.js')],
+    outfile: path.join(HERE, 'supabase.bundle.js'),
+    bundle: true,
+    minify: true,
+    platform: 'browser',
+    target: ['chrome70', 'safari13', 'firefox70'],
+    legalComments: 'none',
+  });
   // Wrap each file in its own IIFE so top-level `const` declarations
   // (especially `const { useState, ... } = React;`) don't collide across files.
   // Each file is expected to expose its public symbols by assigning to
@@ -98,7 +107,7 @@ async function watch() {
   await build();
   fs.watch(HERE, { recursive: false }, async (event, filename) => {
     if (!filename) return;
-    if (!SOURCES.includes(filename)) return;
+    if (!SOURCES.includes(filename) && filename !== 'supabase-client.js') return;
     console.log(`🔄 ${filename} changed, rebuilding…`);
     try {
       await build();
