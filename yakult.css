@@ -1,16 +1,6 @@
-/* Yakult honours: a sculpted crown, engraved brand band and floating bottle. */
+/* Yakult honours: a sculpted crown with an engraved brand band. */
 .yakult-wordmark{display:inline-block;font:900 19px/1.15 Arial,sans-serif;letter-spacing:-.8px;color:#b7213b}
 .yakult-equipment{position:absolute;inset:0;display:block;pointer-events:none;z-index:2;--yakult-gold:#ffe5a0;--yakult-red:#e66f7d}
-.yakult-orbit,.yakult-orbit-inner{position:absolute;left:-14%;right:-14%;bottom:14%;height:30%;border:2px solid #ffe6a5;border-top-color:#fff1d277;border-radius:50%;box-shadow:0 0 8px #fff3caaa,inset 0 0 7px #fbb98088;transform:rotate(-9deg);animation:yakult-orbit-breathe 5s ease-in-out infinite}
-.yakult-orbit:after{content:'✦';position:absolute;right:6%;top:7%;color:#fff8dc;font-size:17px;text-shadow:0 0 8px #ffe39b}
-.yakult-orbit-inner{left:-5%;right:-5%;height:23%;bottom:17%;border:1px solid #f69b96aa;box-shadow:0 0 9px #f47b5e55;transform:rotate(11deg);animation-delay:-2s}
-.yakult-spark{position:absolute;color:#ffefd0;text-shadow:0 0 7px #ffd185;animation:yakult-twinkle 3s ease-in-out infinite;font:18px/1 serif}
-.yakult-spark-one{left:-13%;top:30%}.yakult-spark-two{right:0;top:4%;animation-delay:-1.5s;font-size:12px}
-.yakult-familiar{position:absolute;right:-21%;top:27%;width:43px;height:53px;transform-origin:50% 100%;filter:drop-shadow(0 4px 6px #511a224d);animation:yakult-float 3.6s ease-in-out infinite}
-.yakult-bottle-cap{position:absolute;top:0;left:9px;right:9px;height:9px;border-radius:4px 4px 2px 2px;border:1px solid #f7c6a6;background:repeating-linear-gradient(90deg,#c82746 0 3px,#e65e6b 3px 5px);z-index:1}
-.yakult-bottle{position:absolute;inset:6px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:15px 15px 10px 10px;border:1px solid #f8d098;background:linear-gradient(100deg,#ffe2be,#fffbed 40%,#fff3d7 68%,#eac18c);box-shadow:inset 0 -4px 7px #c3916333,0 0 7px #ffe9a744;clip-path:polygon(23% 0,77% 0,82% 16%,95% 31%,100% 87%,89% 100%,11% 100%,0 87%,5% 31%,18% 16%)}
-.yakult-bottle b{font:900 10px/1 Arial,sans-serif;letter-spacing:-.3px;color:#b51c39;background:#fff4e0;padding:3px 2px;border-block:1px solid #eab7a0;white-space:nowrap}
-.yakult-bottle small{font:10px/1 serif;color:#c78a43}.yakult-eyes{width:14px;height:4px;background:radial-gradient(circle at 2px 2px,#562e31 2px,transparent 2.2px),radial-gradient(circle at 12px 2px,#562e31 2px,transparent 2.2px)}
 .yakult-crown{position:absolute;left:50%;top:5%;width:clamp(62px,58%,105px);aspect-ratio:180 / 140;transform:translate(-50%,-78%) rotate(-5deg);transform-origin:50% 85%;filter:drop-shadow(0 3px 2px #36162399) drop-shadow(0 0 6px #ffe0a480)}
 .yakult-crown svg{display:block;width:100%;height:100%;overflow:visible}
 .yakult-crown-engraving{paint-order:stroke;stroke:#fff7dd;stroke-width:.6px}
@@ -20,26 +10,13 @@
 .yakult-stage-3 .yakult-crown{width:clamp(76px,73%,124px);filter:drop-shadow(0 3px 2px #36162399) drop-shadow(0 0 8px #ffe0a488)}
 .yakult-stage-4 .yakult-crown{width:clamp(80px,77%,130px)}
 .yakult-stage-5 .yakult-crown{width:clamp(86px,83%,142px);transform:translate(-50%,-78%) rotate(0deg);filter:drop-shadow(0 4px 2px #36162399) drop-shadow(0 0 10px #ffd97ca6)}
-.yakult-stage-1 .yakult-familiar{width:34px;height:44px;right:-15%}.yakult-stage-1 .yakult-bottle b{font-size:9px}.yakult-stage-1 .yakult-bottle small{display:none}
-.yakult-stage-3 .yakult-orbit,.yakult-stage-4 .yakult-orbit{border-width:3px;box-shadow:0 0 14px #fff0b9aa,inset 0 0 10px #ffb59b66}
-.yakult-stage-4 .yakult-familiar:before,.yakult-stage-5 .yakult-familiar:before{content:'';position:absolute;inset:12px -11px 8px;border-radius:50%;border:1px solid #ffecc6;transform:rotate(-25deg);box-shadow:0 0 8px #ffecb4}
-.yakult-stage-5 .yakult-orbit{border-width:3px;box-shadow:0 0 18px #ffe5a5,inset 0 0 12px #ffb09488;background:radial-gradient(ellipse,transparent 45%,#ffeab722 75%,transparent 76%)}
 .yakult-celebrate .yakult-crown{animation:yakult-coronation 3s ease-in-out 1}
-.yakult-celebrate .yakult-orbit{animation:yakult-celebrate-ring 3s ease-out 1}.yakult-celebrate .yakult-familiar{animation:yakult-familiar-cheer 3s ease-in-out 1,yakult-float 3.6s ease-in-out 3s infinite}
-.yakult-celebration{position:absolute;top:-58px;left:50%;width:max-content;max-width:210px;transform:translateX(-50%);border:1px solid #f9dba0;border-radius:20px;padding:6px 12px;background:#fff7e6;color:#aa233d;font:800 13px/1.2 Arial,sans-serif;animation:yakult-title-rise 3s ease-out both}
-.yakult-owner-title{grid-column:1 / -1;justify-self:center;color:#ffe3a2;font:800 10px/1.2 Arial,sans-serif;white-space:nowrap}
 .cinematic-view-switch .yakult-park-entry{color:#ffe1ad;min-height:44px}.cinematic-view-switch .yakult-park-entry>span{color:#ef8e9a}
 .yakult-evolution-actor{position:relative;width:210px;height:210px;max-width:76%}.yakult-evolution-actor .evolution-hero-beast{width:100%;height:100%;max-width:none}
 .evolution-hero.yakult-crowned{height:320px;padding-top:70px}
-.yakult-evolution-actor .yakult-crown{top:5%;width:clamp(62px,54%,104px)}.yakult-evolution-actor .yakult-celebration{top:-40px;z-index:2}
-.yakult-evolution-actor .yakult-familiar{right:-13%}
-@keyframes yakult-orbit-breathe{0%,100%{opacity:.8;scale:1}50%{opacity:1;scale:1.05}}
+.yakult-evolution-actor .yakult-crown{top:5%;width:clamp(62px,54%,104px)}
 @keyframes yakult-twinkle{0%,100%{opacity:.45;scale:.8}50%{opacity:1;scale:1.15}}
-@keyframes yakult-float{0%,100%{transform:translateY(1px) rotate(-7deg)}50%{transform:translateY(-8px) rotate(7deg)}}
 @keyframes yakult-coronation{0%,100%{translate:0 0;scale:1}30%{translate:0 -10px;scale:1.12}65%{translate:0 -4px;scale:1.04}}
-@keyframes yakult-celebrate-ring{0%,100%{scale:1}25%{scale:1.24;box-shadow:0 0 25px #ffe5a5}55%{scale:1.02}75%{scale:1.15}}
-@keyframes yakult-familiar-cheer{0%,100%{transform:translate(0,0) rotate(-7deg)}25%{transform:translate(-18px,-30px) rotate(-22deg)}55%{transform:translate(7px,-18px) rotate(20deg)}80%{transform:translate(-8px,-25px) rotate(-10deg)}}
-@keyframes yakult-title-rise{0%{opacity:0;translate:0 12px}15%,75%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -12px}}
 .yakult-backdrop{position:fixed;inset:0;z-index:510;display:grid;place-items:center;background:#081f24c9;backdrop-filter:blur(12px);padding:16px;overscroll-behavior:contain}
 .yakult-dialog{position:relative;width:min(100%,520px);max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;border:1px solid #f2d6b5;border-radius:26px;background:#fffbf4;box-shadow:0 25px 100px #0007;color:#493329;font-family:var(--font-body,sans-serif)}
 .yakult-close{position:sticky;float:right;top:12px;margin:12px 12px -64px 0;z-index:4;width:52px;height:52px;border:1px solid #dbc7ae;background:#fff9ef;border-radius:50%;color:#673b3d;font:32px/1 Arial;cursor:pointer;touch-action:manipulation}
@@ -66,7 +43,7 @@
 .yakult-admin>p{font-size:12px;line-height:1.7}.yakult-admin-filters{display:flex;gap:12px;flex-wrap:wrap}.yakult-admin-filters label{flex:1;min-width:140px;display:flex;flex-direction:column;gap:5px;font-size:12px}.yakult-admin input,.yakult-admin select{width:100%;min-width:0;min-height:44px;border:1px solid #cfc4b3;border-radius:9px;padding:9px;color:#51422e;background:#fff;font:inherit}.yakult-admin summary{min-height:44px;line-height:1.6;padding:12px 0;cursor:pointer}
 .yakult-audit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:12px;max-height:580px;overflow:auto;padding:3px}.yakult-audit-list article{border:1px solid #e0d4bf;border-radius:13px;padding:13px;background:#fffaf0;min-width:0;overflow-wrap:anywhere}.yakult-audit-list article>div{display:flex;gap:10px;justify-content:space-between;font-size:13px}.yakult-audit-list strong{white-space:nowrap;color:#985a22}.yakult-audit-list small{display:block;font-size:11px;color:#87715c;margin-top:7px;line-height:1.6}.yakult-audit-list p{font-size:12px;line-height:1.6}.yakult-audit-list label{display:flex;flex-direction:column;gap:4px;font-size:12px}
 .yakult-dialog button:focus-visible,.yakult-admin :is(select,input,summary):focus-visible,.yakult-preview-button:focus-visible,.yakult-award-tag button:focus-visible,.yakult-rewards-board>summary:focus-visible{outline:3px solid #b74353;outline-offset:3px}
-@media(max-width:720px){.cinematic-beast .yakult-crown{top:8%}.cinematic-beast .yakult-familiar{width:33px;height:42px;right:-25%;top:12%}.cinematic-beast .yakult-bottle b{font-size:9px}.cinematic-beast .yakult-bottle small{display:none}.cinematic-beast .yakult-orbit{bottom:26%;height:28%}.cinematic-beast .yakult-orbit-inner{bottom:29%;height:22%}.yakult-owner-title{font-size:9px}.cinematic-view-switch{gap:1px}.cinematic-view-switch button{padding:7px 9px;min-height:44px}.yakult-dialog{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:23px}.yakult-backdrop{padding:12px}.yakult-board{padding:24px 16px 16px}.yakult-board h3{font-size:23px}.yakult-ranking>li{gap:7px;padding:10px 8px}.yakult-student>b,.yakult-student>button{font-size:12px}.yakult-rank{width:19px}}
+@media(max-width:720px){.cinematic-beast .yakult-crown{top:8%}.cinematic-view-switch{gap:1px}.cinematic-view-switch button{padding:7px 9px;min-height:44px}.yakult-dialog{max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:23px}.yakult-backdrop{padding:12px}.yakult-board{padding:24px 16px 16px}.yakult-board h3{font-size:23px}.yakult-ranking>li{gap:7px;padding:10px 8px}.yakult-student>b,.yakult-student>button{font-size:12px}.yakult-rank{width:19px}}
 @media(max-width:600px){.yakult-evolution-actor{width:168px;height:168px}.evolution-hero.yakult-crowned{height:265px;padding-top:60px}}
-@media(max-height:710px) and (max-width:600px){.yakult-evolution-actor{width:122px;height:122px}.yakult-evolution-actor .yakult-familiar{width:36px;height:46px}.evolution-hero.yakult-crowned{height:214px;padding-top:54px}}
-@media(prefers-reduced-motion:reduce){.yakult-equipment,.yakult-equipment *{animation:none!important}.yakult-celebration{display:none}}
+@media(max-height:710px) and (max-width:600px){.yakult-evolution-actor{width:122px;height:122px}.evolution-hero.yakult-crowned{height:214px;padding-top:54px}}
+@media(prefers-reduced-motion:reduce){.yakult-equipment,.yakult-equipment *{animation:none!important}}

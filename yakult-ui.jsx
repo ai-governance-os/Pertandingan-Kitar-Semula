@@ -52,14 +52,10 @@ function YakultCrown({ stage }) {
   </span>;
 }
 
-// The crown and familiar travel with the actor for every species and form.
+// The crown travels with the actor for every species and form.
 function YakultEquipment({ stage = 0, celebrate = false }) {
   return <span className={`yakult-equipment yakult-stage-${stage} ${celebrate ? 'yakult-celebrate' : ''}`} aria-hidden="true">
-    <span className="yakult-orbit"/><span className="yakult-orbit-inner"/>
-    <span className="yakult-spark yakult-spark-one">✦</span><span className="yakult-spark yakult-spark-two">✧</span>
     <YakultCrown stage={stage}/>
-    {stage > 0 && <span className="yakult-familiar"><span className="yakult-bottle-cap"/><span className="yakult-bottle"><i className="yakult-eyes"/><b>Yakult</b><small>✦</small></span></span>}
-    {celebrate && <span className="yakult-celebration">Yakult 之星 ✦</span>}
   </span>;
 }
 
@@ -116,7 +112,7 @@ function YakultPetHonour({ row, state }) {
   const history = React.useMemo(() => EcoYakult.honours(state, row.id, now), [state, row.id, now]);
   return <section className={`yakult-pet-honour ${current?.winner ? 'is-yakult-star' : ''}`} aria-label="Yakult 荣誉">
     <div className="yakult-honour-copy"><span className="yakult-wordmark">Yakult</span><b>{current?.winner ? '本月 Yakult 之星' : '本月 Yakult 荣誉'}</b><span>{current?.total || 0} 张 Yakult 奖励卡</span></div>
-    <p>{current?.winner ? '已获得 Yakult 星耀冠冕，随进化解锁更华丽的冠饰与星瓶精灵；同分共享，每月重新竞争。' : '本月 Yakult 奖励卡并列最高且大于 0，即可获得 Yakult 星耀冠冕与星瓶精灵。'}</p>
+    <p>{current?.winner ? '已获得 Yakult 星耀冠冕，随进化解锁更华丽的王冠；同分共享，每月重新竞争。' : '本月 Yakult 奖励卡并列最高且大于 0，即可获得 Yakult 星耀冠冕。'}</p>
     {!current?.winner && <button type="button" className="yakult-preview-button" aria-expanded={preview} onClick={() => setPreview(!preview)}>{preview ? '收起装备预览' : '预览 Yakult 装备'}</button>}
     {preview && !current?.winner && <div className="yakult-equipment-preview"><span>装备预览 · 尚未获得</span><div className="yakult-preview-pet"><EvolvedBeast speciesId={row.pet.species.id} stage={row.pet.displayStageIndex} loading="lazy"/><YakultEquipment stage={row.pet.displayStageIndex}/></div></div>}
     {history.length > 0 && <details className="yakult-history"><summary>历月 Yakult 之星 · {history.length} 次</summary>{history.map(item => <p key={item.month}>✦ {item.label} · {item.total} 张</p>)}</details>}

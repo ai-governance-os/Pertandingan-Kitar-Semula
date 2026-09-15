@@ -1138,11 +1138,8 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                     playToken={0}
                   />
                   {row.yakult?.winner && <YakultEquipment stage={displayStage}/>}
-                  <span className="cinematic-owner-tag">
-                    <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={20} className="cinematic-team-badge" />
+                  <span className="cinematic-owner-tag" title={row.name}>
                     <b>{row.name}</b>
-                    <span>{row.pet.nickname || row.pet.species.zh} · {PetEvolution.names[displayStage]}</span>
-                    {row.yakult?.winner && <strong className="yakult-owner-title">Yakult 之星</strong>}
                   </span>
                 </span>
               </button>
