@@ -1053,7 +1053,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     const rect=image?.getBoundingClientRect();
     const host=parkRef.current.getBoundingClientRect();
     setParkShow({row,token:showToken+1,origin:{x:rect?rect.left+rect.width/2:host.left+host.width/2,y:rect?rect.top+rect.height/2:host.top+host.height/2,width:rect?.width||70}});
-    setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId) : `${row.name} · 弹跳打招呼`);
+    setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId,row.pet.voiceGender) : `${row.name} · 弹跳打招呼`);
     clearTimeout(reactionTimerRef.current);
     // Loading failure still permits opening the details. The normal completion
     // comes from the actor so slow image loading cannot truncate the show.
@@ -1292,6 +1292,7 @@ function useMythicParkAudio() {
     } else {
       playingRef.current = false;
       setPlaying(false);
+      window.PetOwnerVoice?.stop();
       if (engineRef.current) engineRef.current.setMuted(true);
     }
   }, [available, rememberEnabled, start]);
@@ -1300,9 +1301,19 @@ function useMythicParkAudio() {
     if (!enabledRef.current) return;
     window.PetOwnerVoice?.stop();
     const request=window.PetOwnerVoice?.token();
+    let useCreatureCall=false,creaturePlayed=false;
+    const playCreature=()=>{
+      if(creaturePlayed||!enabledRef.current||!window.PetOwnerVoice?.isCurrent(request)||!engineRef.current?.isRunning())return;
+      creaturePlayed=true;
+      engineRef.current.playAccent(row.pet.species.id,row.pet.displayStageIndex,false,row.pet.voiceAction);
+    };
+    const fallback=()=>{useCreatureCall=true;playCreature();};
+    // Call play inside the click gesture, before awaiting the music unlock.
+    const speaking=window.PetOwnerVoice?.speak(row,{onUnavailable:fallback});
     start().then((ok) => {
       if (ok && engineRef.current && window.PetOwnerVoice?.isCurrent(request)) {
-        engineRef.current.playAccent(row.pet.species.id,row.pet.displayStageIndex,false,row.pet.voiceAction);
+        if(speaking&&!useCreatureCall)engineRef.current.duck(window.PetCharacterVoice.resolve(row).duration);
+        else playCreature();
       }
     });
   }, [start]);

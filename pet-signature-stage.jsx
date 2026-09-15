@@ -28,7 +28,9 @@ function PetSignatureStage({row,onClose,onPetInteract}){
  useEffect(()=>{
   const previous=document.activeElement;close.current?.focus();
   const voiceChanged=e=>{if(e.detail.id==='hornbeetle')setVoiceStatus(e.detail.state==='playing'?'天角仙鸣叫中':'');};
+  const speechChanged=e=>{if(e.detail.studentId===row.id)setVoiceStatus(e.detail.state==='playing'?'天角仙正在说话':'');};
   window.addEventListener('pet-creature-call',voiceChanged);
+  window.addEventListener('pet-character-voice',speechChanged);
   const media=matchMedia('(prefers-reduced-motion: reduce)'),change=()=>setReduced(media.matches);change();media.addEventListener?.('change',change);
   const img=new Image();atlas.current=img;img.onload=()=>setLoaded(true);img.onerror=()=>setError(true);img.src=SIGNATURE_ATLAS;
   function key(e){
@@ -41,7 +43,7 @@ function PetSignatureStage({row,onClose,onPetInteract}){
   }
   dialog.current?.addEventListener('keydown',key);
   const el=dialog.current;
-  return()=>{img.onload=img.onerror=null;media.removeEventListener?.('change',change);el?.removeEventListener('keydown',key);window.removeEventListener('pet-creature-call',voiceChanged);window.PetOwnerVoice?.stop();previous?.focus?.();};
+  return()=>{img.onload=img.onerror=null;media.removeEventListener?.('change',change);el?.removeEventListener('keydown',key);window.removeEventListener('pet-creature-call',voiceChanged);window.removeEventListener('pet-character-voice',speechChanged);window.PetOwnerVoice?.stop();previous?.focus?.();};
  },[]);
  useEffect(()=>{
   if(!loaded||!canvas.current)return;
@@ -96,7 +98,7 @@ function PetSignatureStage({row,onClose,onPetInteract}){
    <div className="signature-controls">
     <div className="signature-status" role="status"><span className={mode?'busy':''}/>{error?'素材暂时无法载入，请关闭后重试':phase}{mode&&<button onClick={stop}>结束互动</button>}</div>
     <div className="signature-actions">{Object.entries(SIGNATURE_SHOWS).map(([id,s],i)=><button key={id} disabled={!loaded||error||!!mode} onClick={()=>play(id)}><span className="signature-action-number">0{i+1}</span><b>{s.name}</b><small>{id==='greet'?'向你打招呼':id==='flight'?'展开虹彩双翼':'闭眼享受陪伴'}</small></button>)}</div>
-    <div className="signature-meta"><button aria-pressed={sound} onClick={()=>{setSound(!sound);if(sound)window.PetOwnerVoice?.stop();}}>神兽鸣叫：{sound?'开':'关'}</button><span role="status">{voiceStatus||(reduced?'已遵循减少动态设置':'对白仅作字幕 · 不含人声')}</span></div>
+    <div className="signature-meta"><button aria-pressed={sound} onClick={()=>{setSound(!sound);if(sound)window.PetOwnerVoice?.stop();}}>神兽声音：{sound?'开':'关'}</button><span role="status">{voiceStatus||(reduced?'已遵循减少动态设置':window.PetCharacterVoice?.resolve(row)?.label||'对白字幕 · 动物鸣叫')}</span></div>
     <div className="signature-unlock"><span>{row.pet.exp>=120?'传奇已达成':`再赚 ${Math.max(0,120-row.pet.exp)} 张，抵达传奇`}</span><b>{row.pet.exp} / 120</b><i><em style={{width:Math.min(100,row.pet.exp/120*100)+'%'}}/></i><small>试演不增加奖励卡，也不提前解锁形态。</small></div>
    </div>
   </section>

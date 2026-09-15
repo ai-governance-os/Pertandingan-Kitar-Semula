@@ -1084,6 +1084,7 @@ function petState(state, studentId, now = Date.now()) {
     species,
     lifetimeExp,
     nickname: state?.pets?.[studentId]?.nickname || "",
+    voiceGender: ['male','female'].includes(state?.pets?.[studentId]?.voiceGender) ? state.pets[studentId].voiceGender : '',
     exp,
     stageIndex,
     stage: PET_STAGES[stageIndex],
@@ -1130,6 +1131,15 @@ function setPetSpecies(state, studentId, speciesId) {
   const other = Object.keys(assignments).find(id=>id!==studentId && assignments[id]===speciesId);
   if (other) pets[other] = { ...pets[other], speciesId:assignments[studentId] };
   pets[studentId] = { ...(pets[studentId] || {}), speciesId };
+  const next = { ...state, pets };
+  save(next);
+  return next;
+}
+
+function setPetVoiceGender(state, studentId, voiceGender) {
+  if (!['','male','female'].includes(voiceGender) || !state.teams.some(team => (team.members || []).some(member => member.id === studentId))) return state;
+  const pets = { ...(state.pets || {}) };
+  pets[studentId] = { ...(pets[studentId] || {}), voiceGender };
   const next = { ...state, pets };
   save(next);
   return next;
@@ -1382,7 +1392,7 @@ Object.assign(window, {
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     redListThreshold, setRedListThreshold,
     // Pets
-    petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname,
+    petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname, setPetVoiceGender,
     PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
     exportCSV,
     // AI scan helpers

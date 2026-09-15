@@ -8,16 +8,24 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   const [libraryOpen,setLibraryOpen]=useState(false);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const [voiceStatus,setVoiceStatus]=useState('');
+  const voiceGender=EcoData.petState(state,row.id).voiceGender;
+  const voiceRow={...row,pet:{...row.pet,voiceGender,displayStageIndex:viewStage}};
+  const voicePack=window.PetCharacterVoice?.resolve(voiceRow);
   const heroRef=useRef(null);
   const performanceDuration=[3000,3400,3800,4200,4500,5000][viewStage];
   useEffect(()=>{
     setVoiceStatus('');
     const changed=e=>{
       if(e.detail.id!==p.species.id)return;
-      setVoiceStatus(e.detail.state==='playing'?'神兽正在鸣叫 · 不含人声':'');
+      setVoiceStatus(e.detail.state==='playing'?'神兽正在鸣叫':'');
     };
-    window.addEventListener('pet-creature-call',changed);return()=>window.removeEventListener('pet-creature-call',changed);
-  },[row.name,viewStage,p.species.id]);
+    const voiced=e=>{
+      if(e.detail.studentId!==row.id||e.detail.stage!==viewStage)return;
+      setVoiceStatus(({loading:'正在准备声音…',playing:'神兽正在说话',error:'语音暂时无法播放，已尝试恢复鸣叫'})[e.detail.state]||'');
+    };
+    window.addEventListener('pet-creature-call',changed);window.addEventListener('pet-character-voice',voiced);
+    return()=>{window.removeEventListener('pet-creature-call',changed);window.removeEventListener('pet-character-voice',voiced);};
+  },[row.id,viewStage,p.species.id,voiceGender]);
   const previousStage=useRef(p.stageIndex),dialogRef=useRef(null),closeRef=useRef(null);
   const locked=viewStage>p.stageIndex;
   const threshold=EcoData.PET_STAGES[viewStage].minExp;
@@ -49,7 +57,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   function play(){
     heroRef.current?.scrollIntoView({block:'center',behavior:'auto'});
     setPlaying(true);setPlayToken(n=>n+1);
-    onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});
+    onPetInteract?.(voiceRow);
   }
   useEffect(()=>()=>window.PetOwnerVoice?.stop(),[]);
   function rename(){
@@ -79,10 +87,16 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         </button>)}
       </div>
       {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
-          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>对白仅作字幕 · {window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫'} · 不含人声</small><br/>
-          <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.({...row,pet:{...row.pet,displayStageIndex:viewStage}});}}>听听本阶段鸣叫</button>
+          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id,voiceGender)}”<br/><small>{voicePack?voicePack.label+' · 各阶段先共用这段问候':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
+          <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.(voiceRow);}}>{voicePack?'听宠物说话':'听听本阶段鸣叫'}</button>
           {voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
       </p>}
+      {isAdmin&&<label className="pet-voice-setting">宠物声音
+        <select aria-label="宠物声音" value={voiceGender} onChange={e=>{if(!requireAuth())return;window.PetOwnerVoice?.stop();setState(EcoData.setPetVoiceGender(state,row.id,e.target.value));}}>
+          <option value="">待设置 · 保留鸣叫</option><option value="male">男生 · 男声</option><option value="female">女生 · 女声</option>
+        </select>
+        <small>按学生资料设置；换宠物、进化后保留声音。</small>
+      </label>}
       <button className="evolution-play" type="button" onClick={play} disabled={playing}>
         <span className="material-symbols-rounded" aria-hidden="true">{playing?'auto_awesome':'play_arrow'}</span>
         <span>{playing?'正在表演：':locked?'试播未来招式：':'表演给我看：'}{profile.acts[viewStage]}</span>

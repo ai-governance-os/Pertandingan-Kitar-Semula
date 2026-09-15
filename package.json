@@ -7,6 +7,7 @@
     "build": "node build.cjs",
     "dev": "node build.cjs --watch",
     "test:sync": "node --test scripts/test-cloud-sync.cjs",
+    "test:voices": "node --test scripts/test-pet-character-voice.cjs",
     "pdf": "node build-pdf.cjs"
   },
   "devDependencies": {
