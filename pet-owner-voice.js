@@ -5,8 +5,8 @@ window.PetOwnerVoice=(()=>{
   const text=String(studentName||'').trim(),zh=text.match(/[\u3400-\u9fff]+/g)?.join('');
   return zh?(zh.length===3?zh.slice(1):zh):text;
  }
- function greeting(studentName,stage=2,speciesId='hornbeetle',voiceGender=''){
-  const recording=window.PetCharacterVoice?.resolve({pet:{voiceGender}});
+ function greeting(studentName,stage=2,speciesId='hornbeetle',voiceGender='',voiceId=''){
+  const recording=window.PetCharacterVoice?.resolve({pet:{voiceGender,voiceId}});
   if(recording)return recording.text;
   return `${name(studentName)}主人，${window.PetDialogue?.line(speciesId,stage)||'你来啦！'}`;
  }

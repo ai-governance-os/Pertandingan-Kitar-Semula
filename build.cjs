@@ -21,6 +21,7 @@ const HERE = __dirname;
 // IIFEs can reach them), finally app.jsx which mounts React.
 const SOURCES = [
   // data layer (plain JS, no JSX)
+  'pet-voice-catalog.js',
   'data.js',
   'yakult.js',
   'cloud-sync.js',

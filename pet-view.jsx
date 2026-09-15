@@ -1053,7 +1053,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     const rect=image?.getBoundingClientRect();
     const host=parkRef.current.getBoundingClientRect();
     setParkShow({row,token:showToken+1,origin:{x:rect?rect.left+rect.width/2:host.left+host.width/2,y:rect?rect.top+rect.height/2:host.top+host.height/2,width:rect?.width||70}});
-    setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId,row.pet.voiceGender) : `${row.name} · 弹跳打招呼`);
+    setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId,row.pet.voiceGender,row.pet.voiceId) : `${row.name} · 弹跳打招呼`);
     clearTimeout(reactionTimerRef.current);
     // Loading failure still permits opening the details. The normal completion
     // comes from the actor so slow image loading cannot truncate the show.

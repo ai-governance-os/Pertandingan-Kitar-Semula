@@ -1085,6 +1085,7 @@ function petState(state, studentId, now = Date.now()) {
     lifetimeExp,
     nickname: state?.pets?.[studentId]?.nickname || "",
     voiceGender: ['male','female'].includes(state?.pets?.[studentId]?.voiceGender) ? state.pets[studentId].voiceGender : '',
+    voiceId: typeof state?.pets?.[studentId]?.voiceId === 'string' ? state.pets[studentId].voiceId : '',
     exp,
     stageIndex,
     stage: PET_STAGES[stageIndex],
@@ -1139,7 +1140,20 @@ function setPetSpecies(state, studentId, speciesId) {
 function setPetVoiceGender(state, studentId, voiceGender) {
   if (!['','male','female'].includes(voiceGender) || !state.teams.some(team => (team.members || []).some(member => member.id === studentId))) return state;
   const pets = { ...(state.pets || {}) };
-  pets[studentId] = { ...(pets[studentId] || {}), voiceGender };
+  const previous = pets[studentId] || {};
+  const voiceId = window.PetVoiceCatalog?.get(previous.voiceId)?.gender === voiceGender ? previous.voiceId : '';
+  pets[studentId] = { ...previous, voiceGender, voiceId };
+  const next = { ...state, pets };
+  save(next);
+  return next;
+}
+
+function setPetVoice(state, studentId, voiceId) {
+  const voice = window.PetVoiceCatalog?.get(voiceId);
+  if (!state.teams.some(team => (team.members || []).some(member => member.id === studentId))) return state;
+  if (!voice || voice.gender !== state.pets?.[studentId]?.voiceGender) return state;
+  const pets = { ...(state.pets || {}) };
+  pets[studentId] = { ...(pets[studentId] || {}), voiceId: voice.id };
   const next = { ...state, pets };
   save(next);
   return next;
@@ -1392,7 +1406,7 @@ Object.assign(window, {
     sessionTeamStats, sessionStats, teamStats, totalStats, absenceReport,
     redListThreshold, setRedListThreshold,
     // Pets
-    petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname, setPetVoiceGender,
+    petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname, setPetVoiceGender, setPetVoice,
     PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
     exportCSV,
     // AI scan helpers

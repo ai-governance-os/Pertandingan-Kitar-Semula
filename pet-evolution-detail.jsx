@@ -8,8 +8,8 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   const [libraryOpen,setLibraryOpen]=useState(false);
   const [signatureOpen,setSignatureOpen]=useState(false);
   const [voiceStatus,setVoiceStatus]=useState('');
-  const voiceGender=EcoData.petState(state,row.id).voiceGender;
-  const voiceRow={...row,pet:{...row.pet,voiceGender,displayStageIndex:viewStage}};
+  const {voiceGender,voiceId}=EcoData.petState(state,row.id);
+  const voiceRow={...row,pet:{...row.pet,voiceGender,voiceId,displayStageIndex:viewStage}};
   const voicePack=window.PetCharacterVoice?.resolve(voiceRow);
   const heroRef=useRef(null);
   const performanceDuration=[3000,3400,3800,4200,4500,5000][viewStage];
@@ -25,7 +25,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
     };
     window.addEventListener('pet-creature-call',changed);window.addEventListener('pet-character-voice',voiced);
     return()=>{window.removeEventListener('pet-creature-call',changed);window.removeEventListener('pet-character-voice',voiced);};
-  },[row.id,viewStage,p.species.id,voiceGender]);
+  },[row.id,viewStage,p.species.id,voiceGender,voiceId]);
   const previousStage=useRef(p.stageIndex),dialogRef=useRef(null),closeRef=useRef(null);
   const locked=viewStage>p.stageIndex;
   const threshold=EcoData.PET_STAGES[viewStage].minExp;
@@ -87,16 +87,23 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         </button>)}
       </div>
       {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
-          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id,voiceGender)}”<br/><small>{voicePack?voicePack.label+' · 各阶段先共用这段问候':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
+          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id,voiceGender,voiceId)}”<br/><small>{voicePack?voicePack.label+' · 各阶段先共用这段问候':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
           <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.(voiceRow);}}>{voicePack?'听宠物说话':'听听本阶段鸣叫'}</button>
           {voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
       </p>}
-      {isAdmin&&<label className="pet-voice-setting">宠物声音
+      {isAdmin&&<div className="pet-voice-setting"><label className="pet-voice-field">宠物声音
         <select aria-label="宠物声音" value={voiceGender} onChange={e=>{if(!requireAuth())return;window.PetOwnerVoice?.stop();setState(EcoData.setPetVoiceGender(state,row.id,e.target.value));}}>
           <option value="">待设置 · 保留鸣叫</option><option value="male">男生 · 男声</option><option value="female">女生 · 女声</option>
         </select>
-        <small>按学生资料设置；换宠物、进化后保留声音。</small>
-      </label>}
+        </label>
+        {voiceGender&&<label className="pet-voice-field">专属音色
+          <select aria-label="专属音色" value={voicePack?.id||''} onChange={e=>{if(!requireAuth())return;window.PetOwnerVoice?.stop();setState(EcoData.setPetVoice(state,row.id,e.target.value));}}>
+            {window.PetVoiceCatalog.list(voiceGender).map(voice=><option key={voice.id} value={voice.id}>{voice.label}{voice.reviewed?'':' · 新样板'}</option>)}
+          </select>
+        </label>}
+        <small>每位学生可选不同音色；换宠物、进化后保留选择。</small>
+        <a href="pet-voice-preview.html" target="_blank" rel="noopener noreferrer" onClick={()=>window.PetOwnerVoice?.stop()}>比较全部童声样板 ↗</a>
+      </div>}
       <button className="evolution-play" type="button" onClick={play} disabled={playing}>
         <span className="material-symbols-rounded" aria-hidden="true">{playing?'auto_awesome':'play_arrow'}</span>
         <span>{playing?'正在表演：':locked?'试播未来招式：':'表演给我看：'}{profile.acts[viewStage]}</span>

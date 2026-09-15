@@ -1,12 +1,13 @@
 // Trial recordings are fetched only after a gesture. Voice follows the owner,
 // never the owner's name, pet species, or evolution stage.
 window.PetCharacterVoice=(()=>{
- const packs={
-  male:{label:'男孩童声候选 · 第二轮',url:'assets/voices/trial/male-v2.mp3',duration:6.80,text:'嘿！你可算来啦！哼，今天的小挑战，我才不怕呢！来呀，一起冲！'},
-  female:{label:'女孩童声候选 · 第二轮',url:'assets/voices/trial/female-v2.mp3',duration:5.88,text:'嘿！你可算来啦！嘻嘻，今天的小挑战，我才不怕呢！走咯，一起冲！'},
- };
  let current=null,sequence=0;
- function resolve(row){const gender=row?.pet?.voiceGender;return gender==='male'||gender==='female'?packs[gender]:null;}
+ function resolve(row){
+  const gender=row?.pet?.voiceGender,catalog=window.PetVoiceCatalog;
+  if(!catalog||(gender!=='male'&&gender!=='female'))return null;
+  const selected=catalog.get(row.pet.voiceId);
+  return selected?.gender===gender?selected:catalog.get(catalog.defaults[gender]);
+ }
  function notify(row,state){
   window.dispatchEvent?.(new CustomEvent('pet-character-voice',{detail:{studentId:row.id,id:row.pet.species.id,stage:row.pet.displayStageIndex,state}}));
  }

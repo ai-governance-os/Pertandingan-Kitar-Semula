@@ -142,3 +142,6 @@
 .pet-voice-setting{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0;padding:12px;border:1px solid #c8dbd0;border-radius:12px;color:#345a48;font-size:13px;font-weight:700;background:#f3faf5}
 .pet-voice-setting select{margin-left:auto;max-width:100%;padding:8px;border:1px solid #aec8b9;border-radius:8px;background:white;color:#254635;font:inherit}
 .pet-voice-setting small{width:100%;font-size:11px;font-weight:400}
+.pet-voice-field{display:flex;align-items:center;gap:8px;width:100%;min-width:0}
+.pet-voice-field select{min-width:0;max-width:calc(100% - 64px)}
+.pet-voice-setting a{color:#245c4b;font-size:12px;text-decoration:underline;text-underline-offset:3px}
