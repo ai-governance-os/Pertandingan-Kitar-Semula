@@ -29,6 +29,7 @@ const SOURCES = [
   'pet-audio.js',
   'pet-cute-sounds.js',
   'pet-dialogue.js',
+  'pet-personalized-voices.js',
   'pet-character-voice.js',
   'pet-owner-voice.js',
   'pet-evolution.js',

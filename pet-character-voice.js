@@ -1,5 +1,5 @@
-// Trial recordings are fetched only after a gesture. Voice follows the owner,
-// never the owner's name, pet species, or evolution stage.
+// Voice selection follows the owner. Spoken content matches their name,
+// current species and stage; audition scripts never replace pet dialogue.
 window.PetCharacterVoice=(()=>{
  let current=null,sequence=0;
  function resolve(row){
@@ -10,6 +10,10 @@ window.PetCharacterVoice=(()=>{
  }
  function notify(row,state){
   window.dispatchEvent?.(new CustomEvent('pet-character-voice',{detail:{studentId:row.id,id:row.pet.species.id,stage:row.pet.displayStageIndex,state}}));
+ }
+ function recording(row){
+  const voice=resolve(row),clip=voice&&window.PetPersonalizedVoices?.find(row,voice);
+  return clip?{...voice,...clip}:null;
  }
  function stop(){
   sequence++;
@@ -22,7 +26,7 @@ window.PetCharacterVoice=(()=>{
  }
  function play(row,{onUnavailable}={}){
   stop();
-  const pack=resolve(row);
+  const pack=recording(row);
   if(!pack||!window.Audio||window.document?.hidden||window.EcoMythicAudio?.readPreference()===false)return false;
   const request=sequence;
   let audio;
@@ -48,5 +52,5 @@ window.PetCharacterVoice=(()=>{
   catch(e){finish('error');}
   return true;
  }
- return {resolve,play,stop,warm:()=>{}};
+ return {resolve,recording,play,stop,warm:()=>{}};
 })();

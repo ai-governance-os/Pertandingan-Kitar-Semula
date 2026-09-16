@@ -11,6 +11,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
   const {voiceGender,voiceId}=EcoData.petState(state,row.id);
   const voiceRow={...row,pet:{...row.pet,voiceGender,voiceId,displayStageIndex:viewStage}};
   const voicePack=window.PetCharacterVoice?.resolve(voiceRow);
+  const voiceRecording=window.PetCharacterVoice?.recording(voiceRow);
   const heroRef=useRef(null);
   const performanceDuration=[3000,3400,3800,4200,4500,5000][viewStage];
   useEffect(()=>{
@@ -87,8 +88,8 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         </button>)}
       </div>
       {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
-          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id,voiceGender,voiceId)}”<br/><small>{voicePack?voicePack.label+' · 各阶段先共用这段问候':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
-          <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.(voiceRow);}}>{voicePack?'听宠物说话':'听听本阶段鸣叫'}</button>
+          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>{voiceRecording?voicePack.label+' · 专属对白':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
+          <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.(voiceRow);}}>{voiceRecording?'听宠物说话':'听听本阶段鸣叫'}</button>
           {voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
       </p>}
       {isAdmin&&<div className="pet-voice-setting"><label className="pet-voice-field">宠物声音

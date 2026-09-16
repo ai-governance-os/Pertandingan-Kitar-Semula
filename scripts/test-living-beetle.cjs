@@ -11,8 +11,8 @@ assert.equal(voice.name('Test 王小明'),'小明');
 assert.equal(voice.name('欧阳小明'),'欧阳小明');
 assert.equal(voice.name('Alex'),'Alex');
 assert.equal(voice.greeting('李冠德',0),'冠德主人，等等我呀！');
-assert.equal(voice.speak('李冠德',2),false,'Human speech is disabled');
-assert.equal(voice.setDeviceEnabled(true),false,'Legacy device settings cannot enable TTS');
+assert.equal(voice.speak('李冠德',2),false,'Legacy string calls cannot enable system TTS');
+assert.equal(voice.speak({id:'test',name:'李冠德',pet:{voiceGender:'male'}}),false,'Without a matching recording, system TTS stays unused');
 assert.equal(voice.speak('王小明',3),false);
 assert.equal(spoken.length,0);
 voice.stop();assert.equal(cancelled,0,'No system voice initialization or use');
@@ -38,7 +38,7 @@ for(let stage=1;stage<=5;stage++){
 }
 assert.equal(rig.rigs[1].wings.length,0,'Hatchling stays in shell');
 assert(rig.rigs[5].wings.length>0,'Legendary has articulated wings');
-console.log('PASS: five baseline rigs, blink/limb poses, motion bounds, reduced motion, subtitle owner names, human speech disabled.');
+console.log('PASS: five baseline rigs, blink/limb poses, motion bounds, reduced motion, subtitle owner names, no system TTS.');
 context.BeetleRig=window.BeetleRig;
 vm.runInContext(fs.readFileSync(path.join(root,'data.js'),'utf8'),context);
 vm.runInContext(fs.readFileSync(path.join(root,'pet-body-rigs.js'),'utf8'),context);

@@ -7,8 +7,8 @@ function setup(){
  const document={hidden:false,addEventListener:(k,v)=>listeners[k]=v};
  const window={Audio,document,dispatchEvent:e=>events.push(e),setTimeout:(fn,ms)=>{timers.set(++timerId,{fn,ms});return timerId;},clearTimeout:id=>timers.delete(id),PetCuteSounds:{stop:()=>callsStopped++},EcoMythicAudio:{readPreference:()=>enabled}};
  const context=vm.createContext({window,CustomEvent,console,Math,Date,localStorage:{getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)},crypto:require('crypto').webcrypto});
- for(const file of ['pet-voice-catalog.js','data.js','pet-dialogue.js','pet-character-voice.js','pet-owner-voice.js'])vm.runInContext('(function(){'+fs.readFileSync(path.join(root,file),'utf8')+'})();',context);
- const row=(gender='',id='a',species='hornbeetle',stage=5)=>({id,name:'李同学',pet:{voiceGender:gender,species:{id:species},displayStageIndex:stage}});
+ for(const file of ['pet-voice-catalog.js','data.js','pet-dialogue.js','pet-personalized-voices.js','pet-character-voice.js','pet-owner-voice.js'])vm.runInContext('(function(){'+fs.readFileSync(path.join(root,file),'utf8')+'})();',context);
+ const row=(gender='',id,species,stage=5)=>({id:id||(gender==='female'?'dragons_lai_xuan_ning':'dragons_lau_yu_ze'),name:gender==='female'?'赖萱宁':'刘宇哲',pet:{voiceGender:gender,species:{id:species||(gender==='female'?'cloudpard':'stardeer')},displayStageIndex:stage}});
  return {window,audios,events,timers,listeners,memory,row,voice:window.PetOwnerVoice,pack:window.PetCharacterVoice,data:window.EcoData,mute:()=>enabled=false,callsStopped:()=>callsStopped};
 }
 test('no network/audio on startup, unassigned owners, invalid gender or old string calls',()=>{
@@ -23,11 +23,12 @@ test('setting persists after reload and follows owner through species swap',()=>
  assert.equal(d.petState(state,a).voiceGender,'male');assert.equal(d.petState(state,b).voiceGender,'female');assert.equal(d.petState(d.load(),a).voiceGender,'male');
  assert.equal(d.setPetVoiceGender(state,'missing','male'),state);assert.equal(d.setPetVoiceGender(state,a,'auto'),state);assert.equal(d.petState(d.setPetVoiceGender(state,a,''),a).voiceGender,'');
 });
-test('selected recording subtitle matches audio; unassigned keeps owner greeting',()=>{
- const s=setup();assert.equal(s.voice.greeting('李冠德',0),'冠德主人，等等我呀！');assert.equal(s.voice.greeting('李冠德',5,'hornbeetle','female'),s.pack.resolve(s.row('female')).text);
+test('voice choices never replace personalized owner and stage dialogue with audition text',()=>{
+ const s=setup();assert.equal(s.voice.greeting('李冠德',0),'冠德主人，等等我呀！');assert.equal(s.voice.greeting('李冠德',5,'hornbeetle','female'),'冠德主人，换我守护你！');
+ assert.equal(s.pack.recording(s.row('female')).text,s.voice.greeting('赖萱宁',5,'cloudpard'));
 });
 test('second voice stops first and releases its source',()=>{
- const s=setup();s.voice.speak(s.row('male'));s.audios[0].onplaying();s.voice.speak(s.row('female','b'));assert.equal(s.audios[0].paused,true);assert.equal(s.audios[0].src,'');assert.equal(s.audios[1].paused,false);assert.equal(s.timers.size,1);
+ const s=setup();s.voice.speak(s.row('male'));s.audios[0].onplaying();s.voice.speak(s.row('female'));assert.equal(s.audios[0].paused,true);assert.equal(s.audios[0].src,'');assert.equal(s.audios[1].paused,false);assert.equal(s.timers.size,1);
 });
 test('muted and hidden pages do not start recordings',()=>{
  const s=setup();s.mute();assert.equal(s.voice.speak(s.row('male')),false);const t=setup();t.window.document.hidden=true;assert.equal(t.voice.speak(t.row('female')),false);assert.equal(t.audios.length+s.audios.length,0);
@@ -40,7 +41,7 @@ test('audio error falls back exactly once and reports error',()=>{
  const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});const fail=s.audios[0].onerror;fail();fail();assert.equal(failed,1);assert.equal(s.events.at(-1).detail.state,'error');assert.equal(s.timers.size,0);
 });
 test('old rejected play promise cannot stop new owner or trigger fallback',async()=>{
- const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});const old=s.audios[0];s.voice.speak(s.row('female','b'));old.reject(Error('old request'));await Promise.resolve();assert.equal(s.audios[1].paused,false);assert.equal(failed,0);
+ const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});const old=s.audios[0];s.voice.speak(s.row('female'));old.reject(Error('old request'));await Promise.resolve();assert.equal(s.audios[1].paused,false);assert.equal(failed,0);
 });
 test('hung loads time out and allow creature fallback',()=>{
  const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});[...s.timers.values()][0].fn();assert.equal(failed,1);assert.equal(s.audios[0].paused,true);
@@ -74,9 +75,34 @@ test('selection rejects wrong group, unknown voice/student and unassigned gender
  assert.equal(s.pack.resolve({pet:{voiceGender:'female',voiceId:'boy-spark'}}).id,'girl-pal');
  state=d.setPetVoiceGender(state,a,'');assert.equal(s.pack.resolve({pet:d.petState(state,a)}),null);
 });
-test('all chosen voices survive species and stage changes and provide their exact subtitle',()=>{
+test('all chosen voices preserve personalized subtitles across every species and stage',()=>{
  const s=setup();for(const voice of s.window.PetVoiceCatalog.list())for(const {id} of s.data.PET_SPECIES)for(let stage=0;stage<6;stage++){
   const row=s.row(voice.gender,'same-owner',id,stage);row.pet.voiceId=voice.id;
-  assert.equal(s.pack.resolve(row).id,voice.id);assert.equal(s.voice.greeting(row.name,stage,id,voice.gender,voice.id),voice.text);
+  assert.equal(s.pack.resolve(row).id,voice.id);assert.equal(s.voice.greeting(row.name,stage,id,voice.gender,voice.id),s.voice.name(row.name)+'主人，'+s.window.PetDialogue.line(id,stage));
  }
+});
+
+test('all 19 students have six distinct matching personalized recordings with valid audio',()=>{
+ const s=setup(),manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/voices/personalized/manifest.json'),'utf8')),hashes=new Set(),texts=new Set();
+ assert.equal(Object.keys(manifest.students).length,19);
+ for(const [id,owner] of Object.entries(manifest.students)){
+  assert.equal(owner.stages.length,6);const voice=s.window.PetVoiceCatalog.get(owner.voiceId);assert.ok(voice);
+  for(let stage=0;stage<6;stage++){
+   const row={id,name:owner.ownerName,pet:{voiceGender:voice.gender,voiceId:voice.id,species:{id:owner.speciesId},displayStageIndex:stage}},clip=s.pack.recording(row);
+   assert.ok(clip,id+':'+stage);assert.equal(clip.text,s.voice.greeting(row.name,stage,owner.speciesId));assert.equal(clip.id,voice.id);
+   assert.ok(clip.duration>0.8&&clip.duration<10);const bytes=fs.readFileSync(path.join(root,clip.url));assert.ok(bytes.length>1000);assert.ok(bytes.toString('ascii',0,3)==='ID3'||(bytes[0]===255&&(bytes[1]&224)===224));
+   hashes.add(require('crypto').createHash('sha256').update(bytes).digest('hex'));texts.add(clip.text);
+   assert.equal(s.voice.speak(row),true);assert.equal(s.audios.at(-1).src,clip.url);s.voice.stop();
+  }
+ }
+ assert.equal(texts.size,114);assert.equal(hashes.size,114);
+});
+
+test('missing or stale recordings cannot speak another owner, species, voice, or demo script',()=>{
+ const s=setup();
+ for(const change of [r=>r.id='new-owner',r=>r.name='新名字',r=>r.pet.species.id='phoenix',r=>r.pet.voiceId='boy-spark',r=>r.pet.voiceGender='female']){
+  const row=s.row('male');change(row);assert.equal(s.pack.recording(row),null);assert.equal(s.voice.speak(row),false);
+  assert.ok(s.voice.greeting(row.name,row.pet.displayStageIndex,row.pet.species.id).includes('主人，'));
+ }
+ assert.equal(s.audios.length,0);
 });
