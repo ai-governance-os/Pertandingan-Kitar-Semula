@@ -1017,7 +1017,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
   const parkRef = useRef(null);
   const [parkShow,setParkShow] = useState(null);
   const [lastPetId,setLastPetId] = useState(null);
-  const reactionTimerRef = useRef(null);
+  const interactionTimerRef = useRef(null);
   const [activeId, setActiveId] = useState(null);
   const activeInteractionRef = useRef(null);
   const [showToken, setShowToken] = useState(0);
@@ -1039,7 +1039,15 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     };
   }, []);
 
-  useEffect(() => () => clearTimeout(reactionTimerRef.current), []);
+  useEffect(() => () => clearTimeout(interactionTimerRef.current), []);
+  useEffect(() => {
+    if (!reaction) return;
+    const timer = setTimeout(() => {
+      setReaction('');
+      setLastPetId(null);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [reaction, showToken]);
 
   function interact(row,button) {
     const speciesId = row.pet.species.id;
@@ -1054,24 +1062,23 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
     const host=parkRef.current.getBoundingClientRect();
     setParkShow({row,token:showToken+1,origin:{x:rect?rect.left+rect.width/2:host.left+host.width/2,y:rect?rect.top+rect.height/2:host.top+host.height/2,width:rect?.width||70}});
     setReaction(window.PetOwnerVoice ? PetOwnerVoice.greeting(row.name,row.pet.displayStageIndex,speciesId) : `${row.name} · 弹跳打招呼`);
-    clearTimeout(reactionTimerRef.current);
+    clearTimeout(interactionTimerRef.current);
     // Loading failure still permits opening the details. The normal completion
     // comes from the actor so slow image loading cannot truncate the show.
-    reactionTimerRef.current = setTimeout(() => finishInteraction(row), 12000);
+    interactionTimerRef.current = setTimeout(() => finishInteraction(row), 12000);
   }
 
   function finishInteraction(row) {
     if (activeInteractionRef.current !== row.id) return;
     activeInteractionRef.current = null;
-    clearTimeout(reactionTimerRef.current);
+    clearTimeout(interactionTimerRef.current);
     setActiveId(null);
     setParkShow(null);
-    setReaction(`${row.pet.nickname||row.pet.species.zh} 回来啦！点它可以再表演一次`);
   }
 
   function openEvolution(){
     activeInteractionRef.current=null;
-    clearTimeout(reactionTimerRef.current);
+    clearTimeout(interactionTimerRef.current);
     setActiveId(null);setParkShow(null);setReaction('');
     if(lastPetId)onPick(lastPetId);
   }
