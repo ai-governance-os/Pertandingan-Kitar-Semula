@@ -38,13 +38,22 @@ window.PetVoiceCatalog=(()=>{
     "reviewed": true
   },
   {
-    "id": "girl-bell",
+    "id": "girl-reference-a",
     "gender": "female",
-    "label": "小铃 · 灵动女孩",
-    "url": "assets/voices/characters/girl-bell-v1.mp3",
-    "duration": 7.01,
-    "text": "嘿！你可算来啦！嘻嘻，今天的小挑战，我才不怕呢！走咯，一起冲！",
-    "reviewed": false
+    "label": "小云 · 灵动女孩（A）",
+    "url": "assets/voices/characters/girl-reference-a-v1.mp3",
+    "duration": 4.24,
+    "text": "丽恩主人，小胡须痒痒！一起绕圈圈！",
+    "reviewed": true
+  },
+  {
+    "id": "girl-reference-b",
+    "gender": "female",
+    "label": "小星 · 活泼女孩（B）",
+    "url": "assets/voices/characters/girl-reference-b-v1.mp3",
+    "duration": 4.4,
+    "text": "丽恩主人，小胡须痒痒！一起绕圈圈！",
+    "reviewed": true
   }
 ].map(voice=>Object.freeze(voice)));
  const defaults=Object.freeze({male:'boy-joy',female:'girl-pal'});

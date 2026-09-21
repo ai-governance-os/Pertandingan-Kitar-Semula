@@ -49,12 +49,12 @@ test('hung loads time out and allow creature fallback',()=>{
 test('end of audio releases source and watchdog without fallback',()=>{
  const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});s.audios[0].onplaying();s.audios[0].onended();assert.equal(failed,0);assert.equal(s.events.at(-1).detail.state,'ended');assert.equal(s.timers.size,0);
 });
-test('five distinct recordings have unique stable IDs and valid MP3 bytes',()=>{
+test('six distinct recordings have unique stable IDs and valid MP3 bytes',()=>{
  const s=setup(),voices=s.window.PetVoiceCatalog.list(),hashes=new Set();
- assert.equal(voices.length,5);assert.equal(new Set(voices.map(v=>v.id)).size,5);
- assert.equal(s.window.PetVoiceCatalog.list('male').length,3);assert.equal(s.window.PetVoiceCatalog.list('female').length,2);
+ assert.equal(voices.length,6);assert.equal(new Set(voices.map(v=>v.id)).size,6);
+ assert.equal(s.window.PetVoiceCatalog.list('male').length,3);assert.equal(s.window.PetVoiceCatalog.list('female').length,3);
  for(const voice of voices){const b=fs.readFileSync(path.join(root,voice.url));assert(b.length>1000);assert(b.toString('ascii',0,3)==='ID3'||(b[0]===255&&(b[1]&224)===224));hashes.add(require('crypto').createHash('sha256').update(b).digest('hex'));}
- assert.equal(hashes.size,5,'Samples use distinct recordings');
+ assert.equal(hashes.size,6,'Samples use distinct recordings');
 });
 test('same-gender students keep separate voice choices through reload, rename and species swap',()=>{
  const s=setup(),d=s.data;let state=d.defaultState();const [a,b]=state.teams.flatMap(t=>t.members).map(m=>m.id);
@@ -68,7 +68,7 @@ test('same-gender students keep separate voice choices through reload, rename an
 test('selection rejects wrong group, unknown voice/student and unassigned gender',()=>{
  const s=setup(),d=s.data;let state=d.defaultState();const a=state.teams[0].members[0].id;
  assert.equal(d.setPetVoice(state,a,'boy-spark'),state);state=d.setPetVoiceGender(state,a,'male');
- for(const id of ['girl-bell','__proto__','missing'])assert.equal(d.setPetVoice(state,a,id),state);
+ for(const id of ['girl-reference-a','girl-reference-b','girl-bell','__proto__','missing'])assert.equal(d.setPetVoice(state,a,id),state);
  assert.equal(d.setPetVoice(state,'missing','boy-spark'),state);
  state=d.setPetVoice(state,a,'boy-spark');state=d.setPetVoiceGender(state,a,'female');
  assert.equal(state.pets[a].voiceId,'');assert.equal(s.pack.resolve({pet:d.petState(state,a)}).id,'girl-pal');
@@ -96,6 +96,10 @@ test('all 19 students have six distinct matching personalized recordings with va
   }
  }
  assert.equal(texts.size,114);assert.equal(hashes.size,114);
+ const girls=Object.values(manifest.students).filter(owner=>s.window.PetVoiceCatalog.get(owner.voiceId)?.gender==='female');
+ assert.equal(girls.length,11);
+ assert.deepEqual(Object.entries(girls.reduce((count,owner)=>(count[owner.voiceId]=(count[owner.voiceId]||0)+1,count),{})).sort(),[['girl-pal',5],['girl-reference-a',3],['girl-reference-b',3]]);
+ assert.equal(s.window.PetVoiceCatalog.get('girl-bell'),null);
 });
 
 test('missing or stale recordings cannot speak another owner, species, voice, or demo script',()=>{

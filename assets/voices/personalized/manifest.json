@@ -1,41 +1,41 @@
 {
   "version": 1,
-  "generatedAt": "2026-09-16T22:34:44.166Z",
+  "generatedAt": "2026-09-21T23:17:15.700Z",
   "students": {
     "lions_low_li_en": {
       "ownerName": "丽恩",
       "speciesId": "qinglong",
-      "voiceId": "girl-bell",
+      "voiceId": "girl-reference-a",
       "stages": [
         {
           "text": "丽恩主人，灵珠陪我睡！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-0-v1.mp3",
-          "duration": 2.67
+          "url": "assets/voices/personalized/lions_low_li_en/stage-0-v2.mp3",
+          "duration": 2.35
         },
         {
           "text": "丽恩主人，小胡须痒痒！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-1-v1.mp3",
-          "duration": 2.48
+          "url": "assets/voices/personalized/lions_low_li_en/stage-1-v2.mp3",
+          "duration": 2.59
         },
         {
           "text": "丽恩主人，一起绕圈圈！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-2-v1.mp3",
-          "duration": 2.39
+          "url": "assets/voices/personalized/lions_low_li_en/stage-2-v2.mp3",
+          "duration": 3.23
         },
         {
           "text": "丽恩主人，玉珠送你看！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-3-v1.mp3",
-          "duration": 2.36
+          "url": "assets/voices/personalized/lions_low_li_en/stage-3-v2.mp3",
+          "duration": 2.67
         },
         {
           "text": "丽恩主人，穿云追珠喽！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-4-v1.mp3",
-          "duration": 3.54
+          "url": "assets/voices/personalized/lions_low_li_en/stage-4-v2.mp3",
+          "duration": 2.75
         },
         {
           "text": "丽恩主人，青云绕着你！",
-          "url": "assets/voices/personalized/lions_low_li_en/stage-5-v1.mp3",
-          "duration": 3.26
+          "url": "assets/voices/personalized/lions_low_li_en/stage-5-v2.mp3",
+          "duration": 2.27
         }
       ]
     },
@@ -190,37 +190,37 @@
     "lions_tan_yue_ying": {
       "ownerName": "月營",
       "speciesId": "zhuque",
-      "voiceId": "girl-bell",
+      "voiceId": "girl-reference-a",
       "stages": [
         {
           "text": "月營主人，羽毛热乎乎！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-0-v1.mp3",
-          "duration": 2.83
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-0-v2.mp3",
+          "duration": 2.99
         },
         {
           "text": "月營主人，小冠好看吗！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-1-v1.mp3",
-          "duration": 2.88
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-1-v2.mp3",
+          "duration": 2.11
         },
         {
           "text": "月營主人，转一圈给你看！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-2-v1.mp3",
-          "duration": 2.67
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-2-v2.mp3",
+          "duration": 2.91
         },
         {
           "text": "月營主人，丝带飞起来啦！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-3-v1.mp3",
-          "duration": 2.76
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-3-v2.mp3",
+          "duration": 3.15
         },
         {
           "text": "月營主人，看我开小屏！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-4-v1.mp3",
-          "duration": 2.09
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-4-v2.mp3",
+          "duration": 3.31
         },
         {
           "text": "月營主人，花一样的羽毛！",
-          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-5-v1.mp3",
-          "duration": 2.42
+          "url": "assets/voices/personalized/lions_tan_yue_ying/stage-5-v2.mp3",
+          "duration": 2.67
         }
       ]
     },
@@ -338,111 +338,111 @@
     "dragons_lau_yan_tong": {
       "ownerName": "妍彤",
       "speciesId": "snowferret",
-      "voiceId": "girl-pal",
+      "voiceId": "girl-reference-b",
       "stages": [
         {
           "text": "妍彤主人，雪花轻轻落！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-0-v1.mp3",
-          "duration": 3.19
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-0-v2.mp3",
+          "duration": 3.39
         },
         {
           "text": "妍彤主人，小鼻子凉凉！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-1-v1.mp3",
-          "duration": 2.72
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-1-v2.mp3",
+          "duration": 3.15
         },
         {
           "text": "妍彤主人，陪我滑一下！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-2-v1.mp3",
-          "duration": 2.62
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-2-v2.mp3",
+          "duration": 2.91
         },
         {
           "text": "妍彤主人，围巾分你一半！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-3-v1.mp3",
-          "duration": 2.85
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-3-v2.mp3",
+          "duration": 2.91
         },
         {
           "text": "妍彤主人，接住这朵雪花！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-4-v1.mp3",
-          "duration": 2.46
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-4-v2.mp3",
+          "duration": 2.43
         },
         {
           "text": "妍彤主人，极光给你披上！",
-          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-5-v1.mp3",
-          "duration": 2.57
+          "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-5-v2.mp3",
+          "duration": 3.31
         }
       ]
     },
     "dragons_ong_xing_yi": {
       "ownerName": "欣依",
       "speciesId": "baihu",
-      "voiceId": "girl-bell",
+      "voiceId": "girl-reference-a",
       "stages": [
         {
           "text": "欣依主人，小爪在伸懒腰！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-0-v1.mp3",
-          "duration": 2.81
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-0-v2.mp3",
+          "duration": 3.71
         },
         {
           "text": "欣依主人，摸摸我的耳朵！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-1-v1.mp3",
-          "duration": 2.29
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-1-v2.mp3",
+          "duration": 2.67
         },
         {
           "text": "欣依主人，绒球借我玩！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-2-v1.mp3",
-          "duration": 2.36
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-2-v2.mp3",
+          "duration": 2.75
         },
         {
           "text": "欣依主人，蓝围巾暖暖的！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-3-v1.mp3",
-          "duration": 2.6
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-3-v2.mp3",
+          "duration": 2.99
         },
         {
           "text": "欣依主人，我来保护你！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-4-v1.mp3",
-          "duration": 2.56
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-4-v2.mp3",
+          "duration": 2.43
         },
         {
           "text": "欣依主人，大白虎也要抱！",
-          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-5-v1.mp3",
-          "duration": 2.78
+          "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-5-v2.mp3",
+          "duration": 2.59
         }
       ]
     },
     "dragons_lau_xin_yu": {
       "ownerName": "欣瑜",
       "speciesId": "phoenix",
-      "voiceId": "girl-bell",
+      "voiceId": "girl-reference-b",
       "stages": [
         {
           "text": "欣瑜主人，蛋里暖暖的！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-0-v1.mp3",
-          "duration": 2.81
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-0-v2.mp3",
+          "duration": 2.99
         },
         {
           "text": "欣瑜主人，啾，见到你啦！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-1-v1.mp3",
-          "duration": 3.45
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-1-v2.mp3",
+          "duration": 3.23
         },
         {
           "text": "欣瑜主人，看我拍小翅！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-2-v1.mp3",
-          "duration": 2.74
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-2-v2.mp3",
+          "duration": 2.91
         },
         {
           "text": "欣瑜主人，送你金羽毛！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-3-v1.mp3",
-          "duration": 2.8
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-3-v2.mp3",
+          "duration": 2.67
         },
         {
           "text": "欣瑜主人，一起迎着光！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-4-v1.mp3",
-          "duration": 2
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-4-v2.mp3",
+          "duration": 2.99
         },
         {
           "text": "欣瑜主人，为你点亮天空！",
-          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-5-v1.mp3",
-          "duration": 2.4
+          "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-5-v2.mp3",
+          "duration": 2.27
         }
       ]
     },
@@ -597,37 +597,37 @@
     "dragons_tee_jing_er": {
       "ownerName": "静娥",
       "speciesId": "ninetail",
-      "voiceId": "girl-bell",
+      "voiceId": "girl-reference-b",
       "stages": [
         {
           "text": "静娥主人，猜猜我是谁！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-0-v1.mp3",
-          "duration": 2.87
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-0-v2.mp3",
+          "duration": 3.23
         },
         {
           "text": "静娥主人，小耳朵出来啦！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-1-v1.mp3",
-          "duration": 2.57
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-1-v2.mp3",
+          "duration": 3.07
         },
         {
           "text": "静娥主人，来追我的尾巴！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-2-v1.mp3",
-          "duration": 2.66
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-2-v2.mp3",
+          "duration": 2.27
         },
         {
           "text": "静娥主人，月亮借你抱！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-3-v1.mp3",
-          "duration": 2.52
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-3-v2.mp3",
+          "duration": 3.31
         },
         {
           "text": "静娥主人，数数我的尾巴！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-4-v1.mp3",
-          "duration": 6.29
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-4-v2.mp3",
+          "duration": 2.99
         },
         {
           "text": "静娥主人，九条尾巴抱抱！",
-          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-5-v1.mp3",
-          "duration": 2.88
+          "url": "assets/voices/personalized/dragons_tee_jing_er/stage-5-v2.mp3",
+          "duration": 3.63
         }
       ]
     },
