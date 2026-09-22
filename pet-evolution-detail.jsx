@@ -88,7 +88,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
         </button>)}
       </div>
       {window.PetOwnerVoice&&<p style={{textAlign:'center',fontSize:12,color:'#476353',margin:'8px 0'}}>
-          “{PetOwnerVoice.greeting(row.name,viewStage,p.species.id)}”<br/><small>{voiceRecording?voicePack.label+' · 专属对白':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
+          “{PetOwnerVoice.line(voiceRow)}”<br/><small>{voiceRecording?voiceRecording.label+' · 专属对白':'对白字幕 · '+(window.PetCuteSounds?.profile(p.species.id,viewStage).label||'动物鸣叫')}</small><br/>
           <button className="character-voice-preview" type="button" onClick={()=>{if(!window.EcoMythicAudio?.readPreference()){setVoiceStatus('乐园已静音，请先在乐园开启声音');return;}onPetInteract?.(voiceRow);}}>{voiceRecording?'听宠物说话':'听听本阶段鸣叫'}</button>
           {voiceStatus&&<small style={{display:'block',marginTop:4}} role="status">{voiceStatus}</small>}
       </p>}

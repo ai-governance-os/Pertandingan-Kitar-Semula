@@ -1,5 +1,5 @@
 // Voice selection follows the owner. Spoken content matches their name,
-// current species and stage; audition scripts never replace pet dialogue.
+// current species and stage, or their own species-neutral recorded greeting.
 window.PetCharacterVoice=(()=>{
  let current=null,sequence=0;
  function resolve(row){
@@ -13,7 +13,8 @@ window.PetCharacterVoice=(()=>{
  }
  function recording(row){
   const voice=resolve(row),clip=voice&&window.PetPersonalizedVoices?.find(row,voice);
-  return clip?{...voice,...clip}:null;
+  const recordedVoice=clip&&window.PetVoiceCatalog?.get(clip.voiceId);
+  return clip&&recordedVoice?{...recordedVoice,...clip}:null;
  }
  function stop(){
   sequence++;

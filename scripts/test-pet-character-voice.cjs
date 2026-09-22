@@ -49,12 +49,12 @@ test('hung loads time out and allow creature fallback',()=>{
 test('end of audio releases source and watchdog without fallback',()=>{
  const s=setup();let failed=0;s.voice.speak(s.row('male'),{onUnavailable:()=>failed++});s.audios[0].onplaying();s.audios[0].onended();assert.equal(failed,0);assert.equal(s.events.at(-1).detail.state,'ended');assert.equal(s.timers.size,0);
 });
-test('six distinct recordings have unique stable IDs and valid MP3 bytes',()=>{
+test('nine distinct recordings have unique stable IDs and valid MP3 bytes',()=>{
  const s=setup(),voices=s.window.PetVoiceCatalog.list(),hashes=new Set();
- assert.equal(voices.length,6);assert.equal(new Set(voices.map(v=>v.id)).size,6);
- assert.equal(s.window.PetVoiceCatalog.list('male').length,3);assert.equal(s.window.PetVoiceCatalog.list('female').length,3);
+ assert.equal(voices.length,9);assert.equal(new Set(voices.map(v=>v.id)).size,9);
+ assert.equal(s.window.PetVoiceCatalog.list('male').length,6);assert.equal(s.window.PetVoiceCatalog.list('female').length,3);
  for(const voice of voices){const b=fs.readFileSync(path.join(root,voice.url));assert(b.length>1000);assert(b.toString('ascii',0,3)==='ID3'||(b[0]===255&&(b[1]&224)===224));hashes.add(require('crypto').createHash('sha256').update(b).digest('hex'));}
- assert.equal(hashes.size,6,'Samples use distinct recordings');
+ assert.equal(hashes.size,9,'Samples use distinct recordings');
 });
 test('same-gender students keep separate voice choices through reload, rename and species swap',()=>{
  const s=setup(),d=s.data;let state=d.defaultState();const [a,b]=state.teams.flatMap(t=>t.members).map(m=>m.id);
@@ -102,11 +102,46 @@ test('all 19 students have six distinct matching personalized recordings with va
  assert.equal(s.window.PetVoiceCatalog.get('girl-bell'),null);
 });
 
-test('missing or stale recordings cannot speak another owner, species, voice, or demo script',()=>{
+test('missing owners, renamed owners and wrong gender never play someone else\'s voice',()=>{
  const s=setup();
- for(const change of [r=>r.id='new-owner',r=>r.name='新名字',r=>r.pet.species.id='phoenix',r=>r.pet.voiceId='boy-spark',r=>r.pet.voiceGender='female']){
+ for(const change of [r=>r.id='new-owner',r=>r.name='新名字',r=>r.pet.voiceGender='female']){
   const row=s.row('male');change(row);assert.equal(s.pack.recording(row),null);assert.equal(s.voice.speak(row),false);
   assert.ok(s.voice.greeting(row.name,row.pet.displayStageIndex,row.pet.species.id).includes('主人，'));
  }
  assert.equal(s.audios.length,0);
+});
+
+test('all 19 owners keep recorded speech and matching subtitles across all 50 pets and six stages',()=>{
+ const s=setup(),manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/voices/personalized/manifest.json'),'utf8'));
+ let checked=0;
+ for(const [id,owner] of Object.entries(manifest.students)){
+  const voice=s.window.PetVoiceCatalog.get(owner.voiceId);
+  assert.ok(owner.universal?.text.startsWith(owner.ownerName+'主人，'));
+  assert.ok(fs.statSync(path.join(root,owner.universal.url)).size>1000);
+  for(const species of s.data.PET_SPECIES)for(let stage=0;stage<6;stage++){
+   const row={id,name:owner.ownerName,pet:{voiceGender:voice.gender,voiceId:voice.id,species,displayStageIndex:stage}};
+   const clip=s.pack.recording(row);assert.ok(clip,id+':'+species.id+':'+stage);
+   assert.equal(clip.id,owner.voiceId);assert.equal(s.voice.line(row),clip.text);
+   assert.equal(clip.text,species.id===owner.speciesId?owner.stages[stage].text:owner.universal.text);
+   assert.equal(s.voice.speak(row),true);assert.equal(s.audios.at(-1).src,clip.url);s.voice.stop();checked++;
+  }
+ }
+ assert.equal(checked,19*50*6);
+});
+
+test('stale same-gender voice settings retain the owner\'s recorded voice rather than animal calls',()=>{
+ const s=setup(),row=s.row('male');row.pet.voiceId='boy-warm';
+ const clip=s.pack.recording(row);assert.ok(clip);assert.equal(clip.id,'boy-joy');
+ assert.ok(clip.text.startsWith('宇哲主人，'));assert.equal(s.voice.line(row),clip.text);assert.equal(s.voice.speak(row),true);
+});
+
+test('Tee Joe Jian speaks with the current misttapir and after a persisted species swap',()=>{
+ const s=setup(),d=s.data,id='dragons_tee_joe_jian';let state=d.defaultState();
+ state=d.setPetVoiceGender(state,id,'male');state=d.setPetVoice(state,id,'boy-adventure');
+ for(const species of ['misttapir','phoenix']){
+  state=d.setPetSpecies(state,id,species);state=d.load();
+  const row={id,name:'Tee Joe Jian 郑祖建',pet:d.petState(state,id)};
+  assert.equal(row.pet.species.id,species);assert.equal(row.pet.voiceId,'boy-adventure');
+  assert.ok(s.pack.recording(row)?.text.startsWith('祖建主人，'));assert.equal(s.voice.speak(row),true);s.voice.stop();
+ }
 });

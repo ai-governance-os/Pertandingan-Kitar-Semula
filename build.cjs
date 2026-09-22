@@ -15,6 +15,7 @@ const path = require('path');
 const esbuild = require('esbuild');
 
 const HERE = __dirname;
+require('./scripts/build-personalized-voice-index.cjs')(HERE);
 
 // IMPORTANT: order matters. Plain JS deps first (data.js sets up EcoData, etc.)
 // then JSX components (each exposes its exports via `window.X = X` so other

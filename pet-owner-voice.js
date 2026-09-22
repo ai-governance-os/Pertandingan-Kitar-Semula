@@ -15,5 +15,6 @@ window.PetOwnerVoice=(()=>{
  function isCurrent(value){return value===generation;}
  window.document?.addEventListener('visibilitychange',()=>{if(window.document.hidden)stop();});
  function speak(row,options){return window.PetCharacterVoice?.play(row,options)||false;}
- return {name,greeting,stop,token,isCurrent,speak};
+ function line(row){return window.PetCharacterVoice?.recording(row)?.text||greeting(row?.name,row?.pet?.displayStageIndex,row?.pet?.species?.id);}
+ return {name,greeting,line,stop,token,isCurrent,speak};
 })();

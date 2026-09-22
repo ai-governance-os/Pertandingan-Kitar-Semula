@@ -29,6 +29,33 @@ window.PetVoiceCatalog=(()=>{
     "reviewed": false
   },
   {
+    "id": "boy-adventure",
+    "gender": "male",
+    "label": "小勇 · 冒险男孩",
+    "url": "assets/voices/characters/boy-adventure-v1.mp3",
+    "duration": 6.08,
+    "text": "嘿，你来啦！快看，我找到一颗会发光的小星星！一起去冒险吧！",
+    "reviewed": true
+  },
+  {
+    "id": "boy-mischief",
+    "gender": "male",
+    "label": "小奇 · 机灵男孩",
+    "url": "assets/voices/characters/boy-mischief-v1.mp3",
+    "duration": 5.84,
+    "text": "嘿，你来啦！快看，我找到一颗会发光的小星星！一起去冒险吧！",
+    "reviewed": true
+  },
+  {
+    "id": "boy-warm",
+    "gender": "male",
+    "label": "小暖 · 阳光男孩",
+    "url": "assets/voices/characters/boy-warm-v1.mp3",
+    "duration": 5.92,
+    "text": "嘿，你来啦！快看，我找到一颗会发光的小星星！一起去冒险吧！",
+    "reviewed": true
+  },
+  {
     "id": "girl-pal",
     "gender": "female",
     "label": "小芽 · 俏皮女孩",

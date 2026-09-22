@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "generatedAt": "2026-09-21T23:17:15.700Z",
+  "version": 2,
+  "generatedAt": "2026-09-23T00:00:00.000Z",
   "students": {
     "lions_low_li_en": {
       "ownerName": "丽恩",
@@ -37,7 +37,12 @@
           "url": "assets/voices/personalized/lions_low_li_en/stage-5-v2.mp3",
           "duration": 2.27
         }
-      ]
+      ],
+      "universal": {
+        "text": "丽恩主人，一起绕圈圈！",
+        "url": "assets/voices/personalized/lions_low_li_en/stage-2-v2.mp3",
+        "duration": 3.23
+      }
     },
     "lions_low_li_qing": {
       "ownerName": "丽情",
@@ -74,7 +79,12 @@
           "url": "assets/voices/personalized/lions_low_li_qing/stage-5-v1.mp3",
           "duration": 2.78
         }
-      ]
+      ],
+      "universal": {
+        "text": "丽情主人，我有新故事！",
+        "url": "assets/voices/personalized/lions_low_li_qing/stage-3-v1.mp3",
+        "duration": 2.54
+      }
     },
     "lions_low_jun_hao": {
       "ownerName": "均昊",
@@ -111,7 +121,12 @@
           "url": "assets/voices/personalized/lions_low_jun_hao/stage-5-v1.mp3",
           "duration": 2.98
         }
-      ]
+      ],
+      "universal": {
+        "text": "均昊主人，接住我哦！",
+        "url": "assets/voices/personalized/lions_low_jun_hao/stage-2-v1.mp3",
+        "duration": 2.21
+      }
     },
     "lions_tan_jin_xian": {
       "ownerName": "晋贤",
@@ -148,44 +163,54 @@
           "url": "assets/voices/personalized/lions_tan_jin_xian/stage-5-v1.mp3",
           "duration": 2.56
         }
-      ]
+      ],
+      "universal": {
+        "text": "晋贤主人，陪我追彩点！",
+        "url": "assets/voices/personalized/lions_tan_jin_xian/stage-2-v1.mp3",
+        "duration": 2.78
+      }
     },
     "lions_chan_yu_xun": {
       "ownerName": "昱勋",
       "speciesId": "firemouse",
-      "voiceId": "boy-spark",
+      "voiceId": "boy-mischief",
       "stages": [
         {
           "text": "昱勋主人，小火星暖暖！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-0-v1.mp3",
-          "duration": 2.15
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-0-v3.mp3",
+          "duration": 2.35
         },
         {
           "text": "昱勋主人，耳朵听到你啦！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-1-v1.mp3",
-          "duration": 2.07
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-1-v3.mp3",
+          "duration": 2.67
         },
         {
           "text": "昱勋主人，追着小灯跑！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-2-v1.mp3",
-          "duration": 1.98
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-2-v3.mp3",
+          "duration": 2.43
         },
         {
           "text": "昱勋主人，叮，小铃响啦！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-3-v1.mp3",
-          "duration": 2.36
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-3-v3.mp3",
+          "duration": 3.31
         },
         {
           "text": "昱勋主人，举灯出发喽！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-4-v1.mp3",
-          "duration": 2.13
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-4-v3.mp3",
+          "duration": 2.35
         },
         {
           "text": "昱勋主人，为你亮起万盏灯！",
-          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-5-v1.mp3",
-          "duration": 3.13
+          "url": "assets/voices/personalized/lions_chan_yu_xun/stage-5-v3.mp3",
+          "duration": 2.75
         }
-      ]
+      ],
+      "universal": {
+        "text": "昱勋主人，举灯出发喽！",
+        "url": "assets/voices/personalized/lions_chan_yu_xun/stage-4-v3.mp3",
+        "duration": 2.35
+      }
     },
     "lions_tan_yue_ying": {
       "ownerName": "月營",
@@ -222,44 +247,54 @@
           "url": "assets/voices/personalized/lions_tan_yue_ying/stage-5-v2.mp3",
           "duration": 2.67
         }
-      ]
+      ],
+      "universal": {
+        "text": "月營主人，转一圈给你看！",
+        "url": "assets/voices/personalized/lions_tan_yue_ying/stage-2-v2.mp3",
+        "duration": 2.91
+      }
     },
     "lions_hugo_lee_jun_hong": {
       "ownerName": "唆竑",
       "speciesId": "lingui",
-      "voiceId": "boy-leap",
+      "voiceId": "boy-warm",
       "stages": [
         {
           "text": "唆竑主人，小角在长啦！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-0-v1.mp3",
-          "duration": 2.67
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-0-v3.mp3",
+          "duration": 2.59
         },
         {
           "text": "唆竑主人，让我靠近你！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-1-v1.mp3",
-          "duration": 2.26
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-1-v3.mp3",
+          "duration": 2.35
         },
         {
           "text": "唆竑主人，小步走稳啦！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-2-v1.mp3",
-          "duration": 2.37
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-2-v3.mp3",
+          "duration": 2.75
         },
         {
           "text": "唆竑主人，我会认真听！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-3-v1.mp3",
-          "duration": 2.62
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-3-v3.mp3",
+          "duration": 2.35
         },
         {
           "text": "唆竑主人，我们一起加油！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-4-v1.mp3",
-          "duration": 2.5
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-4-v3.mp3",
+          "duration": 2.51
         },
         {
           "text": "唆竑主人，温柔也有力量！",
-          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-5-v1.mp3",
-          "duration": 2.58
+          "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-5-v3.mp3",
+          "duration": 2.67
         }
-      ]
+      ],
+      "universal": {
+        "text": "唆竑主人，我们一起加油！",
+        "url": "assets/voices/personalized/lions_hugo_lee_jun_hong/stage-4-v3.mp3",
+        "duration": 2.51
+      }
     },
     "lions_queenie_lee_li_ying": {
       "ownerName": "栎颖",
@@ -296,7 +331,12 @@
           "url": "assets/voices/personalized/lions_queenie_lee_li_ying/stage-5-v1.mp3",
           "duration": 2.74
         }
-      ]
+      ],
+      "universal": {
+        "text": "栎颖主人，乘着微风走！",
+        "url": "assets/voices/personalized/lions_queenie_lee_li_ying/stage-3-v1.mp3",
+        "duration": 2.43
+      }
     },
     "lions_tee_ling_xian": {
       "ownerName": "琳仙",
@@ -333,7 +373,12 @@
           "url": "assets/voices/personalized/lions_tee_ling_xian/stage-5-v1.mp3",
           "duration": 2.36
         }
-      ]
+      ],
+      "universal": {
+        "text": "琳仙主人，为你点亮云海！",
+        "url": "assets/voices/personalized/lions_tee_ling_xian/stage-5-v1.mp3",
+        "duration": 2.36
+      }
     },
     "dragons_lau_yan_tong": {
       "ownerName": "妍彤",
@@ -370,7 +415,12 @@
           "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-5-v2.mp3",
           "duration": 3.31
         }
-      ]
+      ],
+      "universal": {
+        "text": "妍彤主人，接住这朵雪花！",
+        "url": "assets/voices/personalized/dragons_lau_yan_tong/stage-4-v2.mp3",
+        "duration": 2.43
+      }
     },
     "dragons_ong_xing_yi": {
       "ownerName": "欣依",
@@ -407,7 +457,12 @@
           "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-5-v2.mp3",
           "duration": 2.59
         }
-      ]
+      ],
+      "universal": {
+        "text": "欣依主人，我来保护你！",
+        "url": "assets/voices/personalized/dragons_ong_xing_yi/stage-4-v2.mp3",
+        "duration": 2.43
+      }
     },
     "dragons_lau_xin_yu": {
       "ownerName": "欣瑜",
@@ -444,7 +499,12 @@
           "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-5-v2.mp3",
           "duration": 2.27
         }
-      ]
+      ],
+      "universal": {
+        "text": "欣瑜主人，一起迎着光！",
+        "url": "assets/voices/personalized/dragons_lau_xin_yu/stage-4-v2.mp3",
+        "duration": 2.99
+      }
     },
     "dragons_lucas_lee_guan_teck": {
       "ownerName": "冠德",
@@ -481,44 +541,54 @@
           "url": "assets/voices/personalized/dragons_lucas_lee_guan_teck/stage-5-v1.mp3",
           "duration": 2.71
         }
-      ]
+      ],
+      "universal": {
+        "text": "冠德主人，我陪着你！",
+        "url": "assets/voices/personalized/dragons_lucas_lee_guan_teck/stage-3-v1.mp3",
+        "duration": 2.21
+      }
     },
     "dragons_tee_joe_jian": {
       "ownerName": "祖建",
-      "speciesId": "seakirin",
-      "voiceId": "boy-leap",
+      "speciesId": "misttapir",
+      "voiceId": "boy-adventure",
       "stages": [
         {
-          "text": "祖建主人，泡泡挠痒痒！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-0-v1.mp3",
-          "duration": 2.47
+          "text": "祖建主人，做个甜甜梦！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-0-v3.mp3",
+          "duration": 2.35
         },
         {
-          "text": "祖建主人，噗，小鳍来啦！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-1-v1.mp3",
-          "duration": 3.03
+          "text": "祖建主人，鼻子碰碰你！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-1-v3.mp3",
+          "duration": 2.19
         },
         {
-          "text": "祖建主人，追泡泡去吧！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-2-v1.mp3",
-          "duration": 2.26
+          "text": "祖建主人，陪我追梦球！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-2-v3.mp3",
+          "duration": 2.27
         },
         {
-          "text": "祖建主人，珍珠给你摸！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-3-v1.mp3",
-          "duration": 2.2
+          "text": "祖建主人，梦铃叮一下！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-3-v3.mp3",
+          "duration": 2.51
         },
         {
-          "text": "祖建主人，浪花开花啦！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-4-v1.mp3",
-          "duration": 2.1
+          "text": "祖建主人，月环吹出来啦！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-4-v3.mp3",
+          "duration": 2.51
         },
         {
-          "text": "祖建主人，海里的光送你！",
-          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-5-v1.mp3",
-          "duration": 2.24
+          "text": "祖建主人，好梦由我守护！",
+          "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-5-v3.mp3",
+          "duration": 2.51
         }
-      ]
+      ],
+      "universal": {
+        "text": "祖建主人，做个甜甜梦！",
+        "url": "assets/voices/personalized/dragons_tee_joe_jian/stage-0-v3.mp3",
+        "duration": 2.35
+      }
     },
     "dragons_lau_yu_ze": {
       "ownerName": "宇哲",
@@ -555,7 +625,12 @@
           "url": "assets/voices/personalized/dragons_lau_yu_ze/stage-5-v1.mp3",
           "duration": 2.78
         }
-      ]
+      ],
+      "universal": {
+        "text": "宇哲主人，追一颗小星星！",
+        "url": "assets/voices/personalized/dragons_lau_yu_ze/stage-2-v1.mp3",
+        "duration": 2.72
+      }
     },
     "dragons_lai_xuan_ning": {
       "ownerName": "萱宁",
@@ -592,7 +667,12 @@
           "url": "assets/voices/personalized/dragons_lai_xuan_ning/stage-5-v1.mp3",
           "duration": 2.84
         }
-      ]
+      ],
+      "universal": {
+        "text": "萱宁主人，被你找到啦！",
+        "url": "assets/voices/personalized/dragons_lai_xuan_ning/stage-1-v1.mp3",
+        "duration": 2.27
+      }
     },
     "dragons_tee_jing_er": {
       "ownerName": "静娥",
@@ -629,7 +709,12 @@
           "url": "assets/voices/personalized/dragons_tee_jing_er/stage-5-v2.mp3",
           "duration": 3.63
         }
-      ]
+      ],
+      "universal": {
+        "text": "静娥主人，猜猜我是谁！",
+        "url": "assets/voices/personalized/dragons_tee_jing_er/stage-0-v2.mp3",
+        "duration": 3.23
+      }
     },
     "dragons_ong_xing_mei": {
       "ownerName": "欣美",
@@ -666,44 +751,54 @@
           "url": "assets/voices/personalized/dragons_ong_xing_mei/stage-5-v1.mp3",
           "duration": 2.63
         }
-      ]
+      ],
+      "universal": {
+        "text": "欣美主人，一起找宝贝！",
+        "url": "assets/voices/personalized/dragons_ong_xing_mei/stage-2-v1.mp3",
+        "duration": 2.22
+      }
     },
     "dragons_tea_kai_ze": {
       "ownerName": "凱泽",
       "speciesId": "griffin",
-      "voiceId": "boy-joy",
+      "voiceId": "boy-adventure",
       "stages": [
         {
           "text": "凱泽主人，梦到去探险！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-0-v1.mp3",
-          "duration": 3.23
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-0-v3.mp3",
+          "duration": 1.95
         },
         {
           "text": "凱泽主人，小爪敬个礼！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-1-v1.mp3",
-          "duration": 3.07
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-1-v3.mp3",
+          "duration": 2.43
         },
         {
           "text": "凱泽主人，翅膀练好啦！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-2-v1.mp3",
-          "duration": 2.79
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-2-v3.mp3",
+          "duration": 2.03
         },
         {
           "text": "凱泽主人，探险袋装好啦！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-3-v1.mp3",
-          "duration": 3.13
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-3-v3.mp3",
+          "duration": 2.35
         },
         {
           "text": "凱泽主人，一起飞一圈！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-4-v1.mp3",
-          "duration": 2.3
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-4-v3.mp3",
+          "duration": 2.11
         },
         {
           "text": "凱泽主人，你的骑士来啦！",
-          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-5-v1.mp3",
-          "duration": 2.4
+          "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-5-v3.mp3",
+          "duration": 2.27
         }
-      ]
+      ],
+      "universal": {
+        "text": "凱泽主人，梦到去探险！",
+        "url": "assets/voices/personalized/dragons_tea_kai_ze/stage-0-v3.mp3",
+        "duration": 1.95
+      }
     }
   }
 }
