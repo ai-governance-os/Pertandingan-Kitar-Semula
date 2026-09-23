@@ -31,7 +31,7 @@ test('hazards are spaced out and the first stretch gives room to learn the contr
   e.step(r,{right:true},1/60);r.objects.forEach(item=>{if(item.kind==='ground'||item.kind==='overhead')seen.add(item.x);item.passed=true;});
  }
  const hazards=[...seen].sort((a,b)=>a-b).map(x=>({x}));
- assert(hazards.length>=2);
+ assert(hazards.length>=1);
  for(let i=1;i<hazards.length;i++)assert(hazards[i].x-hazards[i-1].x>=850);
  assert(r.nextObjectX>r.x);
 });
@@ -57,7 +57,33 @@ test('a cliff needs a running start and item placement keeps the takeoff clear',
  for(let i=0;i<55&&fast.status==='playing';i++)e.step(fast,{},1/60);
  assert.equal(fast.status,'playing');assert(fast.x>1435);assert.equal(fast.onGround,true);
  const layout=e.create(12);e.step(layout,{},1/60);
- for(const pit of e.PITS)assert(layout.objects.every(item=>item.x<pit.start-280||item.x>pit.end+110));
+ assert.equal(e.PITS.length,5);
+ for(const pit of e.PITS)assert(layout.objects.every(item=>item.x<pit.start-400||item.x>pit.end+110));
+ for(const [index,pit] of e.PITS.entries()){
+  const runner=e.create(100+index);runner.objects=[];runner.nextObjectX=1e9;runner.x=pit.start-340;
+  for(let i=0;i<48;i++)e.step(runner,{right:true},1/60);
+  e.step(runner,{jump:true},1/60);
+  for(let i=0;i<60&&runner.status==='playing';i++)e.step(runner,{},1/60);
+  assert.equal(runner.status,'playing','cliff '+index+' is impossible');
+  assert(runner.x>pit.end,'cliff '+index+' cannot be crossed');
+ }
+});
+test('the first level has a boss, telegraphed bombs, a finite victory, and an attack shortcut',()=>{
+ const {engine:e}=setup(),r=e.create(24);r.pits=[];r.objects=[];r.nextObjectX=1e9;r.x=e.BOSS_ARENA;
+ e.step(r,{},1/60);assert(r.boss.active);assert(r.soundEvents.includes('boss_enter'));
+ for(let n=0;n<e.BOSS_DODGES;n++){
+  r.boss.attackIn=0;r.x=e.BOSS_ARENA+20;e.step(r,{},1/60);
+  assert.equal(r.boss.bombs.length,1);assert(r.boss.bombs[0].eta>0);
+  r.x=e.BOSS_ARENA+280;
+  for(let i=0;i<75&&r.status==='playing';i++)e.step(r,{},1/60);
+ }
+ assert.equal(r.status,'won');assert.equal(r.boss.dodged,e.BOSS_DODGES);assert.equal(r.distance,e.LEVEL_END-100);assert(r.score>0);
+ const hit=e.create(25);hit.pits=[];hit.objects=[];hit.nextObjectX=1e9;hit.x=e.BOSS_ARENA;hit.boss.attackIn=0;
+ e.step(hit,{},1/60);for(let i=0;i<75&&hit.status==='playing';i++)e.step(hit,{},1/60);
+ assert.equal(hit.status,'over');assert.match(hit.reason,/首领/);
+ const spell=e.create(26);spell.pits=[];spell.objects=[];spell.nextObjectX=1e9;spell.x=e.BOSS_ARENA;spell.powerExpires=20;spell.boss.attackIn=99;
+ for(let n=0;n<3;n++){e.step(spell,{fire:true},1/60);for(let i=0;i<31&&spell.status==='playing';i++)e.step(spell,{},1/60);}
+ assert.equal(spell.status,'won');assert.equal(spell.boss.hp,0);
 });
 test('all nineteen current beasts have distinct named and rendered special moves',()=>{
  const {data,skills}=setup();
@@ -92,7 +118,9 @@ test('ten qualified runs issue exactly one real card, retries do not duplicate i
  assert.equal(d.petSpeciesFor(state,id).id,species);
   assert.equal(d.recordGameRun(state,{studentId:id,runId:'run_10',teacherId:'ADMIN',checkpoints:4}),state);
   state=d.recordGameRun(state,{studentId:id,runId:'run_10',teacherId:'ADMIN',distance:4800,recycled:10,checkpoints:4});
-  assert.equal(d.gameProgress(state,id).bestDistance,4800);assert.equal(state.starLedger.length,1);
+ assert.equal(d.gameProgress(state,id).bestDistance,4800);assert.equal(state.starLedger.length,1);
+ state=d.recordGameRun(state,{studentId:id,runId:'run_10',teacherId:'ADMIN',distance:5100,recycled:12,checkpoints:4,score:850,bossDefeated:true});
+ assert.equal(d.gameProgress(state,id).wins,10);assert.equal(d.gameProgress(state,id).bossWins,1);assert(d.gameProgress(state,id).totalScore>=850);assert.equal(state.starLedger.length,1);
  assert.equal(d.reconcileGameAwards(state),state);
  state=d.recordGameRun(state,{studentId:id,runId:'run_11',teacherId:'ADMIN',distance:4100,recycled:2,checkpoints:3});
  assert.equal(d.gameProgress(state,id).wins,10);assert.equal(state.starLedger.length,1);

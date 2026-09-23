@@ -806,7 +806,9 @@ function gameProgress(state, studentId) {
   const runs = (state.gameRuns || []).filter(run => run.studentId === studentId && run.levelId === GAME_LEVEL_ID);
   const wins = runs.filter(run => run.checkpoints >= 4).length;
   return { runs: runs.length, wins, progress: wins % GAME_WINS_PER_CARD, cards: Math.floor(wins / GAME_WINS_PER_CARD),
-    bestDistance: Math.max(0, ...runs.map(run => Number(run.distance) || 0)) };
+    bestDistance: Math.max(0, ...runs.map(run => Number(run.distance) || 0)),
+    totalScore: runs.reduce((sum,run)=>sum+(Number(run.score)||Math.floor((Number(run.distance)||0)/10)+(Number(run.recycled)||0)*10),0),
+    bossWins: runs.filter(run=>run.bossDefeated).length };
 }
 
 // Recompute card milestones from unique completed runs. Stable ledger IDs make
@@ -837,7 +839,7 @@ function reconcileGameAwards(state) {
   return awards.length ? { ...state, starLedger: [...awards, ...(state.starLedger || [])] } : state;
 }
 
-function recordGameRun(state, { studentId, runId, teacherId, distance, recycled, checkpoints }) {
+function recordGameRun(state, { studentId, runId, teacherId, distance, recycled, checkpoints, score, bossDefeated }) {
   const memberTeam = (state.teams || []).find(team => team.members?.some(member => member.id === studentId && member.active !== false));
   if (!memberTeam || !teacherId || teacherId === "unknown" || !runId) return state;
   const previous = (state.gameRuns || []).find(run => run.id === runId);
@@ -846,15 +848,17 @@ function recordGameRun(state, { studentId, runId, teacherId, distance, recycled,
     const updated = { ...previous,
       distance: Math.max(previous.distance || 0,Math.floor(Number(distance) || 0)),
       recycled: Math.max(previous.recycled || 0,Math.floor(Number(recycled) || 0)),
-      checkpoints: Math.max(previous.checkpoints || 0,Math.floor(Number(checkpoints) || 0)) };
-    if (updated.distance===previous.distance&&updated.recycled===previous.recycled&&updated.checkpoints===previous.checkpoints)return state;
+      checkpoints: Math.max(previous.checkpoints || 0,Math.floor(Number(checkpoints) || 0)),
+      score: Math.max(previous.score || 0,Math.floor(Number(score) || 0)),bossDefeated:!!(previous.bossDefeated||bossDefeated) };
+    if (updated.distance===previous.distance&&updated.recycled===previous.recycled&&updated.checkpoints===previous.checkpoints&&updated.score===(previous.score||0)&&updated.bossDefeated===!!previous.bossDefeated)return state;
     const next=reconcileGameAwards({...state,gameRuns:state.gameRuns.map(run=>run.id===runId?updated:run)});
     save(next);return next;
   }
   const win = { id: runId, studentId, levelId: GAME_LEVEL_ID, teacherId,
     distance: Math.max(0, Math.min(100000, Math.floor(Number(distance) || 0))),
     recycled: Math.max(0, Math.min(10000, Math.floor(Number(recycled) || 0))),
-    checkpoints: Math.max(0, Math.min(4, Math.floor(Number(checkpoints) || 0))), ts: Date.now() };
+    checkpoints: Math.max(0, Math.min(4, Math.floor(Number(checkpoints) || 0))),
+    score: Math.max(0,Math.floor(Number(score) || 0)),bossDefeated:!!bossDefeated,ts: Date.now() };
   const next = reconcileGameAwards({ ...state, gameRuns: [...(state.gameRuns || []), win] });
   save(next);
   return next;
@@ -864,13 +868,14 @@ function gameLeaderboard(state, now = Date.now()) {
   const month = teacherQuotaMonth(now), counts = new Map();
   for (const win of state.gameRuns || []) {
     if (win.levelId !== GAME_LEVEL_ID || teacherQuotaMonth(Number(win.ts) || 0) !== month) continue;
-    const current = counts.get(win.studentId) || { runs: 0, bestDistance: 0, recycled: 0 };
+    const current = counts.get(win.studentId) || { runs: 0, bestDistance: 0, recycled: 0, totalScore: 0 };
     counts.set(win.studentId, { runs: current.runs + 1,
-      bestDistance: Math.max(current.bestDistance, Number(win.distance) || 0), recycled: current.recycled + (Number(win.recycled) || 0) });
+      bestDistance: Math.max(current.bestDistance, Number(win.distance) || 0), recycled: current.recycled + (Number(win.recycled) || 0),
+      totalScore: current.totalScore+(Number(win.score)||Math.floor((Number(win.distance)||0)/10)+(Number(win.recycled)||0)*10) });
   }
   const rows = (state.teams || []).flatMap(team => (team.members || []).filter(member => member.active !== false)
-    .map(member => ({ id: member.id, name: member.name, teamId: team.id, ...(counts.get(member.id) || { runs: 0, bestDistance: 0, recycled: 0 }) })));
-  rows.sort((a,b) => b.bestDistance - a.bestDistance || b.recycled - a.recycled || a.name.localeCompare(b.name));
+    .map(member => ({ id: member.id, name: member.name, teamId: team.id, ...(counts.get(member.id) || { runs: 0, bestDistance: 0, recycled: 0, totalScore: 0 }) })));
+  rows.sort((a,b) => b.bestDistance - a.bestDistance || b.totalScore-a.totalScore || b.recycled - a.recycled || a.name.localeCompare(b.name));
   const top = rows[0]?.bestDistance || 0;
   return { month, rows, winners: top ? rows.filter(row => row.bestDistance === top).map(row => row.id) : [] };
 }
