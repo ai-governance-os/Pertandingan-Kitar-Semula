@@ -76,7 +76,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
       </header>
       <div className="evolution-owner"><TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={25}/><span>{row.name}<small>{row.teamName} · {profile.temperament}</small></span></div>
       {p.species.id==='hornbeetle'&&window.PetSignatureStage&&<button className="signature-entry" onClick={()=>{window.PetOwnerVoice?.stop();setPlayToken(0);setPlaying(false);setSignatureOpen(true);}}><span>新动作试演</span><b>虹翼之约</b><small>挥爪 · 展翼 · 摸摸回应 →</small></button>}
-      <div ref={heroRef} className={'evolution-hero form-'+viewStage+(row.yakult?.winner?' yakult-crowned':'')}>
+      <div ref={heroRef} className={'evolution-hero form-'+viewStage+(row.yakult?.winner?' yakult-crowned':'')+(row.yakult?.winner&&row.gameWinner?' dual-crowned':'')}>
         <span className="evolution-state-chip">{locked?'未来预览 · 尚未解锁':viewStage===p.displayStageIndex?'当前外形':'已达成'}</span>
         <span className="evolution-form-number">{String(viewStage+1).padStart(2,'0')}<small>/ {EcoData.PET_STAGES.length}</small></span>
         <div className="yakult-evolution-actor"><EvolvedBeast key={p.species.id+':'+viewStage} speciesId={p.species.id} stage={viewStage} className="evolution-hero-beast" alt={p.species.zh+' · '+profile.features[viewStage]} loading="eager" playToken={playToken} duration={performanceDuration} motionScale={.35} onFinished={()=>setPlaying(false)}/>{row.yakult?.winner && <YakultEquipment key={'yakult-'+playToken+':'+viewStage} stage={viewStage} celebrate={playing}/>}{row.gameWinner&&<DetailGameCrown/>}</div>
@@ -114,7 +114,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
       <div className="evolution-unlock-note" role="status">{celebration|| (locked?'再赚 '+Math.max(0,threshold-p.exp)+' 张奖励卡，解锁这个造型和招式。':'点它就能表演，奖励卡由老师确认后发放。')}</div>
       <section className="evolution-next" aria-label="下一阶段奖励">
         <img src={PetEvolution.asset(p.species.id,next)} alt="" loading="lazy"/>
-        <div><small>历来累计 {p.exp} 张 · 当前{PetEvolution.names[p.displayStageIndex]}</small>
+        <div><small>9 月起累计 {p.exp} 张 · 当前{PetEvolution.names[p.displayStageIndex]}</small>
           <b>{p.isMaxStage?'神话已达成，你的努力闪闪发光！':'再赚 '+p.expToNext+' 张 → '+profile.features[next]}</b>
           <span>{p.isMaxStage?'十种造型和十个专属表演已达成':'新招式：'+profile.acts[next]}</span>
           <div className="evolution-progress" role="progressbar" aria-label="下一阶段成长进度" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.stageProgress*100)}><i style={{width:Math.round(p.stageProgress*100)+'%'}}/></div>
@@ -123,7 +123,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
       </section>
       <details className="evolution-earn"><summary>今天可以怎样赚奖励卡？</summary>
         <div>{examples.map(type=><span key={type.id}>{type.zh}<b>参考 +{type.defaultStars}</b></span>)}</div>
-        <p>做好环保、学习或助人行动，请老师确认。实际发卡数以老师记录为准；试播不会改变奖励卡。成长按历来奖卡累计；月初清零和兑换奖品不会让神兽退化，扣卡则会影响成长值。</p>
+        <p>做好环保、学习或助人行动，请老师确认。实际发卡数以老师记录为准；试播不会改变奖励卡。神兽从 2026 年 9 月开始累计成长；之后月初清零和兑换奖品不会让它退化，扣卡则会影响成长值。</p>
       </details>
       <YakultPetHonour row={row} state={state}/>
       {authed&&<button type="button" className="evolution-rename" onClick={rename}>给神兽取名字</button>}

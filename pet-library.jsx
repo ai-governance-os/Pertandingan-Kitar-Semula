@@ -56,7 +56,7 @@ function BeastLibraryPicker({state,setState,studentId,isAdmin,onClose}) {
         return <button key={s.id} className={selected===s.id?'selected':''} aria-pressed={selected===s.id} onClick={()=>choose(s.id)}><img src={PetEvolution.asset(s.id,5)} alt="" loading="lazy"/><b>{s.zh}</b><small>{assigned?assigned.name.split(' ').slice(-1)[0]+' 的伙伴':'可选择'}</small></button>;
       })}</div>
       {!visible.length&&<p className="library-empty">没有找到这个名称，试试其它关键词。</p>}
-      <p className="library-footnote">50 种 × 10 阶进化。真实成长按历来净奖卡 0 / 20 / 50 / 100 / 150 / 250 / 400 / 600 / 750 / 1000 张解锁；月初余额清零不影响宠物。</p>
+      <p className="library-footnote">50 种 × 10 阶进化。成长从 2026 年 9 月起算，按净奖卡 0 / 20 / 50 / 100 / 150 / 250 / 400 / 600 / 750 / 1000 张解锁；之后月初余额清零不影响宠物。</p>
     </section>
   </div>;
 }

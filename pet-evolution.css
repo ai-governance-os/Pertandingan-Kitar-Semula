@@ -12,9 +12,11 @@
 .pet-ascension-regalia.tier-9{filter:drop-shadow(0 0 9px var(--ascension-aura))}
 .pet-ascension-regalia.tier-9 .pet-ascension-disc{opacity:.17}
 .pet-ascension-wings{fill:var(--ascension-aura);fill-opacity:.22;stroke:var(--ascension-aura);stroke-width:1.5;stroke-opacity:.8}
-.park-game-crown{position:absolute;right:-4%;top:-7%;z-index:4;display:block;width:30px;height:26px;pointer-events:none;filter:drop-shadow(0 0 5px #9ff6d0)}
-.park-game-crown .game-crown.small{width:100%;height:100%}
-.yakult-evolution-actor .park-game-crown{right:0;top:2%;width:42px;height:36px}
+.park-game-crown{position:absolute;left:50%;top:5%;z-index:4;display:block;width:clamp(62px,58%,105px);aspect-ratio:180/140;transform:translate(-50%,-78%) rotate(3deg);pointer-events:none;filter:drop-shadow(0 3px 2px #163f3688) drop-shadow(0 0 7px #91efc9a0)}
+.park-game-crown .game-crown.small{display:block;width:100%;height:100%}
+.cinematic-beast:is(.stage-4,.stage-5,.stage-6,.stage-7,.stage-8,.stage-9) .park-game-crown{width:clamp(80px,83%,142px)}
+.yakult-evolution-actor .park-game-crown{top:5%;width:clamp(62px,54%,104px)}
+.dual-crowned .park-game-crown{left:77%;top:0;transform:translate(-45%,-75%) rotate(12deg)}
 .evolution-stage-buttons{grid-template-columns:repeat(5,minmax(0,1fr))}
 .pet-evolution-preview{overflow-x:auto}
 .pet-evolution-track{grid-template-columns:repeat(10,minmax(68px,1fr));min-width:730px}

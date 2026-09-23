@@ -1032,8 +1032,10 @@ const PET_SPECIES = [
   { id:"roseflamingo", zh:"绯羽鹭", en:"roseflamingo", category:"飞羽", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
 ];
 
-// Growth is a permanent, net award-card record. Monthly redeemable balances
-// reset independently; redemptions never undo a pet's growth.
+// Growth begins with the September 2026 school month. Earlier cards stay in
+// financial history but do not enlarge pets. Future monthly wallet resets do
+// not reset this growth record; redemptions do not undo it either.
+const PET_GROWTH_START_TS = Date.parse('2026-09-01T00:00:00+08:00');
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
   { minExp: 20,  zh: "破壳", en: "Hatching" },
@@ -1139,9 +1141,14 @@ function petHungerFor(days) {
 }
 
 function petState(state, studentId, now = Date.now()) {
-  const all = (state.starLedger || []).filter(e => e.studentId === studentId);
+  const all = (state.starLedger || []).filter(e => {
+    if (e.studentId !== studentId) return false;
+    const numeric = Number(e.ts);
+    const timestamp = Number.isFinite(numeric) ? numeric : Date.parse(e.ts);
+    return timestamp >= PET_GROWTH_START_TS;
+  });
 
-  // All award and deduction entries count across month boundaries. Prize
+  // Award and deduction entries since the new growth start count across month boundaries. Prize
   // redemptions are deliberately excluded; only a card deduction can regress
   // the pet. The monthly star wallet keeps its separate reset behavior.
   const exp = Math.max(0, all.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));

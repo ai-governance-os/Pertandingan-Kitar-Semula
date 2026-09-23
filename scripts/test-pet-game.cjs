@@ -24,15 +24,24 @@ test('the pet stays still until moved, walks both directions, and reaches four c
  for(let i=0;i<800&&r.checkpoints<4;i++)e.step(r,{right:true},1/60);
  assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>285);assert(r.powerExpires<r.elapsed);
 });
-test('hazards are spaced out and the first stretch gives room to learn the controls',()=>{
- const {engine:e}=setup(),r=e.create(45),seen=new Set();r.pits=[];
- for(let i=0;i<1100&&r.status==='playing';i++){
+test('later stretches contain playable low/high hazard pairs while the opening stays readable',()=>{
+ const {engine:e}=setup(),r=e.create(45),seen=new Map();r.pits=[];
+ for(let i=0;i<1500&&r.status==='playing'&&r.x<e.BOSS_ARENA-300;i++){
   // Skip collisions for this layout test, while still moving the pet through the stage.
-  e.step(r,{right:true},1/60);r.objects.forEach(item=>{if(item.kind==='ground'||item.kind==='overhead')seen.add(item.x);item.passed=true;});
+  e.step(r,{right:true},1/60);r.objects.forEach(item=>{if(item.kind==='ground'||item.kind==='overhead')seen.set(item.x,item);item.passed=true;});
  }
- const hazards=[...seen].sort((a,b)=>a-b).map(x=>({x}));
+ const hazards=[...seen.values()].sort((a,b)=>a.x-b.x);
  assert(hazards.length>=1);
- for(let i=1;i<hazards.length;i++)assert(hazards[i].x-hazards[i-1].x>=850);
+ assert(hazards.some(h=>h.kind==='ground')&&hazards.some(h=>h.kind==='overhead'));
+ assert(hazards.some(h=>h.kind==='overhead'&&h.y===314),'higher poison cloud exists');
+ assert(hazards.filter(h=>h.kind==='overhead').every(h=>[314,350].includes(h.y)),'clouds occupy either high lane');
+ let pairs=0;
+ for(let i=1;i<hazards.length;i++){
+  const gap=hazards[i].x-hazards[i-1].x;
+  assert(gap>=335,'obstacles leave reaction time');
+  if(gap<850){pairs++;assert.notEqual(hazards[i].kind,hazards[i-1].kind,'paired hazards alternate height');}
+ }
+ assert(pairs>=1,'at least one sequential pair appears');
  assert(r.nextObjectX>r.x);
 });
 test('one jump tap carries the pet forward until landing without holding the move button',()=>{
@@ -57,7 +66,7 @@ test('a cliff needs a running start and item placement keeps the takeoff clear',
  for(let i=0;i<55&&fast.status==='playing';i++)e.step(fast,{},1/60);
  assert.equal(fast.status,'playing');assert(fast.x>1435);assert.equal(fast.onGround,true);
  const layout=e.create(12);e.step(layout,{},1/60);
- assert.equal(e.PITS.length,5);
+ assert.equal(e.PITS.length,9);
  for(const pit of e.PITS)assert(layout.objects.every(item=>item.x<pit.start-400||item.x>pit.end+110));
  for(const [index,pit] of e.PITS.entries()){
   const runner=e.create(100+index);runner.objects=[];runner.nextObjectX=1e9;runner.x=pit.start-340;
@@ -68,21 +77,23 @@ test('a cliff needs a running start and item placement keeps the takeoff clear',
   assert(runner.x>pit.end,'cliff '+index+' cannot be crossed');
  }
 });
-test('the first level has a boss, telegraphed bombs, a finite victory, and an attack shortcut',()=>{
+test('the farther boss leaps, throws sequences, shields itself, and can eventually be defeated',()=>{
  const {engine:e}=setup(),r=e.create(24);r.pits=[];r.objects=[];r.nextObjectX=1e9;r.x=e.BOSS_ARENA;
  e.step(r,{},1/60);assert(r.boss.active);assert(r.soundEvents.includes('boss_enter'));
- for(let n=0;n<e.BOSS_DODGES;n++){
+ assert(e.BOSS_ARENA>9000,'the boss is reached after a longer journey');
+ for(let n=0;n<6&&r.status==='playing';n++){
   r.boss.attackIn=0;r.x=e.BOSS_ARENA+20;e.step(r,{},1/60);
-  assert.equal(r.boss.bombs.length,1);assert(r.boss.bombs[0].eta>0);
+  assert(r.boss.bombs.length>=2,'bombs arrive in a sequence');assert(r.boss.bombs[0].eta>0);
   r.x=e.BOSS_ARENA+280;
-  for(let i=0;i<75&&r.status==='playing';i++)e.step(r,{},1/60);
+  for(let i=0;i<116&&r.status==='playing';i++)e.step(r,{},1/60);
  }
- assert.equal(r.status,'won');assert.equal(r.boss.dodged,e.BOSS_DODGES);assert.equal(r.distance,e.LEVEL_END-100);assert(r.score>0);
+ assert.equal(r.status,'won');assert(r.boss.dodged>=e.BOSS_DODGES);assert.equal(r.distance,e.LEVEL_END-100);assert(r.score>0);
  const hit=e.create(25);hit.pits=[];hit.objects=[];hit.nextObjectX=1e9;hit.x=e.BOSS_ARENA;hit.boss.attackIn=0;
  e.step(hit,{},1/60);for(let i=0;i<75&&hit.status==='playing';i++)e.step(hit,{},1/60);
  assert.equal(hit.status,'over');assert.match(hit.reason,/首领/);
  const spell=e.create(26);spell.pits=[];spell.objects=[];spell.nextObjectX=1e9;spell.x=e.BOSS_ARENA;spell.powerExpires=20;spell.boss.attackIn=99;
- for(let n=0;n<3;n++){e.step(spell,{fire:true},1/60);for(let i=0;i<31&&spell.status==='playing';i++)e.step(spell,{},1/60);}
+ e.step(spell,{fire:true},1/60);assert.equal(spell.boss.hp,e.BOSS_HP,'shield blocks premature attack');
+ for(let n=0;n<e.BOSS_HP;n++){spell.boss.vulnerableFor=.5;spell.fireCooldown=0;e.step(spell,{fire:true},1/60);}
  assert.equal(spell.status,'won');assert.equal(spell.boss.hp,0);
 });
 test('all nineteen current beasts have distinct named and rendered special moves',()=>{
@@ -106,6 +117,22 @@ test('expired fire cannot clear danger and ducking avoids a high cloud',()=>{
  e.step(ducked,{duck:true},.02);assert.equal(ducked.status,'playing');
  const standing=e.create(6);standing.nextObjectX=2000;standing.objects=[{x:105,kind:'overhead',label:'废气团',y:354,passed:false}];
  e.step(standing,{},.02);assert.equal(standing.status,'over');
+});
+test('charging toxins move toward the pet; low charges require a jump and high charges allow a duck',()=>{
+ const {engine:e}=setup();
+ const low=e.create(51);low.pits=[];low.nextObjectX=1e9;low.objects=low.objects.filter(item=>item.kind==='charger'&&item.lane==='low').slice(0,1);
+ const lowItem=low.objects[0];low.x=lowItem.x-650;const before=lowItem.x;e.step(low,{},.1);
+ assert(lowItem.x<before);assert(low.soundEvents.includes('toxin_charge'));
+ low.x=lowItem.x-90;e.step(low,{jump:true},1/60);
+ for(let i=0;i<25&&low.status==='playing';i++)e.step(low,{},1/60);
+ assert.equal(low.status,'playing','a timely jump clears the low charger');
+ const high=e.create(52);high.pits=[];high.nextObjectX=1e9;high.objects=high.objects.filter(item=>item.kind==='charger'&&item.lane==='high');
+ const highItem=high.objects[0];high.x=highItem.x-45;
+ for(let i=0;i<45&&high.status==='playing';i++)e.step(high,{duck:true},1/60);
+ assert.equal(high.status,'playing','ducking clears the high charger');
+ const hit=e.create(53);hit.pits=[];hit.nextObjectX=1e9;hit.objects=hit.objects.filter(item=>item.kind==='charger'&&item.lane==='high');hit.x=hit.objects[0].x-30;
+ for(let i=0;i<45&&hit.status==='playing';i++)e.step(hit,{},1/60);
+ assert.equal(hit.status,'over');assert.match(hit.reason,/毒瘴/);
 });
 test('ten qualified runs issue exactly one real card, retries do not duplicate it, and species stays unchanged',()=>{
  const {data:d}=setup(),id=d.defaultState().teams[0].members[0].id;

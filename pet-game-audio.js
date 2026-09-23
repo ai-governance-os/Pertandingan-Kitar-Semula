@@ -49,6 +49,10 @@ window.PetGameAudio=(()=>{
   if(event==='boss_enter'){setTrack('boss');tone(90,at,.9,'sawtooth',.12,45);noise(at,.5,.09);}
   if(event==='bomb_throw'){tone(440,at,.48,'sine',.06,120);}
   if(event==='boss_hit'){noise(at,.4,.15);tone(240,at,.5,'sawtooth',.1,70);}
+  if(event==='boss_shield'){tone(680,at,.22,'triangle',.06,350);tone(840,at+.05,.18,'sine',.045,420);}
+  if(event==='boss_leap'){tone(150,at,.38,'sawtooth',.06,420);}
+  if(event==='boss_land'){noise(at,.26,.11);tone(130,at,.34,'sine',.08,55);}
+  if(event==='toxin_charge'){tone(360,at,.35,'sawtooth',.045,150);noise(at+.07,.25,.035);}
  }
  function toggle(){mute=!mute;if(audio){master.gain.setTargetAtTime(mute?.0001:.85,audio.currentTime,.04);if(!mute){music.gain.setTargetAtTime(.36,audio.currentTime,.05);schedule();}}return mute;}
  return {unlock,start,setTrack,stop,play,toggle,TRACKS,TRACK_IDS,get muted(){return mute;},state:()=>({audio:audio?.state||'unavailable',track,playing:!!timer,muted:mute,cues,notes})};

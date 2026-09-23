@@ -8,12 +8,20 @@ const GAME_HAZARD_IMAGES=Object.fromEntries([
 const GAME_BOSS_IMAGE=new Image();GAME_BOSS_IMAGE.src='assets/pet-park/game-miasma-boss-v1.webp';
 
 function GameCrown({small=false}){
- return <svg className={small?'game-crown small':'game-crown'} viewBox="0 0 90 72" role="img" aria-label="绿境闯关王冠冕">
-  <defs><linearGradient id="gameCrownGold" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff0b1"/><stop offset=".46" stopColor="#d7af60"/><stop offset="1" stopColor="#8d672e"/></linearGradient><linearGradient id="gameCrownJade" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#9cffe1"/><stop offset=".55" stopColor="#33b795"/><stop offset="1" stopColor="#075a55"/></linearGradient></defs>
-  <path d="M8 25L22 39 30 10 45 32 61 8 68 39 82 24 76 58Q45 69 14 58Z" fill="url(#gameCrownJade)" stroke="url(#gameCrownGold)" strokeWidth="4" strokeLinejoin="round"/>
-  <path d="M13 51Q45 61 78 51L76 61Q45 70 15 61Z" fill="url(#gameCrownGold)"/>
-  <path d="M45 33L53 44 45 53 37 44Z" fill="#d8fff1" stroke="#edcf79" strokeWidth="2"/>
-  <circle cx="23" cy="44" r="3" fill="#fff0b1"/><circle cx="67" cy="44" r="3" fill="#fff0b1"/>
+ const id=React.useId().replace(/:/g,''),gold='game-gold-'+id,jade='game-jade-'+id,gem='game-gem-'+id;
+ return <svg className={small?'game-crown small':'game-crown'} viewBox="0 0 180 140" role="img" aria-label="绿境闯关王翡翠冠冕">
+  <defs><linearGradient id={gold} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fffbdc"/><stop offset=".22" stopColor="#f7e298"/><stop offset=".49" stopColor="#b98636"/><stop offset=".73" stopColor="#f8dda0"/><stop offset="1" stopColor="#835323"/></linearGradient><linearGradient id={jade} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#d9ffec"/><stop offset=".32" stopColor="#75e5be"/><stop offset=".62" stopColor="#178c72"/><stop offset="1" stopColor="#094b52"/></linearGradient><radialGradient id={gem}><stop stopColor="#f0fff4"/><stop offset=".42" stopColor="#8affd2"/><stop offset="1" stopColor="#0c796c"/></radialGradient></defs>
+  <g fill={'url(#'+gold+')'} stroke="#805422" strokeWidth="1.4"><path d="M36 109C14 97 5 76 8 56C22 66 30 82 28 93C16 87 8 78 5 68C22 76 30 95 36 109Z"/><path d="M144 109C166 97 175 76 172 56C158 66 150 82 152 93C164 87 172 78 175 68C158 76 150 95 144 109Z"/></g>
+  <path d="M37 85Q21 36 68 25L90 39L112 25Q159 36 143 85M90 38V88" fill="none" stroke={'url(#'+gold+')'} strokeWidth="8"/>
+  <ellipse cx="90" cy="110" rx="61" ry="18" fill="#145249" stroke="#e9c47e" strokeWidth="3"/>
+  <path d="M21 55L50 76L61 37L80 65L90 20L100 65L119 37L130 76L159 55L143 112Q90 131 37 112Z" fill={'url(#'+jade+')'} stroke={'url(#'+gold+')'} strokeWidth="4" strokeLinejoin="round"/>
+  <path d="M32 65L54 84L64 51L81 79L90 40L99 79L116 51L126 84L148 65" fill="none" stroke="#dcffec" strokeWidth="3" strokeLinejoin="round"/>
+  {[[21,55],[61,37],[90,20],[119,37],[159,55]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r={i===2?6:4.5} fill="#fef3c4" stroke="#a46d30" strokeWidth="2"/>)}
+  <path d="M90 64L106 83L90 102L74 83Z" fill={'url(#'+gem+')'} stroke="#fff2bd" strokeWidth="3"/>
+  <path d="M42 101Q90 114 138 101L140 123Q90 140 40 123Z" fill={'url(#'+gold+')'} stroke="#8c642e" strokeWidth="2"/>
+  <path d="M43 106Q90 120 137 106M42 123Q90 138 138 123" fill="none" stroke="#fff5cc" strokeWidth="2"/>
+  <path d="M52 116L58 111L64 116L58 121ZM116 116L122 111L128 116L122 121Z" fill={'url(#'+gem+')'} stroke="#fff4ce"/>
+  <path d="M33 71L36 79L44 82L36 85L33 93L30 85L22 82L30 79Z" fill="#fffef2" opacity=".9"/>
  </svg>;
 }
 window.GameCrown=GameCrown;
@@ -77,13 +85,14 @@ function paintGame(canvas,run,bg,speciesId){
   ctx.fillStyle='rgba(247,220,155,.75)';ctx.fillRect(x-53,GROUND-18,106,8);
   ctx.shadowBlur=0;ctx.fillStyle='#e9fff7';ctx.font='700 16px Nunito, sans-serif';ctx.textAlign='center';ctx.fillText(`${index+1}`,x,GROUND-111);ctx.restore();
  }
- if(run.x>PetGameEngine.BOSS_ARENA-650){const boss=run.boss,x=PetGameEngine.BOSS_X-cam,y=GROUND-205;
+ if(run.x>PetGameEngine.BOSS_ARENA-650){const boss=run.boss,x=boss.x-cam,y=GROUND-205-boss.jumpY;
   ctx.save();const halo=ctx.createRadialGradient(x,y,15,x,y,210);halo.addColorStop(0,boss.hp?'rgba(238,114,93,.42)':'rgba(167,255,213,.5)');halo.addColorStop(1,'rgba(53,15,68,0)');ctx.fillStyle=halo;ctx.fillRect(x-220,y-220,440,440);
   ctx.translate(x,y+Math.sin(run.elapsed*2)*5);ctx.rotate(Math.sin(run.elapsed*1.4)*.018);ctx.shadowColor=boss.hp?'#ff995f':'#a5ffe4';ctx.shadowBlur=30+boss.flash*35;
   if(GAME_BOSS_IMAGE.complete&&GAME_BOSS_IMAGE.naturalWidth)ctx.drawImage(GAME_BOSS_IMAGE,-136,-212,272,408);
-  else{ctx.fillStyle='#344343';ctx.beginPath();ctx.ellipse(0,0,105,170,0,0,Math.PI*2);ctx.fill();}ctx.restore();
-  if(boss.active){const barX=Math.max(12,Math.min(WIDTH-180,x-90));ctx.save();ctx.fillStyle='rgba(15,15,28,.85)';ctx.fillRect(barX,35,180,14);ctx.fillStyle=boss.hp?'#ff9b6e':'#a6ffe1';ctx.fillRect(barX+2,37,176*Math.max(0,boss.hp)/3,10);ctx.fillStyle='#fff0dc';ctx.font='900 17px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('腐霾魇兽',barX+90,28);ctx.restore();}
-  for(const bomb of boss.bombs){const t=1-bomb.eta/bomb.maxEta,tx=bomb.targetX-cam,bx=x-70+(tx-x+70)*t,by=GROUND-260+(GROUND-35-(GROUND-260))*t-Math.sin(Math.PI*t)*115;
+  else{ctx.fillStyle='#344343';ctx.beginPath();ctx.ellipse(0,0,105,170,0,0,Math.PI*2);ctx.fill();}
+  if(boss.active&&boss.vulnerableFor<=0&&boss.hp>0){ctx.strokeStyle=boss.shieldFlash?'#fff6bd':'#9be8d0';ctx.lineWidth=5;ctx.globalAlpha=.48;ctx.beginPath();ctx.ellipse(0,0,145,200,0,0,Math.PI*2);ctx.stroke();}ctx.restore();
+  if(boss.active){const barX=Math.max(12,Math.min(WIDTH-180,x-90));ctx.save();ctx.fillStyle='rgba(15,15,28,.85)';ctx.fillRect(barX,35,180,14);ctx.fillStyle=boss.hp?'#ff9b6e':'#a6ffe1';ctx.fillRect(barX+2,37,176*Math.max(0,boss.hp)/boss.maxHp,10);ctx.fillStyle='#fff0dc';ctx.font='900 17px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('腐霾魇兽 · '+(boss.vulnerableFor>0?'破绽！':'护盾'),barX+90,28);ctx.restore();}
+  for(const bomb of boss.bombs){const t=1-bomb.eta/bomb.maxEta,tx=bomb.targetX-cam,bx=x-70+(tx-x+70)*t,by=y-55+(GROUND-35-(y-55))*t-Math.sin(Math.PI*t)*115;
    ctx.save();ctx.strokeStyle='#ffac5b';ctx.lineWidth=5;ctx.shadowColor='#ff9b41';ctx.shadowBlur=28;ctx.globalAlpha=.5+t*.5;ctx.beginPath();ctx.ellipse(tx,GROUND-15,70,17,0,0,Math.PI*2);ctx.stroke();
    ctx.fillStyle='rgba(255,87,36,.3)';ctx.beginPath();ctx.ellipse(tx,GROUND-15,70,17,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff1a5';ctx.beginPath();ctx.arc(bx,by,17+t*9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff4cf';ctx.font='bold 18px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('闪避！',tx,GROUND-47);ctx.restore();}
  }
@@ -96,6 +105,14 @@ function paintGame(canvas,run,bg,speciesId){
    const g=ctx.createRadialGradient(x,item.y,3,x,item.y,43);g.addColorStop(0,'rgba(181,255,222,.78)');g.addColorStop(1,'rgba(50,233,187,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,item.y,43,0,Math.PI*2);ctx.fill();
    const index={'纸张':'paper','铝罐':'aluminum','纸箱':'cardboard','塑料瓶':'plastic'}[item.label],image=GAME_RECYCLE_IMAGES.find(entry=>entry.id===index)?.image;
    if(image?.complete&&image.naturalWidth)ctx.drawImage(image,x-27,item.y-29,54,54);
+  }else if(item.kind==='charger'){
+   ctx.save();const high=item.lane==='high',y=high?item.y:GROUND-46;
+   ctx.shadowColor='#b6f95b';ctx.shadowBlur=27;
+   const trail=ctx.createLinearGradient(x-105,y,x+38,y);trail.addColorStop(0,'rgba(88,217,80,0)');trail.addColorStop(1,'rgba(151,255,92,.46)');
+   ctx.fillStyle=trail;ctx.beginPath();ctx.ellipse(x-28,y,95,28,0,0,Math.PI*2);ctx.fill();
+   const image=GAME_HAZARD_IMAGES['有毒液体'];if(image?.complete&&image.naturalWidth)ctx.drawImage(image,x-43,y-44,86,88);
+   ctx.fillStyle='#dcffb2';ctx.font='900 14px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText(high?'毒瘴冲来 · 趴下':'毒瘴冲来 · 跳跃',x,y-53);
+   ctx.strokeStyle='#d7ff9c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-78,y);ctx.lineTo(x-104,y);ctx.moveTo(x-68,y-15);ctx.lineTo(x-92,y-15);ctx.stroke();ctx.restore();
   }else if(item.kind==='ground'){
    ctx.save();ctx.shadowColor='#ff604d';ctx.shadowBlur=17;
    const image=GAME_HAZARD_IMAGES[item.label];if(image?.complete&&image.naturalWidth)ctx.drawImage(image,x-46,GROUND-90,92,92);
@@ -190,6 +207,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
   if(row)window.PetOwnerVoice?.speak(row);
  }
  function hold(control,down){controls.current[control]=down;}
+ React.useEffect(()=>{if(status==='playing')sessionRef.current?.scrollIntoView({block:'start',behavior:'auto'});},[status,runKey]);
  const gameStage=selected?Math.max(2,selected.pet.stageIndex):2;
  return <main className={status==='select'?'game-view selecting':'game-view'}>
   <div className="game-shell">
@@ -205,7 +223,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     <aside className="game-info"><span className="game-section-label">远征规则</span><h2>跑得越远，灵光越盛</h2>
      <p>按 ← → 或 A D 控制神兽前后行走；点 ↑／空格便会顺势向前跃进。山崖前先向右助跑，再点飞跃才能跨过。按 ↓ 低身避开毒雾。拾取灵核后，按 F 释放该神兽的专属特技，持续 8 秒。</p>
      <div className="game-checkpoints">{PetGameEngine.CHECKPOINTS.map((at,i)=><span key={at}><b>0{i+1}</b><small>{at} 米</small></span>)}</div>
-     <p>本关有五处山崖，穿过四座灵门后抵达终点，躲过首领 5 次灵爆即可通关；拾取灵核也能用特技攻击它。第 4 个检查点仍算一次成功；累计 10 次成功，自动获得 1 张正式奖卡。</p>
+     <p>本关有九处山崖，沿途仍有回收物、连续高低障碍和迎面冲来的毒瘴；低处跳过，高处趴下。穿过四座灵门后继续前进，约 9300 米进入首领战。首领会跳跃并连续投弹；躲过 10 次灵爆，或在它落地露出破绽时用特技攻击，即可通关。第 4 个检查点仍算一次成功；累计 10 次成功，自动获得 1 张正式奖卡。</p>
      {progress&&<div className="game-progress">{selected.name} · 已成功 {progress.wins} 次　·　下张奖卡 {progress.progress}/10　·　累计 {progress.totalScore} 分</div>}
      <div className="game-honor"><GameCrown/><div><b>绿境闯关王</b><small>本月最远距离的守护者佩戴翡翠冠冕</small></div></div>
     </aside>
@@ -228,7 +246,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
       {runRef.current?.official?hud.checkpoints===4&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。</small>}
      </div></div>}
     </div>
-    <div className="game-controls"><p>{hud.boss?.active?'首领投掷灵爆：看落点，移动或跳跃闪避！特技也能伤害首领。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　山崖前助跑再点 ↑ 飞跃　·　↓ 低身　·　F 特技'}</p><div>
+    <div className="game-controls"><p>{hud.boss?.active?'首领连续投弹：看落点闪避！它落地时护盾短暂消失，趁机用特技攻击。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　山崖前助跑再点 ↑ 飞跃　·　↓ 低身　·　F 特技'}</p><div>
      <button type="button" aria-label="向左走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('left',true);}} onPointerUp={()=>hold('left',false)} onPointerCancel={()=>hold('left',false)}><b>←</b><small>后退</small></button>
      <button type="button" aria-label="向右走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('right',true);}} onPointerUp={()=>hold('right',false)} onPointerCancel={()=>hold('right',false)}><b>→</b><small>前进</small></button>
      <button type="button" aria-label="向前跃进" onPointerDown={e=>{e.preventDefault();hold('jump',true);}} onClick={()=>hold('jump',true)}><b>↑</b><small>飞跃</small></button>

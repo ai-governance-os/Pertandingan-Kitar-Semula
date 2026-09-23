@@ -1121,7 +1121,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
               <button
                 key={row.id}
                 type="button"
-                className={`cinematic-beast stage-${displayStage} route-${layout.route} performance-${speciesId} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} hunger-${row.pet.hunger.key}`}
+                className={`cinematic-beast stage-${displayStage} route-${layout.route} performance-${speciesId} ${isActive ? "is-performing" : ""} ${isDimmed ? "is-dimmed" : ""} ${row.yakult?.winner&&row.gameWinner?'dual-crowned':''} hunger-${row.pet.hunger.key}`}
                 style={{
                   '--park-x': `${layout.x}%`,
                   '--park-y': `${layout.y}%`,
@@ -1579,7 +1579,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <div className="pet-modal-stats">
           <div className="pet-stat">
-            <b>{p.exp}</b><span>历来累计 ⭐</span>
+            <b>{p.exp}</b><span>9 月起累计 ⭐</span>
           </div>
           <div className="pet-stat">
             <b className="material-symbols-rounded">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</b><span>{p.hunger.zh}</span>
