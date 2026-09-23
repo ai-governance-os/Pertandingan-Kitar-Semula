@@ -169,7 +169,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
  }
  function hold(control,down){controls.current[control]=down;}
  const gameStage=selected?Math.max(2,selected.pet.stageIndex):2;
- return <main className="game-view">
+ return <main className={status==='select'?'game-view selecting':'game-view'}>
   <div className="game-shell">
    <header className="game-head"><div><span className="game-eyebrow">ECO GUARDIANS · SPIRIT QUEST</span><h1>绿境 · 神兽远征</h1><p>亲自引领神兽穿越灵溪古道，收集可回收物，净化危险障碍。</p></div><span className="game-head-mark">第一境 · 灵溪古道</span></header>
    {status==='select'&&<div className="game-select">
@@ -186,6 +186,10 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
      {progress&&<div className="game-progress">{selected.name} · 已成功 {progress.wins} 次　·　下张奖卡 {progress.progress}/10</div>}
      <div className="game-honor"><GameCrown/><div><b>绿境闯关王</b><small>本月最远距离的守护者佩戴翡翠冠冕</small></div></div>
     </aside>
+   </div>}
+   {status==='select'&&<div className="game-mobile-start">
+    <div><small>{authed?'正式闯关 · 计入奖卡':'试玩 · 不计奖卡'}</small><strong>{selected?.name||'先选择一位学生的神兽'}</strong></div>
+    <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开始闯关':'开始试玩'} <span>→</span></button>
    </div>}
    {status!=='select'&&<div className="game-session" ref={sessionRef}>
     <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>净化灵焰</small><b>{hud.power>0?`${hud.power.toFixed(1)} 秒`:'未获得'}</b></div></div>
