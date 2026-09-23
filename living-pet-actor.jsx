@@ -49,6 +49,7 @@ function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='l
   return()=>{disposed=true;cancelAnimationFrame(raf);observer?.disconnect();img.removeEventListener('load',prepare);img.removeEventListener('error',failed);document.removeEventListener('visibilitychange',resume);media.removeEventListener?.('change',resume);};
  },[speciesId,stage,playToken,duration,motionScale,walking]);
  return <span ref={host} className={`evolved-beast living-rig stage-${stage} ${ready?'living-ready':''} ${playing?'actor-playing':''} ${className}`} style={{...style,'--living-delay':`-${PetLivingRig.seed(speciesId)%13}s`}} data-species={speciesId} data-stage={stage} data-rig="living-expression">
+  {stage>=6&&<PetAscensionRegalia speciesId={speciesId} stage={stage}/>}
   <img ref={image} src={PetEvolution.asset(speciesId,stage)} alt={alt} loading={loading} draggable={false}/>
   <canvas ref={canvas} width="768" height="768" aria-hidden="true"/>
  </span>;

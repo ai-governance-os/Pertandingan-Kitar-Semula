@@ -8,6 +8,10 @@ assert.equal(Object.keys(PetBodyRigs.limbs).length,50);assert.equal(Object.keys(
 for(const {id} of EcoData.PET_SPECIES){
  assert.equal(PetBodyRigs.limbs[id].length,5,id+' all five non-egg forms');
  assert.equal(PetLivingRig.get(id,0),null,id+' egg remains egg');
+ for(let stage=6;stage<10;stage++){
+  assert.strictEqual(PetLivingRig.get(id,stage),PetLivingRig.get(id,5),id+' ascension keeps articulated limbs');
+  assert(Object.values(PetLivingRig.pose(id,stage,2.1,.5,false,true)).every(Number.isFinite),id+' ascension pose remains finite');
+ }
  for(let stage=1;stage<6;stage++){
   const rig=PetLivingRig.get(id,stage);assert(rig?.feet.length>=2,id+stage);assert(rig.features?.profile,id+' has a signed-off action brief');forms++;
   assert.strictEqual(rig,PetLivingRig.get(id,stage),'Rig is cached');

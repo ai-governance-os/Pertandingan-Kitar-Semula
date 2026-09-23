@@ -16,6 +16,7 @@ function GameCrown({small=false}){
   <circle cx="23" cy="44" r="3" fill="#fff0b1"/><circle cx="67" cy="44" r="3" fill="#fff0b1"/>
  </svg>;
 }
+window.GameCrown=GameCrown;
 
 function paintGame(canvas,run,bg,speciesId){
  const ctx=canvas.getContext('2d'),{WIDTH,HEIGHT,GROUND,CHECKPOINTS}=PetGameEngine;

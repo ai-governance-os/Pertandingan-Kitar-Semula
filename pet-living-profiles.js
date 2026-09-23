@@ -64,6 +64,7 @@ function livingFamily(id){return Object.keys(PET_LIVING_FAMILIES).find(k=>PET_LI
 function livingSeed(id){return [...id].reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,7);}
 const livingRigCache=new Map();
 function livingRig(id,stage){
+ stage=Math.min(5,Math.max(0,stage));
  const key=id+':'+stage;if(livingRigCache.has(key))return livingRigCache.get(key);
  const beetle=id==='hornbeetle'?window.BeetleRig?.rigs[stage]:null;
  const anchors=PET_EYES[id]?.[stage-1];if(!anchors&&!beetle)return null;
@@ -84,6 +85,7 @@ function livingRig(id,stage){
  livingRigCache.set(key,rig);return rig;
 }
 function livingPose(id,stage,seconds,show=null,reduced=false,walking=false){
+ stage=Math.min(5,Math.max(0,stage));
  const seed=livingSeed(id),offset=(seed%173)/31,family=livingFamily(id);
  const p=BeetleRig.pose(stage,seconds+offset,show,reduced,walking);
  if(reduced)return p;

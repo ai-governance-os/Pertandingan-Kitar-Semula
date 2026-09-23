@@ -132,5 +132,7 @@ test('the green crown uses farthest distance this month and survives reload',()=
  let state=d.recordGameRun(initial,{studentId:ids[0],runId:'a',teacherId:'ADMIN',distance:2200,recycled:2,checkpoints:2});
  state=d.recordGameRun(state,{studentId:ids[1],runId:'b',teacherId:'ADMIN',distance:2500,recycled:1,checkpoints:3});
  assert.equal(d.gameLeaderboard(state).winners[0],ids[1]);
+ assert.equal(d.petReport(state).find(row=>row.id===ids[1]).gameWinner,true,'park shows the winner crown');
+ assert.equal(d.petReport(state).find(row=>row.id===ids[0]).gameWinner,false);
  assert.equal(d.gameProgress(d.load(),ids[1]).bestDistance,2500);
 });

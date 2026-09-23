@@ -52,7 +52,7 @@ const EVOLUTION_PROFILES = {
   snowferret: { prop:'snow', motion:'slide', temperament:'害羞却爱玩雪', features:['冰花纹灵蛋','小鼻探出壳','短尾雪貂宝宝','蓝色针织围巾','冰晶冠与雪披风','雪花王冠与流霜长尾'], acts:['雪花轻吻蛋','探头接雪花','雪地滑一跤','围巾旋雪舞','滑翔抛冰花','极光雪花礼'] },
   firemouse: { prop:'lantern', motion:'scamper', temperament:'小小身体，大大热情', features:['火星纹灵蛋','大耳小鼠探壳','圆耳火鼠宝宝','金铃与火星颊纹','火焰护手与灯杖','红玉冠与巨型灵灯'], acts:['火星绕蛋跳','探头吹火星','追灯急刹车','摇铃点小灯','跃起举焰灯','万灯迎星礼'] },
 };
-const PET_FORM_NAMES = ['蛋','破壳','幼兽','守护兽','战将兽','传奇'];
+const PET_FORM_NAMES = ['蛋','破壳','幼兽','守护兽','战将兽','传奇','灵域','星耀','圣兽','神话'];
 function evolutionProfile(id) { return EVOLUTION_PROFILES[id] || EVOLUTION_PROFILES.qilin; }
 function evolutionAsset(id, stage) { return 'assets/pet-park/evolution/' + id + '/' + Math.max(0, Math.min(5, stage)) + '.webp'; }
 // Each creature has its own trajectory, then its six acts vary the choreography,
@@ -121,7 +121,7 @@ function evolutionPose(id, stage, progress) {
   let q = (t - speeds[segment]) / (speeds[segment + 1] - speeds[segment]);
   q = q * q * (3 - 2 * q);
   const a = path[segment], b = path[segment + 1];
-  const intensity = [.18, .32, .65, .8, 1.05, 1.2][stage];
+  const intensity = [.18, .32, .65, .8, 1.05, 1.2][Math.min(stage,5)];
   const x = (a[0] + (b[0] - a[0]) * q) * intensity;
   const y = (a[1] + (b[1] - a[1]) * q) * intensity;
   const rolling = ['twirl','tumble','slide'].includes(profile.motion);

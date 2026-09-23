@@ -21,7 +21,7 @@ const rosterIdentity=s=>s.teams.map(t=>({id:t.id,zh:t.zh,leaderId:t.leaderId,mem
 assert.equal(JSON.stringify(rosterIdentity(migrated)),JSON.stringify(rosterIdentity(old)),'Names and teams unchanged');
 assert.equal(JSON.stringify(migrated.starLedger),JSON.stringify(old.starLedger));
 assert.equal(migrated.pets[guande].nickname,'小角');
-assert.equal(updated.data.petState(migrated,guande).stageIndex,1);
+assert.equal(updated.data.petState(migrated,guande).stageIndex,0);
 const other=Object.keys(newMap).find(id=>id!==guande),otherSpecies=newMap[other];
 const swapped=updated.data.setPetSpecies(migrated,guande,otherSpecies);
 assert.equal(updated.data.petSpeciesMap(swapped)[other],'hornbeetle');
@@ -31,21 +31,30 @@ assert.equal(JSON.stringify(updated.data.load().pets),JSON.stringify(swapped.pet
 assert.equal(JSON.stringify(swapped.starLedger),JSON.stringify(old.starLedger));
 assert.equal(updated.data.setPetSpecies(swapped,guande,'invalid'),swapped);
 assert.equal(updated.data.setPetSpecies(swapped,'missing','hornbeetle'),swapped);
-for(const [stars,index] of [[0,0],[9,0],[10,1],[19,1],[20,2],[49,2],[50,3],[79,3],[80,4],[119,4],[120,5]]){
+for(const [stars,index] of [[0,0],[19,0],[20,1],[49,1],[50,2],[99,2],[100,3],[149,3],[150,4],[249,4],[250,5],[399,5],[400,6],[599,6],[600,7],[749,7],[750,8],[999,8],[1000,9]]){
   assert.equal(updated.data.petState({...migrated,starLedger:[{studentId:guande,stars,ts:Date.now()}]},guande).stageIndex,index);
 }
+const september=new Date(2026,8,30,12).getTime(),october=new Date(2026,9,1,12).getTime();
+const yearState={...migrated,starLedger:[{studentId:guande,stars:400,ts:september}],rewardRedemptions:[{studentId:guande,starsSpent:30,ts:september}]};
+assert.equal(updated.data.studentStarBalance(yearState,guande,october),0,'monthly wallet resets');
+assert.equal(updated.data.petState(yearState,guande,october).stageIndex,6,'monthly reset and redemption leave pet intact');
+assert.equal(updated.data.petState(yearState,guande,october).exp,400);
+const deducted={...yearState,starLedger:[...yearState.starLedger,{studentId:guande,stars:-1,ts:october}]};
+assert.equal(updated.data.petState(deducted,guande,october).stageIndex,5,'teacher deduction can regress form');
+assert.equal(updated.data.petState(yearState,guande,october+30*24*3600*1000).displayStageIndex,6,'hunger cannot regress form');
 vm.runInContext(fs.readFileSync(path.join(root,'pet-evolution.js'),'utf8'),updated.context);
+vm.runInContext(fs.readFileSync(path.join(root,'pet-ascension-data.js'),'utf8'),updated.context);
 const evo=updated.context.window.PetEvolution;
 for(const species of updated.data.PET_SPECIES){
   const profile=evo.profiles[species.id];assert(profile,species.id);
-  assert.equal(new Set(profile.features).size,6,species.id+' forms');
-  assert.equal(new Set(profile.acts).size,6,species.id+' acts');
-  for(let stage=0;stage<6;stage++)for(const t of [0,.1,.4,.7,1]){
+  assert.equal(new Set(profile.features).size,10,species.id+' forms');
+  assert.equal(new Set(profile.acts).size,10,species.id+' acts');
+  for(let stage=0;stage<10;stage++)for(const t of [0,.1,.4,.7,1]){
     const pose=evo.pose(species.id,stage,t);for(const n of ['x','y','angle','head','tail','wings'])assert(Number.isFinite(pose[n]));
   }
 }
-console.log('PASS: 50 species, 300 form/action definitions, 19 unique owners, exact roster preserved, Li Guande beetle, swap/reload and all six thresholds.');
-for(const species of updated.data.PET_SPECIES)for(let stage=0;stage<6;stage++)for(const [width,height] of [[390,844],[320,568],[1440,900]]){
+console.log('PASS: 50 species, 500 form/action definitions, 19 unique owners, swap/reload and all ten thresholds.');
+for(const species of updated.data.PET_SPECIES)for(let stage=0;stage<10;stage++)for(const [width,height] of [[390,844],[320,568],[1440,900]]){
   const origin={x:width*.7,y:height*.65,scale:.6},size=Math.min(180,Math.max(100,width*.25));
   const first=evo.parkPose(species.id,stage,0,width,height,origin,size);
   const last=evo.parkPose(species.id,stage,1,width,height,origin,size);
@@ -65,4 +74,4 @@ for(const species of updated.data.PET_SPECIES)for(let stage=0;stage<6;stage++)fo
     assert(Math.hypot(departure.x-hero.x,departure.y-hero.y)>size*.12,species.id+' turns through a distinct hero location');
   }
 }
-console.log('PASS: all 300 park shows return to origin, stay in mobile/desktop bounds, use staged curved travel, and respect reduced motion.');
+console.log('PASS: all 500 park shows return to origin, stay in mobile/desktop bounds, use staged curved travel, and respect reduced motion.');

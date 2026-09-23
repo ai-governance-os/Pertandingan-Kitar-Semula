@@ -1032,16 +1032,19 @@ const PET_SPECIES = [
   { id:"roseflamingo", zh:"绯羽鹭", en:"roseflamingo", category:"飞羽", aura:"#68DBB5", stages:["🥚","🐣","✦","✦","✦","✧"] },
 ];
 
-// Monthly growth milestones intentionally reward the first effort quickly:
-// one 10-star step visibly starts the hatch, 20 reveals the full cub, and the
-// larger jumps are reserved for the increasingly cinematic later forms.
+// Growth is a permanent, net award-card record. Monthly redeemable balances
+// reset independently; redemptions never undo a pet's growth.
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
-  { minExp: 10,  zh: "破壳", en: "Hatching" },
-  { minExp: 20,  zh: "幼兽", en: "Cub" },
-  { minExp: 50,  zh: "守护兽", en: "Guardian" },
-  { minExp: 80,  zh: "战将兽", en: "Champion" },
-  { minExp: 120, zh: "传奇", en: "Legend" },
+  { minExp: 20,  zh: "破壳", en: "Hatching" },
+  { minExp: 50,  zh: "幼兽", en: "Cub" },
+  { minExp: 100, zh: "守护兽", en: "Guardian" },
+  { minExp: 150, zh: "战将兽", en: "Champion" },
+  { minExp: 250, zh: "传奇", en: "Legend" },
+  { minExp: 400, zh: "灵域", en: "Spirit Realm" },
+  { minExp: 600, zh: "星耀", en: "Starlight" },
+  { minExp: 750, zh: "圣兽", en: "Sacred Beast" },
+  { minExp: 1000, zh: "神话", en: "Mythic" },
 ];
 
 const PET_HUNGER_LEVELS = [
@@ -1138,13 +1141,13 @@ function petHungerFor(days) {
 function petState(state, studentId, now = Date.now()) {
   const all = (state.starLedger || []).filter(e => e.studentId === studentId);
 
-  // Growth is THIS MONTH's stars, on the same cutoff as the redeemable
-  // balance. On the 1st every beast is an egg again, so the park shows what a
-  // child has done this month rather than since joining. Deductions inside the
-  // month shrink the beast — that is the point — but never below the egg.
-  const events = all.filter(e => (e.ts || 0) >= monthStartTs(now));
-  const exp = Math.max(0, events.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
-  const lifetimeExp = Math.max(0, all.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
+  // All award and deduction entries count across month boundaries. Prize
+  // redemptions are deliberately excluded; only a card deduction can regress
+  // the pet. The monthly star wallet keeps its separate reset behavior.
+  const exp = Math.max(0, all.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
+  const lifetimeExp = exp;
+  const monthlyExp = Math.max(0, all.filter(e => (e.ts || 0) >= monthStartTs(now))
+    .reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
 
   // Hunger reads the WHOLE ledger, not just this month: scoped to the month,
   // every child would look "never fed" for the first days of September.
@@ -1156,9 +1159,7 @@ function petState(state, studentId, now = Date.now()) {
   const hunger = petHungerFor(daysSinceFed);
   const stageIndex = petStageFor(exp);
 
-  // Starving pets LOOK like they regressed one stage — the scare the school
-  // wanted — but exp is untouched, so one new star restores them instantly.
-  const displayStageIndex = hunger.key === "starving" ? Math.max(0, stageIndex - 1) : stageIndex;
+  const displayStageIndex = stageIndex;
 
   const species = petSpeciesFor(state, studentId);
   const nextStage = PET_STAGES[stageIndex + 1] || null;
@@ -1167,6 +1168,7 @@ function petState(state, studentId, now = Date.now()) {
     studentId,
     species,
     lifetimeExp,
+    monthlyExp,
     nickname: state?.pets?.[studentId]?.nickname || "",
     voiceGender: ['male','female'].includes(state?.pets?.[studentId]?.voiceGender) ? state.pets[studentId].voiceGender : '',
     voiceId: typeof state?.pets?.[studentId]?.voiceId === 'string' ? state.pets[studentId].voiceId : '',
@@ -1174,7 +1176,7 @@ function petState(state, studentId, now = Date.now()) {
     stageIndex,
     stage: PET_STAGES[stageIndex],
     displayStageIndex,
-    icon: species.stages[displayStageIndex],
+    icon: species.stages[displayStageIndex] || species.stages[species.stages.length - 1],
     isMaxStage: !nextStage,
     nextStage,
     expToNext: nextStage ? Math.max(0, nextStage.minExp - exp) : 0,
@@ -1184,7 +1186,7 @@ function petState(state, studentId, now = Date.now()) {
     daysSinceFed,
     lastFedTs: lastFedTs || null,
     hunger,
-    isRegressed: hunger.key === "starving" && stageIndex > 0,
+    isRegressed: false,
     neverFed: !lastFedTs,
   };
 }
@@ -1192,6 +1194,7 @@ function petState(state, studentId, now = Date.now()) {
 function petReport(state, now = Date.now()) {
   const yakult = window.EcoYakult?.report(state, now);
   const yakultById = new Map((yakult?.students || []).map(student => [student.id, student]));
+  const gameWinners = new Set(gameLeaderboard(state, now).winners);
   const members = state.teams.flatMap(t =>
     teamMembers(state, t.id).map(m => ({
       ...m,
@@ -1203,7 +1206,7 @@ function petReport(state, now = Date.now()) {
     }))
   );
   return members
-    .map(m => ({ ...m, yakult: yakultById.get(m.id), pet: petState(state, m.id, now) }))
+    .map(m => ({ ...m, yakult: yakultById.get(m.id), gameWinner: gameWinners.has(m.id), pet: petState(state, m.id, now) }))
     .sort((a, b) => b.pet.exp - a.pet.exp || a.name.localeCompare(b.name));
 }
 

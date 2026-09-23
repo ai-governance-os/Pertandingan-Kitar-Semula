@@ -1,4 +1,26 @@
-/* Six real forms; the original park's colour/scale shortcuts no longer apply. */
+/* Ten forms: the first six have painted art; the final four gain species regalia. */
+.pet-ascension-regalia{position:absolute;inset:-7%;width:114%;height:114%;pointer-events:none;overflow:visible;color:var(--ascension-aura);z-index:0;filter:drop-shadow(0 0 5px var(--ascension-aura));animation:ascension-breathe 5s ease-in-out infinite}
+.pet-ascension-regalia~img,.pet-ascension-regalia~canvas{position:relative;z-index:1}
+.pet-ascension-regalia~canvas{position:absolute}
+.pet-ascension-disc{fill:var(--ascension-aura);opacity:.09}
+.pet-ascension-orbit{fill:none;stroke:var(--ascension-aura);stroke-width:2;stroke-dasharray:5 5;opacity:.76}
+.pet-ascension-rays{stroke:var(--ascension-aura);stroke-width:2;stroke-linecap:round;opacity:.85}
+.pet-ascension-stars{fill:#fff4c6;filter:drop-shadow(0 0 4px #fff4c6)}
+.pet-ascension-crest circle{fill:#10332eca;stroke:var(--ascension-aura);stroke-width:2}
+.pet-ascension-crest path{fill:none;stroke:#fff4ca;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pet-ascension-regalia.tier-8 .pet-ascension-orbit{stroke-width:3;stroke-dasharray:3 7}
+.pet-ascension-regalia.tier-9{filter:drop-shadow(0 0 9px var(--ascension-aura))}
+.pet-ascension-regalia.tier-9 .pet-ascension-disc{opacity:.17}
+.pet-ascension-wings{fill:var(--ascension-aura);fill-opacity:.22;stroke:var(--ascension-aura);stroke-width:1.5;stroke-opacity:.8}
+.park-game-crown{position:absolute;right:-4%;top:-7%;z-index:4;display:block;width:30px;height:26px;pointer-events:none;filter:drop-shadow(0 0 5px #9ff6d0)}
+.park-game-crown .game-crown.small{width:100%;height:100%}
+.yakult-evolution-actor .park-game-crown{right:0;top:2%;width:42px;height:36px}
+.evolution-stage-buttons{grid-template-columns:repeat(5,minmax(0,1fr))}
+.pet-evolution-preview{overflow-x:auto}
+.pet-evolution-track{grid-template-columns:repeat(10,minmax(68px,1fr));min-width:730px}
+@media(max-width:560px){.pet-evolution-preview{overflow-x:auto}.pet-evolution-track{grid-template-columns:repeat(10,minmax(64px,1fr));min-width:680px}}
+@keyframes ascension-breathe{50%{opacity:.65;transform:rotate(4deg) scale(1.025)}}
+@media(prefers-reduced-motion:reduce){.pet-ascension-regalia{animation:none}}
 .character-voice-preview{min-height:44px;border:1px solid #b9cbb7;border-radius:22px;background:#eaf2e5;color:#305b42;padding:8px 16px;margin-top:6px;font:inherit;cursor:pointer}.character-voice-preview:focus-visible{outline:3px solid #b99b53;outline-offset:3px}
 .signature-entry{display:flex;align-items:center;flex-wrap:wrap;gap:8px;width:100%;margin:14px 0 5px;border:1px solid #d5bb7e;border-radius:16px;padding:12px 14px;background:linear-gradient(110deg,#153d35,#255448);color:#fff8df;text-align:left;cursor:pointer;font:inherit;min-height:58px}
 .signature-entry>span{font-size:10px;letter-spacing:.1em;color:#ddca91}.signature-entry>b{font-size:16px}.signature-entry>small{margin-left:auto;font-size:11px;color:#d5e6d5}

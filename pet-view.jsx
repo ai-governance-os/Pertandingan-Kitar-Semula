@@ -78,8 +78,8 @@ const PET_LOOKS = {
 // the whole ladder, so an egg and a legend read as the same animal at slightly
 // different sizes. This spans 5.2x — you can tell who has been working from
 // across the classroom, which is the whole point of putting it on a screen.
-const PET_STAGE_SCALE = [0.5, 0.85, 1.2, 1.65, 2.1, 2.6];
-const LEGEND_STAGE = 5;
+const PET_STAGE_SCALE = [0.5, 0.85, 1.2, 1.65, 2.1, 2.6, 2.75, 2.9, 3.05, 3.2];
+const FINAL_STAGE = EcoData.PET_STAGES.length - 1;
 
 // ───────────────────── Cinematic shared park ─────────────────────
 // The new park keeps the existing data model, but renders every species from a
@@ -176,12 +176,16 @@ const CINEMATIC_STAGE_VISUALS = [
   { key: "junior",   scale: .72, previewHeight: 80, asset: cinematicPetAsset },
   { key: "adult",    scale: .96, previewHeight: 100, asset: cinematicPetAsset },
   { key: "legend",   scale: 1.25, previewHeight: 122, asset: cinematicPetAsset },
+  { key: "spirit",   scale: 1.30, previewHeight: 128, asset: cinematicPetAsset },
+  { key: "starlight",scale: 1.35, previewHeight: 134, asset: cinematicPetAsset },
+  { key: "sacred",   scale: 1.40, previewHeight: 140, asset: cinematicPetAsset },
+  { key: "mythic",   scale: 1.45, previewHeight: 146, asset: cinematicPetAsset },
 ];
 
 // Phones use a portrait composition instead of shrinking the 1440px desktop
 // world. Three columns keep all nineteen owners visible in one screen while
 // preserving a comfortable tap target and unmistakable stage-size changes.
-const CINEMATIC_MOBILE_STAGE_WIDTHS = [58, 68, 80, 96, 116, 140];
+const CINEMATIC_MOBILE_STAGE_WIDTHS = [58, 68, 80, 96, 116, 140, 145, 150, 155, 160];
 
 function cinematicMobileAnchor(index, stageIndex) {
   const column = index % 3;
@@ -224,6 +228,11 @@ const CINEMATIC_EGG_HUES = {
 
 function cinematicStageAsset(row, stageIndex = row?.pet?.displayStageIndex || 0) {
   return PetEvolution.asset(row.pet.species.id, stageIndex);
+}
+
+function ParkGameCrown() {
+  const Crown=window.GameCrown;
+  return Crown?<span className="park-game-crown"><Crown small/></span>:null;
 }
 
 function CinematicStageArt({
@@ -615,7 +624,7 @@ function PetPark3D({ report, onPick }) {
         [[-0.3, 0.3], [0.3, 0.3], [-0.3, -0.32], [0.3, -0.32]].forEach(leg =>
           add(ballGeo, accM, [leg[0], 0.17, leg[1]], [0.18, 0.15, 0.22]));
 
-        if (stage === LEGEND_STAGE) { // 传说 — a slowly turning ring of light
+        if (stage >= 5) { // Higher forms retain a slowly turning ring of light.
           const ring = new THREE.Mesh(
             ringGeo,
             keep(new THREE.MeshBasicMaterial({ color: L.aura, transparent: true, opacity: 0.85 }))
@@ -654,10 +663,9 @@ function PetPark3D({ report, onPick }) {
       const pets = [];
       report.forEach((row, i) => {
         const p = row.pet;
-        // displayStageIndex, not stageIndex: a starving beast is literally
-        // smaller in the park, matching the rule the UI already states.
+        // Appearance follows permanent net cards; hunger never shrinks it.
         const grp = buildBeast(p.species.id, p.displayStageIndex);
-        const scale = PET_STAGE_SCALE[p.displayStageIndex] || PET_STAGE_SCALE[0];
+        const scale = PET_STAGE_SCALE[p.displayStageIndex] || PET_STAGE_SCALE[PET_STAGE_SCALE.length-1];
         grp.scale.setScalar(scale);
 
         // Two rings so nineteen beasts have room even at legend size; the outer
@@ -1133,7 +1141,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                   '--egg-hue': `${CINEMATIC_EGG_HUES[speciesId] || 0}deg`,
                 }}
                 onClick={e => interact(row,e.currentTarget)}
-                aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，${row.pet.exp} 星。${row.yakult?.winner ? '本月 Yakult 之星。' : ''}点按互动`}
+                aria-label={`${row.name} 的 ${row.pet.species.zh}，${row.pet.stage.zh}，累计 ${row.pet.exp} 星。${row.yakult?.winner ? '本月 Yakult 之星。' : ''}${row.gameWinner ? '本月绿境闯关王。' : ''}点按互动`}
               >
                 <span className="cinematic-beast-body">
                   <CinematicStageArt
@@ -1145,6 +1153,7 @@ function CinematicSharedPark({ report, teams, teamFilter, setTeamFilter, onPick,
                     playToken={0}
                   />
                   {row.yakult?.winner && <YakultEquipment stage={displayStage}/>}
+                  {row.gameWinner && <ParkGameCrown/>}
                   <span className="cinematic-owner-tag" title={row.name}>
                     <b>{row.name}</b>
                   </span>
@@ -1473,7 +1482,6 @@ function PetCard({ row, onClick }) {
       </div>
       <div className="pet-stage-label">
         <TeamBadge src={row.teamBadgeSrc} name={row.teamName} size={22} /> {p.stage.zh}
-        {p.isRegressed && <span className="pet-regress-tag">虚弱</span>}
       </div>
       <div className="pet-bar">
         <div className="pet-bar-fill" style={{width: `${Math.round(p.stageProgress * 100)}%`}} />
@@ -1485,7 +1493,7 @@ function PetCard({ row, onClick }) {
 
 function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) {
   const p = row.pet;
-  const showingLegendGoal = p.stageIndex < LEGEND_STAGE;
+  const showingLegendGoal = p.stageIndex < FINAL_STAGE;
 
   function changeSpecies() {
     if (!requireAuth()) return;
@@ -1528,10 +1536,11 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <div className={`pet-modal-hero hunger-${p.hunger.key} ${showingLegendGoal ? "is-legend-goal" : ""}`}>
           {showingLegendGoal ? (
-            <img
+            <CinematicStageArt
+              row={row}
+              stageIndex={FINAL_STAGE}
               className="pet-modal-art goal-art"
-              src={cinematicPetAsset(row)}
-              alt={`${row.name} 的${p.species.zh}，120星传说最高形态`}
+              alt={`${row.name} 的${p.species.zh}，1000星神话最高形态`}
               style={{'--egg-hue': `${CINEMATIC_EGG_HUES[p.species.id] || 0}deg`}}
             />
           ) : (
@@ -1546,7 +1555,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
             <>
               <span className="pet-legend-goal-chip">
                 <span className="material-symbols-rounded" aria-hidden="true">auto_awesome</span>
-                最高进化版 · 120 ⭐
+                最高进化版 · 1000 ⭐
               </span>
               <span className="pet-current-state-chip">
                 <CinematicStageArt
@@ -1570,7 +1579,7 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <div className="pet-modal-stats">
           <div className="pet-stat">
-            <b>{p.exp}</b><span>本月 ⭐</span>
+            <b>{p.exp}</b><span>历来累计 ⭐</span>
           </div>
           <div className="pet-stat">
             <b className="material-symbols-rounded">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</b><span>{p.hunger.zh}</span>
@@ -1580,11 +1589,11 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
           </div>
         </div>
 
-        <section className="pet-evolution-preview" aria-label={`${p.species.zh}六阶段进化预览`}>
+        <section className="pet-evolution-preview" aria-label={`${p.species.zh}十阶段进化预览`}>
           <div className="pet-evolution-heading">
             <div>
               <span>未来形态预览</span>
-              <b>六阶段 · 大小与神性逐级觉醒</b>
+              <b>十阶段 · 大小与神性逐级觉醒</b>
             </div>
             <em>实验版</em>
           </div>
@@ -1628,12 +1637,6 @@ function PetDetailModal({ state, setState, row, authed, requireAuth, onClose }) 
 
         <div className={`pet-hunger-note ${p.hunger.key}`}>
           <span className="material-symbols-rounded" aria-hidden="true">{CINEMATIC_HUNGER_ICONS[p.hunger.key]}</span> {hungerHint}
-          {p.isRegressed && (
-            <div className="pet-regress-note">
-              ⚠️ 太久没吃，宠物虚弱了，外表退回上一阶段。<br/>
-              <b>成长值没有减少 —— 拿到新星星马上恢复！</b>
-            </div>
-          )}
         </div>
 
         {authed && (

@@ -334,7 +334,7 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
               </select>
               <button className="chunky-btn primary" type="button" onClick={addRosterStudent}>+ 加入学生</button>
             </div>
-            <div className="roster-help">神兽库有 {EcoData.PET_SPECIES.length} 种原创神兽。班级在籍名额保持 {maxActiveStudents} 位；每人拥有不同伙伴。点击「选神兽」可预览六阶外形再分配。</div>
+            <div className="roster-help">神兽库有 {EcoData.PET_SPECIES.length} 种原创神兽。班级在籍名额保持 {maxActiveStudents} 位；每人拥有不同伙伴。点击「选神兽」可预览十阶外形再分配。</div>
             {beastStudentId&&<BeastLibraryPicker state={state} setState={setState} studentId={beastStudentId} isAdmin={isAdmin} onClose={()=>setBeastStudentId(null)}/>}
             {rosterNotice && <div className="roster-notice" role="status">{rosterNotice}</div>}
 

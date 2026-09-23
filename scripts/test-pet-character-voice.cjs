@@ -111,22 +111,22 @@ test('missing owners, renamed owners and wrong gender never play someone else\'s
  assert.equal(s.audios.length,0);
 });
 
-test('all 19 owners keep recorded speech and matching subtitles across all 50 pets and six stages',()=>{
+test('all 19 owners keep recorded speech and matching subtitles across all 50 pets and ten stages',()=>{
  const s=setup(),manifest=JSON.parse(fs.readFileSync(path.join(root,'assets/voices/personalized/manifest.json'),'utf8'));
  let checked=0;
  for(const [id,owner] of Object.entries(manifest.students)){
   const voice=s.window.PetVoiceCatalog.get(owner.voiceId);
   assert.ok(owner.universal?.text.startsWith(owner.ownerName+'主人，'));
   assert.ok(fs.statSync(path.join(root,owner.universal.url)).size>1000);
-  for(const species of s.data.PET_SPECIES)for(let stage=0;stage<6;stage++){
+  for(const species of s.data.PET_SPECIES)for(let stage=0;stage<10;stage++){
    const row={id,name:owner.ownerName,pet:{voiceGender:voice.gender,voiceId:voice.id,species,displayStageIndex:stage}};
    const clip=s.pack.recording(row);assert.ok(clip,id+':'+species.id+':'+stage);
    assert.equal(clip.id,owner.voiceId);assert.equal(s.voice.line(row),clip.text);
-   assert.equal(clip.text,species.id===owner.speciesId?owner.stages[stage].text:owner.universal.text);
+   assert.equal(clip.text,species.id===owner.speciesId?owner.stages[Math.min(stage,5)].text:owner.universal.text);
    assert.equal(s.voice.speak(row),true);assert.equal(s.audios.at(-1).src,clip.url);s.voice.stop();checked++;
   }
  }
- assert.equal(checked,19*50*6);
+ assert.equal(checked,19*50*10);
 });
 
 test('stale same-gender voice settings retain the owner\'s recorded voice rather than animal calls',()=>{
