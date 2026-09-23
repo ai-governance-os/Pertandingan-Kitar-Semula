@@ -220,7 +220,8 @@ const CloudSync = {
       if (!this.pendingWrite) { this.acceptRemote(remoteState, remote.updated_at); return; }
       const sent = this.clone(this.pendingWrite);
       if (remote && sent.seed) { this.acknowledge(sent, remoteState, remote.updated_at); return; }
-      const merged = remote ? this.mergeChanges(sent.base, sent.state, remoteState) : sent.state;
+      const mergedState = remote ? this.mergeChanges(sent.base, sent.state, remoteState) : sent.state;
+      const merged = EcoData.reconcileGameAwards?.(mergedState) || mergedState;
       if (this.equal(merged, remoteState)) { this.acknowledge(sent, remoteState, remote?.updated_at); return; }
       const updatedAt = new Date(Math.max(Date.now(), (Date.parse(remote?.updated_at) || 0) + 1)).toISOString();
       const row = { data: merged, updated_at: updatedAt };

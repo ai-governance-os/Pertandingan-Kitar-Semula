@@ -1,8 +1,9 @@
 // All fifty species share the same articulated renderer, including the beetle.
 // Offscreen actors pause; only an active show renders at full frame rate.
-function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='lazy',playToken=0,onStarted,onFinished,duration=3000,motionScale=1,walking=false}){
- const image=React.useRef(null),canvas=React.useRef(null),host=React.useRef(null),callbacks=React.useRef({});
+function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='lazy',playToken=0,onStarted,onFinished,duration=3000,motionScale=1,walking=false,gameMotion='run'}){
+ const image=React.useRef(null),canvas=React.useRef(null),host=React.useRef(null),callbacks=React.useRef({}),gameMotionRef=React.useRef(gameMotion);
  callbacks.current={onStarted,onFinished};
+ gameMotionRef.current=gameMotion;
  const [ready,setReady]=React.useState(false),[playing,setPlaying]=React.useState(false);
  React.useEffect(()=>{
   const img=image.current,out=canvas.current,ctx=out?.getContext('2d');if(!ctx)return;
@@ -17,9 +18,11 @@ function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='l
    if(disposed)return;
    if(start===null){start=now;if(playToken){setPlaying(true);callbacks.current.onStarted?.();}}
    if(!finished&&now-start>=duration){finished=true;out.width=out.height=384;painted=true;setPlaying(false);callbacks.current.onFinished?.();}
-   if(now-last>=1000/(finished?(thumbnail?8:walking?12:18):30)){
+   if(now-last>=1000/(finished?(thumbnail?8:walking?(className.includes('game-beast')?24:12):18):30)){
     last=now;const t=finished?null:Math.min(1,(now-start)/duration);
     const p=PetLivingRig.pose(speciesId,stage,now/1000,t,media.matches,walking);
+    if(walking&&gameMotionRef.current==='jump'){p.step=-1.25;p.wave=.85;p.wing=1.25;p.head=-.12;}
+    if(walking&&gameMotionRef.current==='duck'){p.step=-.55;p.wave=-.35;p.head=.18;}
     if(!finished||!media.matches||p.blink>0||painted||walking){
      BeetleRig.paintFace(fc,img,rig,p);
      if(!finished)window.drawLivingPetShow(ctx,face,speciesId,stage,t,aura,media.matches,motionScale);

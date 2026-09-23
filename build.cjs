@@ -34,6 +34,7 @@ const SOURCES = [
   'pet-character-voice.js',
   'pet-owner-voice.js',
   'pet-evolution.js',
+  'pet-game-engine.js',
   // React components (JSX)
   'tweaks-panel.jsx',
   'components.jsx',
@@ -53,6 +54,7 @@ const SOURCES = [
   'pet-signature-stage.jsx',
   'pet-evolution-detail.jsx',
   'pet-view.jsx',
+  'pet-game-view.jsx',
   'reward-corner-view.jsx',
   // entry point — must come last
   'app.jsx',

@@ -221,6 +221,7 @@ function defaultState() {
     aiScans: [],
     starTypes: clone(DEFAULT_STAR_TYPES),
     starLedger: [],
+    gameRuns: [], // Runner attempts; ten runs past the fourth checkpoint grant one formal card.
     teacherQuotaDebits: [], // Positive awards removed from the visible ledger still consume quota.
     teacherQuotaResets: [], // Admin resets change allowance, never student balances.
     rewardCategories: clone(DEFAULT_REWARD_CATEGORIES),
@@ -288,6 +289,8 @@ function normalizeState(input) {
   // and the `group` field appear for existing users without wiping their saved state.
   state.starTypes = mergeStarTypes(input.starTypes);
   state.starLedger = Array.isArray(input.starLedger) ? input.starLedger : [];
+  state.gameRuns = Array.isArray(input.gameRuns) ? input.gameRuns : [];
+  state.starLedger = reconcileGameAwards(state).starLedger;
   state.teacherQuotaDebits = Array.isArray(input.teacherQuotaDebits) ? input.teacherQuotaDebits : [];
   state.teacherQuotaResets = Array.isArray(input.teacherQuotaResets) ? input.teacherQuotaResets : [];
   state.rewardCategories = mergeRewardCategories(input.rewardCategories);
@@ -794,6 +797,82 @@ function addStarEvent(state, event) {
   const next = { ...state, starLedger: [clean, ...(state.starLedger || [])] };
   save(next);
   return next;
+}
+
+const GAME_LEVEL_ID = "forest-1";
+const GAME_WINS_PER_CARD = 10;
+
+function gameProgress(state, studentId) {
+  const runs = (state.gameRuns || []).filter(run => run.studentId === studentId && run.levelId === GAME_LEVEL_ID);
+  const wins = runs.filter(run => run.checkpoints >= 4).length;
+  return { runs: runs.length, wins, progress: wins % GAME_WINS_PER_CARD, cards: Math.floor(wins / GAME_WINS_PER_CARD),
+    bestDistance: Math.max(0, ...runs.map(run => Number(run.distance) || 0)) };
+}
+
+// Recompute card milestones from unique completed runs. Stable ledger IDs make
+// a retry or a cloud merge unable to issue the same milestone twice.
+function reconcileGameAwards(state) {
+  const wins = new Map(), known = new Set((state.starLedger || []).map(event => event.id));
+  for (const win of state.gameRuns || []) {
+    if (!win?.id || win.levelId !== GAME_LEVEL_ID || !win.studentId || win.checkpoints < 4) continue;
+    if (!wins.has(win.studentId)) wins.set(win.studentId, new Map());
+    wins.get(win.studentId).set(win.id, win);
+  }
+  const awards = [];
+  for (const [studentId, unique] of wins) {
+    const memberTeam = (state.teams || []).find(team => team.members?.some(member => member.id === studentId));
+    if (!memberTeam) continue;
+    const sorted = [...unique.values()].sort((a,b) => a.ts - b.ts || a.id.localeCompare(b.id));
+    for (let milestone = 1; milestone * GAME_WINS_PER_CARD <= sorted.length; milestone++) {
+      const id = `game_card_${studentId}_${milestone}`;
+      if (known.has(id)) continue;
+      const win = sorted[milestone * GAME_WINS_PER_CARD - 1];
+      awards.push({ id, ts: win.ts, studentId, teamId: memberTeam.id, teacherId: "ECO_GAME",
+        issuedBy: win.teacherId, starType: "game", stars: 1, source: "pet-game",
+        evidenceType: "game_checkpoint", referenceId: win.id,
+        reasonZh: `绿境闯关 · 累计 ${milestone * GAME_WINS_PER_CARD} 次通关`, reasonEn: "Eco adventure milestone" });
+      known.add(id);
+    }
+  }
+  return awards.length ? { ...state, starLedger: [...awards, ...(state.starLedger || [])] } : state;
+}
+
+function recordGameRun(state, { studentId, runId, teacherId, distance, recycled, checkpoints }) {
+  const memberTeam = (state.teams || []).find(team => team.members?.some(member => member.id === studentId && member.active !== false));
+  if (!memberTeam || !teacherId || teacherId === "unknown" || !runId) return state;
+  const previous = (state.gameRuns || []).find(run => run.id === runId);
+  if (previous) {
+    if (previous.studentId !== studentId || previous.levelId !== GAME_LEVEL_ID) return state;
+    const updated = { ...previous,
+      distance: Math.max(previous.distance || 0,Math.floor(Number(distance) || 0)),
+      recycled: Math.max(previous.recycled || 0,Math.floor(Number(recycled) || 0)),
+      checkpoints: Math.max(previous.checkpoints || 0,Math.floor(Number(checkpoints) || 0)) };
+    if (updated.distance===previous.distance&&updated.recycled===previous.recycled&&updated.checkpoints===previous.checkpoints)return state;
+    const next=reconcileGameAwards({...state,gameRuns:state.gameRuns.map(run=>run.id===runId?updated:run)});
+    save(next);return next;
+  }
+  const win = { id: runId, studentId, levelId: GAME_LEVEL_ID, teacherId,
+    distance: Math.max(0, Math.min(100000, Math.floor(Number(distance) || 0))),
+    recycled: Math.max(0, Math.min(10000, Math.floor(Number(recycled) || 0))),
+    checkpoints: Math.max(0, Math.min(4, Math.floor(Number(checkpoints) || 0))), ts: Date.now() };
+  const next = reconcileGameAwards({ ...state, gameRuns: [...(state.gameRuns || []), win] });
+  save(next);
+  return next;
+}
+
+function gameLeaderboard(state, now = Date.now()) {
+  const month = teacherQuotaMonth(now), counts = new Map();
+  for (const win of state.gameRuns || []) {
+    if (win.levelId !== GAME_LEVEL_ID || teacherQuotaMonth(Number(win.ts) || 0) !== month) continue;
+    const current = counts.get(win.studentId) || { runs: 0, bestDistance: 0, recycled: 0 };
+    counts.set(win.studentId, { runs: current.runs + 1,
+      bestDistance: Math.max(current.bestDistance, Number(win.distance) || 0), recycled: current.recycled + (Number(win.recycled) || 0) });
+  }
+  const rows = (state.teams || []).flatMap(team => (team.members || []).filter(member => member.active !== false)
+    .map(member => ({ id: member.id, name: member.name, teamId: team.id, ...(counts.get(member.id) || { runs: 0, bestDistance: 0, recycled: 0 }) })));
+  rows.sort((a,b) => b.bestDistance - a.bestDistance || b.recycled - a.recycled || a.name.localeCompare(b.name));
+  const top = rows[0]?.bestDistance || 0;
+  return { month, rows, winners: top ? rows.filter(row => row.bestDistance === top).map(row => row.id) : [] };
 }
 
 function removeStarEvent(state, eventId) {
@@ -1408,6 +1487,7 @@ Object.assign(window, {
     // Pets
     petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname, setPetVoiceGender, setPetVoice,
     PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
+    gameProgress, gameLeaderboard, recordGameRun, reconcileGameAwards, GAME_WINS_PER_CARD,
     exportCSV,
     // AI scan helpers
     addAiScan, updateAiScanDecision,

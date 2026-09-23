@@ -66,6 +66,7 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
   const ALL_MODES = [
     { id: "status",  icon: "leaderboard",      zh: "战况", ms: "Status",  adminOnly: false },
     { id: "pets",    icon: "pets",             zh: "宠物", ms: "Pets",    adminOnly: false },
+    { id: "game",    icon: "sports_esports",    zh: "闯关", ms: "Game",    adminOnly: false },
     { id: "rewards", icon: "redeem",           zh: "奖品", ms: "Rewards", adminOnly: false },
     { id: "mobile",  icon: "edit_note",        zh: "记录", ms: "Input",   adminOnly: true  },
     { id: "ai",      icon: "document_scanner", zh: "AI",   ms: "AI",      adminOnly: true  },
@@ -79,6 +80,7 @@ function ModeSwitcher({ mode, setMode, authed = true, adminOnlyModes = [] }) {
           key={m.id}
           className={mode === m.id ? "active" : ""}
           onClick={() => setMode(m.id)}
+          aria-label={`${m.zh} · ${m.ms}`}
         >
           <span className="material-symbols-rounded mode-icon" aria-hidden="true">{m.icon}</span>
           <span className="mode-label">{m.zh}</span>

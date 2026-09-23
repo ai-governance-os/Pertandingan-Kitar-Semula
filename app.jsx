@@ -25,7 +25,7 @@ const ACCOUNTS = [
 const AUTH_KEY = "eco_warrior_authed_v2";
 const USER_KEY = "eco_warrior_user_v2";
 
-const PUBLIC_MODES = ["status", "pets", "rewards"];
+const PUBLIC_MODES = ["status", "pets", "game", "rewards"];
 const ADMIN_ONLY_MODES = ["mobile", "ai", "admin"];
 
 function normalizeMode(mode) {
@@ -216,6 +216,7 @@ function App() {
       {(mode === "status" || mode === "bigscreen") && <BigScreenView state={state} theme={tweaks.bigScreenTheme} />}
       {mode === "ai" && <AIScanView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
       {mode === "pets" && <PetGardenView state={state} setState={setState} authed={authed} isAdmin={isAdmin} requireAuth={requireAuth} />}
+      {mode === "game" && <PetGameView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
       {mode === "rewards" && <RewardCornerView state={state} setState={setState} authed={authed} requireAuth={requireAuth} teacherId={teacherId} />}
       {mode === "admin" && <AdminView state={state} setState={setState} authed={authed} requireAuth={requireAuth} isAdmin={isAdmin} teacherId={teacherId} teacherIds={ACCOUNTS.map(a => a.id)} />}
 
@@ -240,6 +241,7 @@ function App() {
               options={[
                 { value: "status", label: "战况" },
                 { value: "pets", label: "宠物" },
+                { value: "game", label: "闯关" },
                 { value: "rewards", label: "奖品" },
                 { value: "mobile", label: "记录" },
                 { value: "ai", label: "AI" },
