@@ -137,7 +137,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
    if(!last)last=now;const run=runRef.current,dt=Math.min(.05,(now-last)/1000);last=now;
    PetGameEngine.step(run,controls.current,dt);controls.current.jump=false;controls.current.fire=false;
    if(run.checkpoints===4&&!checkpointRecorded.current){checkpointRecorded.current=true;
-    const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:4}));
+    if(run.official){const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:4}));}
    }
    paintGame(canvasRef.current,run,background.current||{});
    const nextMotion=!run.onGround?'jump':run.duck?'duck':run.moving?'run':'idle';
@@ -150,7 +150,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
    }
    if(now-lastUi>100||run.status==='over'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:Math.max(0,run.powerExpires-run.elapsed),reason:run.reason});}
    if(run.status==='over'){
-    if(!committed.current){committed.current=true;
+    if(run.official&&!committed.current){committed.current=true;
      const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:run.checkpoints}));
     }
     setStatus('over');return;
@@ -161,10 +161,10 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
   return()=>cancelAnimationFrame(frame);
  },[status,runKey,selectedId,teacherId]);
  function start(id=selectedId){
-  if(!id||!requireAuth())return;
+  if(!id)return;
   window.PetOwnerVoice?.stop();controls.current={left:false,right:false,jump:false,duck:false,fire:false};committed.current=false;checkpointRecorded.current=false;
   const key=`forest_${id}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-  setSelectedId(id);setRunKey(key);runRef.current=PetGameEngine.create();setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,reason:''});setMotion('idle');setStatus('playing');
+  setSelectedId(id);setRunKey(key);runRef.current=PetGameEngine.create();runRef.current.official=!!authed&&teacherId!=='unknown';setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,reason:''});setMotion('idle');setStatus('playing');
   const row=EcoData.petReport(EcoData.load()).find(entry=>entry.id===id);if(row)window.PetOwnerVoice?.speak(row);
  }
  function hold(control,down){controls.current[control]=down;}
@@ -176,8 +176,8 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     <section className="game-pick"><span className="game-section-label">选择你的守护神兽</span>
      <div className="game-chooser">{report.map(row=><button type="button" key={row.id} className={selectedId===row.id?'chosen':''} onClick={()=>setSelectedId(row.id)} aria-pressed={selectedId===row.id}>
       <img src={PetEvolution.asset(row.pet.species.id,Math.max(2,row.pet.stageIndex))} alt=""/><span><b>{row.name}</b><small>{row.pet.species.zh}</small></span></button>)}</div>
-     <p className="game-pick-note">{authed?'老师已登入 · 选好神兽就能开始':'请先由老师登入，再让学生选择自己的神兽。'}</p>
-     <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>开启远征 <span>→</span></button>
+     <p className="game-pick-note">{authed?'老师已登入 · 闯关成绩和奖卡会正式记录':'可直接试玩；若要记录成绩和奖卡，请先点右上角「老师登入」。'}</p>
+     <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开启正式远征':'开始试玩'} <span>→</span></button>
     </section>
     <aside className="game-info"><span className="game-section-label">远征规则</span><h2>跑得越远，灵光越盛</h2>
      <p>按 ← → 或 A D 控制神兽前后行走；按 ↑／空格跳跃，按 ↓ 低身避开毒雾。拾取净化灵焰后，按 F 施展仙术，灵焰持续 8 秒。</p>
@@ -189,16 +189,17 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
    </div>}
    {status!=='select'&&<div className="game-session" ref={sessionRef}>
     <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>净化灵焰</small><b>{hud.power>0?`${hud.power.toFixed(1)} 秒`:'未获得'}</b></div></div>
+    {!runRef.current?.official&&<div className="game-practice-note" role="status">试玩模式 · 本局不记录排行榜和奖卡；老师登入后再开始正式闯关。</div>}
     <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label="灵溪古道闯关场景"/>
      {selected&&<div className="game-actor" ref={actorRef} data-motion={motion}>
       {crowned&&<GameCrown small/>}<LivingPetActor speciesId={selected.pet.species.id} stage={gameStage} className="game-beast" walking={status==='playing'} gameMotion={motion} loading="eager"/>
      </div>}
      {status==='over'&&<div className="game-over"><div className="game-result"><span className="game-eyebrow">远征记录</span><h2>{hud.checkpoints===4?'四座灵门已达成':'这一程，走到了这里'}</h2><p>{hud.reason} · 最远 {hud.distance} 米 · 收集 {hud.recycled} 件</p>
       <div className="game-result-actions"><button className="game-primary" onClick={()=>start()}>再闯一次</button><button onClick={()=>{window.PetOwnerVoice?.stop();setStatus('select');}}>更换神兽</button></div>
-      {hud.checkpoints===4&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>}
+      {runRef.current?.official?hud.checkpoints===4&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。</small>}
      </div></div>}
     </div>
-    <div className="game-controls"><p>{hud.checkpoints===4?'第四座灵门已达成：本局成功已计入奖卡，继续挑战最远距离！':'← → 行走　·　↑ 跳跃　·　↓ 低身　·　F 灵焰'}</p><div>
+    <div className="game-controls"><p>{hud.checkpoints===4?(runRef.current?.official?'第四座灵门已达成：本局成功已计入奖卡，继续挑战最远距离！':'已到第四座灵门！试玩成绩不计入奖卡。'):'← → 行走　·　↑ 跳跃　·　↓ 低身　·　F 灵焰'}</p><div>
      <button type="button" aria-label="向左走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('left',true);}} onPointerUp={()=>hold('left',false)} onPointerCancel={()=>hold('left',false)}><b>←</b><small>后退</small></button>
      <button type="button" aria-label="向右走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('right',true);}} onPointerUp={()=>hold('right',false)} onPointerCancel={()=>hold('right',false)}><b>→</b><small>前进</small></button>
      <button type="button" aria-label="跳跃" onPointerDown={e=>{e.preventDefault();hold('jump',true);}} onClick={()=>hold('jump',true)}><b>↑</b><small>跃起</small></button>
