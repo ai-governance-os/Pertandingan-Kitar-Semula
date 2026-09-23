@@ -16,8 +16,9 @@ function GameCrown({small=false}){
  </svg>;
 }
 
-function paintGame(canvas,run,bg){
+function paintGame(canvas,run,bg,speciesId){
  const ctx=canvas.getContext('2d'),{WIDTH,HEIGHT,GROUND,CHECKPOINTS}=PetGameEngine;
+ const skill=PetGameSkills.forSpecies(speciesId);
  ctx.clearRect(0,0,WIDTH,HEIGHT);
  if(bg.complete&&bg.naturalWidth){
   const offset=(run.cameraX*.16)%WIDTH;
@@ -35,19 +36,27 @@ function paintGame(canvas,run,bg){
  // The stone path moves under the pet; the distant forest drifts more slowly.
  const earth=ctx.createLinearGradient(0,GROUND-16,0,HEIGHT);
  earth.addColorStop(0,'rgba(156,189,142,.35)');earth.addColorStop(.17,'rgba(34,76,68,.67)');earth.addColorStop(1,'rgba(5,26,28,.93)');
- ctx.fillStyle=earth;ctx.fillRect(0,GROUND-13,WIDTH,HEIGHT-GROUND+13);
- ctx.strokeStyle='rgba(224,238,184,.45)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,GROUND-12);ctx.lineTo(WIDTH,GROUND-12);ctx.stroke();
+ ctx.fillStyle='rgba(1,12,20,.93)';ctx.fillRect(0,GROUND-13,WIDTH,HEIGHT-GROUND+13);
+ let edge=0;
+ for(const pit of run.pits){const left=pit.start-cam,right=pit.end-cam;if(right<0||left>WIDTH)continue;
+  const end=Math.max(0,Math.min(WIDTH,left));if(end>edge){ctx.fillStyle=earth;ctx.fillRect(edge,GROUND-13,end-edge,HEIGHT-GROUND+13);ctx.strokeStyle='rgba(224,238,184,.45)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(edge,GROUND-12);ctx.lineTo(end,GROUND-12);ctx.stroke();}
+  edge=Math.max(edge,Math.min(WIDTH,right));
+  const abyss=ctx.createLinearGradient(0,GROUND-12,0,HEIGHT);abyss.addColorStop(0,'rgba(18,73,78,.6)');abyss.addColorStop(1,'rgba(0,4,15,.98)');ctx.fillStyle=abyss;ctx.fillRect(Math.max(0,left),GROUND-12,Math.min(WIDTH,right)-Math.max(0,left),HEIGHT-GROUND+12);
+  for(const side of [left,right]){if(side<0||side>WIDTH)continue;ctx.save();ctx.shadowColor='#b0ffee';ctx.shadowBlur=25;ctx.strokeStyle='#a1e8d5';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(side,GROUND-24);ctx.lineTo(side,HEIGHT);ctx.stroke();ctx.restore();}
+  const warning=left-125;if(warning>-100&&warning<WIDTH){ctx.save();ctx.fillStyle='#ffe5a3';ctx.shadowColor='#ffe5a3';ctx.shadowBlur=12;ctx.font='bold 18px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText('⚠ 山崖 · 助跑飞跃',warning,GROUND-55);ctx.restore();}
+ }
+ if(edge<WIDTH){ctx.fillStyle=earth;ctx.fillRect(edge,GROUND-13,WIDTH-edge,HEIGHT-GROUND+13);ctx.strokeStyle='rgba(224,238,184,.45)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(edge,GROUND-12);ctx.lineTo(WIDTH,GROUND-12);ctx.stroke();}
  for(let i=Math.floor(cam/132)-1;i<Math.floor((cam+WIDTH)/132)+2;i++){
-  const x=i*132-cam;ctx.fillStyle=i%3?'rgba(195,203,159,.17)':'rgba(228,215,160,.24)';
+  const x=i*132-cam;if(PetGameEngine.pitAt(i*132+55,run.pits))continue;ctx.fillStyle=i%3?'rgba(195,203,159,.17)':'rgba(228,215,160,.24)';
   ctx.beginPath();ctx.ellipse(x+55,GROUND+10+(i%2)*15,46,5,-.07,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='rgba(105,202,162,.18)';ctx.beginPath();ctx.ellipse(x+14,GROUND-13,9,3,0,0,Math.PI*2);ctx.fill();
  }
  const aura=ctx.createRadialGradient(run.x-cam,run.feet-65,18,run.x-cam,run.feet-65,145);
- aura.addColorStop(0,run.powerExpires>run.elapsed?'rgba(112,255,215,.24)':'rgba(243,226,164,.12)');
+ aura.addColorStop(0,run.powerExpires>run.elapsed?skill.primary+'55':'rgba(243,226,164,.12)');
  aura.addColorStop(1,'rgba(38,122,108,0)');ctx.fillStyle=aura;ctx.fillRect(run.x-cam-145,run.feet-210,290,290);
  if(run.powerExpires>run.elapsed){
   const x=run.x-cam,y=run.feet-72,phase=run.elapsed*3;
-  ctx.save();ctx.strokeStyle='rgba(156,255,223,.56)';ctx.shadowColor='#9affdc';ctx.shadowBlur=22;ctx.lineWidth=3;
+  ctx.save();ctx.strokeStyle=skill.primary;ctx.globalAlpha=.56;ctx.shadowColor=skill.primary;ctx.shadowBlur=22;ctx.lineWidth=3;
   ctx.beginPath();ctx.ellipse(x,y,76,95,phase*.15,phase,phase+Math.PI*1.4);ctx.stroke();
   ctx.beginPath();ctx.ellipse(x,y,87,104,-phase*.12,-phase,-phase+Math.PI);ctx.stroke();ctx.restore();
  }
@@ -70,7 +79,7 @@ function paintGame(canvas,run,bg){
   if(item.kind==='power'){
    ctx.save();ctx.shadowColor='#a5ffe5';ctx.shadowBlur=30;
    const flame=ctx.createRadialGradient(x,item.y,1,x,item.y,29);flame.addColorStop(0,'#fffadc');flame.addColorStop(.35,'#8ef5dc');flame.addColorStop(1,'rgba(12,119,106,0)');
-   ctx.fillStyle=flame;ctx.beginPath();ctx.arc(x,item.y,30,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f4fff8';ctx.font='bold 29px serif';ctx.textAlign='center';ctx.fillText('✦',x,item.y+10);ctx.shadowBlur=0;ctx.font='700 13px Nunito,sans-serif';ctx.fillText('灵焰',x,item.y-35);ctx.restore();
+   ctx.fillStyle=flame;ctx.beginPath();ctx.arc(x,item.y,30,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f4fff8';ctx.font='bold 29px serif';ctx.textAlign='center';ctx.fillText('✦',x,item.y+10);ctx.shadowBlur=0;ctx.font='700 13px Nunito,sans-serif';ctx.fillText('灵核',x,item.y-35);ctx.restore();
   }else if(item.kind==='recycle'){
    const g=ctx.createRadialGradient(x,item.y,3,x,item.y,43);g.addColorStop(0,'rgba(181,255,222,.78)');g.addColorStop(1,'rgba(50,233,187,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,item.y,43,0,Math.PI*2);ctx.fill();
    const index={'纸张':'paper','铝罐':'aluminum','纸箱':'cardboard','塑料瓶':'plastic'}[item.label],image=GAME_RECYCLE_IMAGES.find(entry=>entry.id===index)?.image;
@@ -90,26 +99,21 @@ function paintGame(canvas,run,bg){
   ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=spark.color;ctx.shadowColor=spark.color;ctx.shadowBlur=18;
   ctx.beginPath();ctx.arc(spark.x-cam,spark.y,Math.max(.5,spark.size*alpha),0,Math.PI*2);ctx.fill();ctx.restore();
  }
- if(run.flash>0){
-  const alpha=Math.min(1,run.flash*2.4),from=run.x-cam+run.facing*35,to=run.blastX-cam;
-  ctx.save();ctx.globalAlpha=alpha;ctx.shadowColor='#9effdc';ctx.shadowBlur=38;ctx.strokeStyle='#d7fff3';ctx.lineWidth=11;ctx.lineCap='round';
-  ctx.beginPath();ctx.moveTo(from,run.feet-72);ctx.quadraticCurveTo((from+to)/2,run.feet-160,to,run.blastY);ctx.stroke();
-  ctx.strokeStyle='#71e5c2';ctx.lineWidth=30;ctx.globalAlpha=alpha*.32;ctx.stroke();
-  ctx.globalAlpha=alpha;ctx.strokeStyle='#fff4be';ctx.lineWidth=4;
-  for(let radius=18;radius<90;radius+=26){ctx.beginPath();ctx.arc(to,run.blastY,radius*(1-run.flash),0,Math.PI*2);ctx.stroke();}
-  ctx.restore();
- }
- if(run.pickupFlash>0){ctx.save();ctx.globalAlpha=run.pickupFlash*.36;ctx.fillStyle='#caffdf';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.restore();}
+ PetGameSkills.paint(ctx,run,cam,speciesId);
+ if(run.pickupFlash>0){const power=run.pickupKind==='power',x=run.pickupX-cam,y=run.pickupY,t=1-run.pickupFlash/(power?.7:.45);ctx.save();ctx.globalAlpha=run.pickupFlash*.27;ctx.fillStyle=power?'#8fffe1':'#ffe3a3';ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.globalAlpha=Math.min(1,run.pickupFlash*2);ctx.strokeStyle=power?'#b5fff2':'#ffe8ab';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=30;ctx.lineWidth=6;ctx.beginPath();ctx.arc(x,y,28+t*100,0,Math.PI*2);ctx.stroke();ctx.font='bold 25px Nunito,sans-serif';ctx.textAlign='center';ctx.fillText(power?'灵核觉醒！':'回收成功！',x,y-70-t*30);ctx.restore();}
+ if(run.impactFlash>0){const t=1-run.impactFlash/.7,x=run.impactX-cam,y=run.impactY;ctx.save();ctx.globalAlpha=run.impactFlash*.4;ctx.fillStyle=run.impactColor;ctx.fillRect(0,0,WIDTH,HEIGHT);ctx.globalAlpha=Math.min(1,run.impactFlash*2);ctx.strokeStyle=run.impactColor;ctx.shadowColor=run.impactColor;ctx.shadowBlur=38;ctx.lineWidth=9;for(let j=0;j<2;j++){ctx.beginPath();ctx.arc(x,y,30+t*(95+j*75),0,Math.PI*2);ctx.stroke();}ctx.restore();}
 }
 
 function PetGameView({state,setState,authed,requireAuth,teacherId}){
  const {useState,useEffect,useRef}=React;
  const [selectedId,setSelectedId]=useState(''),[runKey,setRunKey]=useState(''),[status,setStatus]=useState('select');
- const [hud,setHud]=useState({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,reason:''});
+ const [hud,setHud]=useState({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,reason:''});
+ const [muted,setMuted]=useState(false);
  const [motion,setMotion]=useState('run');
  const canvasRef=useRef(null),actorRef=useRef(null),sessionRef=useRef(null),runRef=useRef(null),controls=useRef({left:false,right:false,jump:false,duck:false,fire:false}),committed=useRef(false),checkpointRecorded=useRef(false);
  const background=useRef(null);
  const report=EcoData.petReport(state),selected=report.find(row=>row.id===selectedId);
+ const skill=PetGameSkills.forSpecies(selected?.pet.species.id);
  const board=EcoData.gameLeaderboard(state),progress=selected?EcoData.gameProgress(state,selected.id):null;
  const crowned=selected&&board.winners.includes(selected.id);
  useEffect(()=>{document.body.classList.add('game-active');return()=>document.body.classList.remove('game-active');},[]);
@@ -136,10 +140,11 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
   const loop=now=>{
    if(!last)last=now;const run=runRef.current,dt=Math.min(.05,(now-last)/1000);last=now;
    PetGameEngine.step(run,controls.current,dt);controls.current.jump=false;controls.current.fire=false;
+   for(const event of run.soundEvents.splice(0))window.PetGameAudio?.play(event,run.skillSpeciesId);
    if(run.checkpoints===4&&!checkpointRecorded.current){checkpointRecorded.current=true;
     if(run.official){const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:4}));}
    }
-   paintGame(canvasRef.current,run,background.current||{});
+   paintGame(canvasRef.current,run,background.current||{},run.skillSpeciesId);
    const nextMotion=!run.onGround?'jump':run.duck?'duck':run.moving?'run':'idle';
    if(nextMotion!==previousMotion){previousMotion=nextMotion;setMotion(nextMotion);}
    if(actorRef.current){
@@ -148,12 +153,12 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     actorRef.current.style.setProperty('--game-facing',run.facing);
     actorRef.current.dataset.motion=nextMotion;
    }
-   if(now-lastUi>100||run.status==='over'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:Math.max(0,run.powerExpires-run.elapsed),reason:run.reason});}
+   if(now-lastUi>100||run.status==='over'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:Math.max(0,run.powerExpires-run.elapsed),runup:run.runup,cliff:(run.pits.find(pit=>pit.start>run.x)?.start??Infinity)-run.x,reason:run.reason});}
    if(run.status==='over'){
     if(run.official&&!committed.current){committed.current=true;
      const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:run.checkpoints}));
     }
-    setStatus('over');return;
+    setTimeout(()=>{if(runRef.current===run)setStatus('over');},420);return;
    }
    frame=requestAnimationFrame(loop);
   };
@@ -162,10 +167,13 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
  },[status,runKey,selectedId,teacherId]);
  function start(id=selectedId){
   if(!id)return;
-  window.PetOwnerVoice?.stop();controls.current={left:false,right:false,jump:false,duck:false,fire:false};committed.current=false;checkpointRecorded.current=false;
+  window.PetOwnerVoice?.stop();window.PetGameAudio?.unlock();controls.current={left:false,right:false,jump:false,duck:false,fire:false};committed.current=false;checkpointRecorded.current=false;
   const key=`forest_${id}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-  setSelectedId(id);setRunKey(key);runRef.current=PetGameEngine.create();runRef.current.official=!!authed&&teacherId!=='unknown';setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,reason:''});setMotion('idle');setStatus('playing');
-  const row=EcoData.petReport(EcoData.load()).find(entry=>entry.id===id);if(row)window.PetOwnerVoice?.speak(row);
+  setSelectedId(id);setRunKey(key);runRef.current=PetGameEngine.create();runRef.current.official=!!authed&&teacherId!=='unknown';setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,reason:''});setMotion('idle');setStatus('playing');
+  const row=EcoData.petReport(EcoData.load()).find(entry=>entry.id===id);
+  runRef.current.skillSpeciesId=row?.pet.species.id;
+  runRef.current.skillColor=PetGameSkills.forSpecies(runRef.current.skillSpeciesId).primary;
+  if(row)window.PetOwnerVoice?.speak(row);
  }
  function hold(control,down){controls.current[control]=down;}
  const gameStage=selected?Math.max(2,selected.pet.stageIndex):2;
@@ -176,11 +184,12 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     <section className="game-pick"><span className="game-section-label">选择你的守护神兽</span>
      <div className="game-chooser">{report.map(row=><button type="button" key={row.id} className={selectedId===row.id?'chosen':''} onClick={()=>setSelectedId(row.id)} aria-pressed={selectedId===row.id}>
       <img src={PetEvolution.asset(row.pet.species.id,Math.max(2,row.pet.stageIndex))} alt=""/><span><b>{row.name}</b><small>{row.pet.species.zh}</small></span></button>)}</div>
+     {selected&&<div className="game-skill-preview"><span>专属特技</span><strong style={{color:skill.primary}}>{skill.name}</strong><small>拾取灵核后可释放 8 秒</small></div>}
      <p className="game-pick-note">{authed?'老师已登入 · 闯关成绩和奖卡会正式记录':'可直接试玩；若要记录成绩和奖卡，请先点右上角「老师登入」。'}</p>
      <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开启正式远征':'开始试玩'} <span>→</span></button>
     </section>
     <aside className="game-info"><span className="game-section-label">远征规则</span><h2>跑得越远，灵光越盛</h2>
-     <p>按 ← → 或 A D 控制神兽前后行走；按 ↑／空格跳跃，按 ↓ 低身避开毒雾。拾取净化灵焰后，按 F 施展仙术，灵焰持续 8 秒。</p>
+     <p>按 ← → 或 A D 控制神兽前后行走；点 ↑／空格便会顺势向前跃进。山崖前先向右助跑，再点飞跃才能跨过。按 ↓ 低身避开毒雾。拾取灵核后，按 F 释放该神兽的专属特技，持续 8 秒。</p>
      <div className="game-checkpoints">{PetGameEngine.CHECKPOINTS.map((at,i)=><span key={at}><b>0{i+1}</b><small>{at} 米</small></span>)}</div>
      <p>四座灵门沿古道排列，障碍之间留有探索空间。抵达第 4 个检查点算一次成功；累计 10 次成功，自动获得 1 张正式奖卡。</p>
      {progress&&<div className="game-progress">{selected.name} · 已成功 {progress.wins} 次　·　下张奖卡 {progress.progress}/10</div>}
@@ -188,13 +197,14 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     </aside>
    </div>}
    {status==='select'&&<div className="game-mobile-start">
-    <div><small>{authed?'正式闯关 · 计入奖卡':'试玩 · 不计奖卡'}</small><strong>{selected?.name||'先选择一位学生的神兽'}</strong></div>
+    <div><small>{(authed?'正式闯关':'试玩')+' · '+(selected?skill.name:'先选神兽')}</small><strong>{selected?.name||'先选择一位学生的神兽'}</strong></div>
     <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开始闯关':'开始试玩'} <span>→</span></button>
    </div>}
    {status!=='select'&&<div className="game-session" ref={sessionRef}>
-    <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>净化灵焰</small><b>{hud.power>0?`${hud.power.toFixed(1)} 秒`:'未获得'}</b></div></div>
+    <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>{skill.name}</small><b>{hud.power>0?`${hud.power.toFixed(1)} 秒`:'未获得'}</b></div></div>
     {!runRef.current?.official&&<div className="game-practice-note" role="status">试玩模式 · 本局不记录排行榜和奖卡；老师登入后再开始正式闯关。</div>}
     <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label="灵溪古道闯关场景"/>
+     {status==='playing'&&<div className={hud.cliff<350?'game-runup near-cliff':'game-runup'} aria-label={'助跑蓄力 '+Math.round(hud.runup*100)+'%'}><span>{hud.cliff<350?'山崖 '+Math.max(0,Math.round(hud.cliff))+' 米 · '+(hud.runup>.75?'点飞跃':'先助跑'):hud.runup>.88?'蓄力完成 · 点飞跃':'助跑蓄力'}</span><i><b style={{width:Math.round(hud.runup*100)+'%'}}/></i></div>}
      {selected&&<div className="game-actor" ref={actorRef} data-motion={motion}>
       {crowned&&<GameCrown small/>}<LivingPetActor speciesId={selected.pet.species.id} stage={gameStage} className="game-beast" walking={status==='playing'} gameMotion={motion} loading="eager"/>
      </div>}
@@ -203,12 +213,12 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
       {runRef.current?.official?hud.checkpoints===4&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。</small>}
      </div></div>}
     </div>
-    <div className="game-controls"><p>{hud.checkpoints===4?(runRef.current?.official?'第四座灵门已达成：本局成功已计入奖卡，继续挑战最远距离！':'已到第四座灵门！试玩成绩不计入奖卡。'):'← → 行走　·　↑ 跳跃　·　↓ 低身　·　F 灵焰'}</p><div>
+    <div className="game-controls"><p>{hud.checkpoints===4?(runRef.current?.official?'第四座灵门已达成：本局成功已计入奖卡，继续挑战最远距离！':'已到第四座灵门！试玩成绩不计入奖卡。'):'← → 行走　·　山崖前助跑再点 ↑ 飞跃　·　↓ 低身　·　F 特技'} <button type="button" className="game-sound" aria-label={muted?'开启游戏音效':'静音游戏音效'} onClick={()=>setMuted(window.PetGameAudio?.toggle()||false)}>{muted?'🔇':'🔊'}</button></p><div>
      <button type="button" aria-label="向左走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('left',true);}} onPointerUp={()=>hold('left',false)} onPointerCancel={()=>hold('left',false)}><b>←</b><small>后退</small></button>
      <button type="button" aria-label="向右走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('right',true);}} onPointerUp={()=>hold('right',false)} onPointerCancel={()=>hold('right',false)}><b>→</b><small>前进</small></button>
-     <button type="button" aria-label="跳跃" onPointerDown={e=>{e.preventDefault();hold('jump',true);}} onClick={()=>hold('jump',true)}><b>↑</b><small>跃起</small></button>
+     <button type="button" aria-label="向前跃进" onPointerDown={e=>{e.preventDefault();hold('jump',true);}} onClick={()=>hold('jump',true)}><b>↑</b><small>飞跃</small></button>
      <button type="button" aria-label="低身" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('duck',true);}} onPointerUp={()=>hold('duck',false)} onPointerCancel={()=>hold('duck',false)}><b>↓</b><small>低身</small></button>
-     <button type="button" aria-label="净化灵焰" disabled={hud.power<=0} onPointerDown={e=>{e.preventDefault();hold('fire',true);}} onClick={()=>hold('fire',true)}><b>✦</b><small>灵焰</small></button>
+     <button type="button" aria-label={skill.name} title={skill.name} disabled={hud.power<=0} onPointerDown={e=>{e.preventDefault();hold('fire',true);}} onClick={()=>hold('fire',true)}><b>✦</b><small>{skill.short}</small></button>
     </div></div>
    </div>}
    <section className="game-leaderboard"><div className="game-board-head"><GameCrown small/><div><h2>绿境闯关王</h2><p>{board.month} · 按最远距离排名</p></div></div>

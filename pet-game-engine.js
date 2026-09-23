@@ -1,14 +1,16 @@
 // The pet moves through the level under player control; the camera follows.
 window.PetGameEngine=(()=>{
  const WIDTH=960,HEIGHT=540,GROUND=440,CHECKPOINTS=[800,1600,2400,3200];
+ const PITS=[{start:1180,end:1435},{start:2180,end:2450},{start:3580,end:3870}];
  const RECYCLABLES=['纸张','铝罐','纸箱','塑料瓶'];
  const HAZARDS=[{label:'有毒液体',kind:'ground'},{label:'脏纸巾',kind:'ground'},{label:'废气团',kind:'overhead'}];
  function random(run){run.seed=(Math.imul(run.seed,1664525)+1013904223)>>>0;return run.seed/4294967296;}
  function create(seed=Date.now()){
-  return {seed:seed>>>0,x:130,cameraX:0,facing:1,feet:GROUND,vy:0,onGround:true,duck:false,moving:false,speed:285,distance:0,
+  return {seed:seed>>>0,x:130,cameraX:0,facing:1,leapDirection:0,leapSpeed:285,runup:0,falling:false,pits:PITS,feet:GROUND,vy:0,onGround:true,duck:false,moving:false,speed:285,distance:0,
    recycled:0,destroyed:0,checkpoints:0,status:'playing',reason:'',objects:[],nextObjectX:460,lastHazardX:-1000,
-   elapsed:0,powerExpires:0,fireCooldown:0,flash:0,blastX:0,blastY:0,sparkles:[],pickupFlash:0,stepTrail:0};
+   elapsed:0,powerExpires:0,fireCooldown:0,flash:0,blastX:0,blastY:0,sparkles:[],pickupFlash:0,pickupKind:'',pickupX:0,pickupY:0,impactFlash:0,impactX:0,impactY:0,impactColor:'#ff9a71',stepTrail:0,soundEvents:[]};
  }
+ function pitAt(x,pits=PITS){return pits.find(pit=>x>=pit.start&&x<=pit.end);}
  function burst(run,x,y,color,count=16){
   for(let i=0;i<count;i++){
    const a=random(run)*Math.PI*2,force=55+random(run)*190,life=.35+random(run)*.45;
@@ -18,8 +20,10 @@ window.PetGameEngine=(()=>{
  }
  function populate(run){
   while(run.nextObjectX<run.x+1250){
+   const cliff=run.pits.find(pit=>run.nextObjectX>=pit.start-280&&run.nextObjectX<=pit.end+110);
+   if(cliff){run.nextObjectX=cliff.end+140;continue;}
    const roll=random(run),kind=run.nextObjectX===460||roll<.13?'power':roll<.72?'recycle':run.nextObjectX-run.lastHazardX<850?'recycle':random(run)<.63?'ground':'overhead';
-   const choices=kind==='power'?['净化灵焰']:kind==='recycle'?RECYCLABLES:HAZARDS.filter(item=>item.kind===kind);
+   const choices=kind==='power'?['灵核']:kind==='recycle'?RECYCLABLES:HAZARDS.filter(item=>item.kind===kind);
    const pick=choices[Math.floor(random(run)*choices.length)];
    const item=typeof pick==='string'?{label:pick}:pick;
    if(kind==='ground'||kind==='overhead')run.lastHazardX=run.nextObjectX;
@@ -32,50 +36,58 @@ window.PetGameEngine=(()=>{
   if(run.status!=='playing')return run;
   const dt=Math.max(0,Math.min(.05,elapsed));
   run.elapsed+=dt;run.fireCooldown=Math.max(0,run.fireCooldown-dt);run.flash=Math.max(0,run.flash-dt);
-  run.pickupFlash=Math.max(0,run.pickupFlash-dt);
+  run.pickupFlash=Math.max(0,run.pickupFlash-dt);run.impactFlash=Math.max(0,run.impactFlash-dt);
   for(const spark of run.sparkles){spark.x+=spark.vx*dt;spark.y+=spark.vy*dt;spark.vy+=155*dt;spark.life-=dt;}
   run.sparkles=run.sparkles.filter(spark=>spark.life>0);
   const direction=Number(!!right)-Number(!!left);
-  run.moving=direction!==0;
   if(direction)run.facing=direction;
-  run.speed=Math.min(335,285+run.distance*.012);
-  run.x=Math.max(100,run.x+direction*run.speed*dt*(duck&&run.onGround ? .48 : 1));
+  if(run.onGround)run.runup=direction===1?Math.min(1,run.runup+dt*.88):Math.max(0,run.runup-dt*.5);
+  const groundSpeed=Math.min(335,285+run.distance*.012)+run.runup*35;
+  if(jump&&run.onGround){run.vy=-690;run.onGround=false;run.leapDirection=direction||run.facing;
+   run.leapSpeed=groundSpeed+run.runup*100;run.runup=0;run.soundEvents.push('jump');
+   burst(run,run.x,GROUND-18,'#d5f6ca',8);}
+  if(direction&&!run.onGround)run.leapDirection=direction;
+  const moveDirection=direction||(!run.onGround?run.leapDirection:0);
+  run.moving=moveDirection!==0;
+  run.speed=run.onGround?groundSpeed:Math.max(groundSpeed,run.leapSpeed);
+  run.x=Math.max(100,run.x+moveDirection*run.speed*dt*(duck&&run.onGround ? .48 : 1));
   run.distance=Math.max(run.distance,Math.floor(run.x-100));
   run.stepTrail=run.moving&&run.onGround?run.stepTrail+dt:0;
   if(run.stepTrail>.18){run.stepTrail=0;burst(run,run.x-run.facing*27,GROUND-8,'#a7f0d2',3);}
-  if(jump&&run.onGround){run.vy=-690;run.onGround=false;burst(run,run.x,GROUND-18,'#d5f6ca',8);}
   run.duck=!!duck&&run.onGround;
+  if(run.onGround&&pitAt(run.x,run.pits)){run.onGround=false;run.falling=true;run.vy=80;run.soundEvents.push('fall');}
   if(!run.onGround){run.vy+=1720*dt*(duck?1.55:1);run.feet+=run.vy*dt;
-   if(run.feet>=GROUND){run.feet=GROUND;run.vy=0;run.onGround=true;burst(run,run.x,GROUND-8,'#c9eccc',10);}}
+   if(run.feet>=GROUND&&!pitAt(run.x,run.pits)){run.feet=GROUND;run.vy=0;run.onGround=true;run.falling=false;run.leapDirection=0;burst(run,run.x,GROUND-8,'#c9eccc',10);}
+   else if(run.feet>HEIGHT+75){run.status='over';run.reason='坠入山崖';run.soundEvents.push('hit');}}
   const cameraTarget=Math.max(0,run.x-315);
   run.cameraX+=(cameraTarget-run.cameraX)*Math.min(1,dt*5.5);
   populate(run);
   if(fire&&run.powerExpires>run.elapsed&&run.fireCooldown===0){
-   run.fireCooldown=.48;run.flash=.45;
+   run.fireCooldown=.48;run.flash=.72;run.soundEvents.push('cast');
    const targets=run.objects.filter(item=>!item.passed&&['ground','overhead'].includes(item.kind))
     .map(item=>({item,gap:(item.x-run.x)*run.facing})).filter(({gap})=>gap>0&&gap<350).sort((a,b)=>a.gap-b.gap);
    const target=targets[0]?.item;
    run.blastX=target?.x??run.x+run.facing*290;run.blastY=target?.y??360;
-   burst(run,run.x+run.facing*75,run.feet-80,'#aeffe9',14);
-   if(target){target.passed=true;run.destroyed++;burst(run,target.x,target.y,'#ffe2a1',30);}
+   burst(run,run.x+run.facing*75,run.feet-80,run.skillColor||'#aeffe9',22);
+   if(target){target.passed=true;run.destroyed++;run.soundEvents.push('destroy');run.impactFlash=.65;run.impactX=target.x;run.impactY=target.y;run.impactColor=run.skillColor||'#ffe2a1';burst(run,target.x,target.y,run.impactColor,36);}
   }
   run.objects=run.objects.filter(item=>item.x>run.cameraX-170);
   for(const item of run.objects){
    if(item.passed||Math.abs(item.x-run.x)>36)continue;
    if(item.kind==='power'){
-    item.passed=true;run.powerExpires=run.elapsed+8;run.pickupFlash=.7;burst(run,item.x,item.y,'#aaffdd',25);
+    item.passed=true;run.powerExpires=run.elapsed+8;run.pickupFlash=.7;run.pickupKind='power';run.pickupX=item.x;run.pickupY=item.y;run.soundEvents.push('power');burst(run,item.x,item.y,'#aaffdd',25);
    }else if(item.kind==='recycle'){
     const reach=item.y===332?Math.abs(run.feet-330)<72:run.feet>350;
-    if(reach){item.passed=true;run.recycled++;run.pickupFlash=.35;burst(run,item.x,item.y,'#fce8a4',14);}
+    if(reach){item.passed=true;run.recycled++;run.pickupFlash=.45;run.pickupKind='recycle';run.pickupX=item.x;run.pickupY=item.y;run.soundEvents.push('recycle');burst(run,item.x,item.y,'#fce8a4',18);}
    }else if(item.kind==='ground'?run.feet>385:!run.duck&&run.feet>370){
     run.status='over';run.reason=(item.kind==='ground'?'碰到':'撞上')+item.label;
-    burst(run,run.x,run.feet-72,'#ff8c73',30);break;
+    run.soundEvents.push('hit');run.impactFlash=.7;run.impactX=run.x;run.impactY=run.feet-72;run.impactColor='#ff8c73';burst(run,run.x,run.feet-72,'#ff8c73',30);break;
    }
   }
   while(run.checkpoints<CHECKPOINTS.length&&run.distance>=CHECKPOINTS[run.checkpoints]){
-   run.checkpoints++;burst(run,CHECKPOINTS[run.checkpoints-1]+100,GROUND-120,'#d4ffd8',30);
+   run.checkpoints++;run.soundEvents.push('checkpoint');burst(run,CHECKPOINTS[run.checkpoints-1]+100,GROUND-120,'#d4ffd8',30);
   }
   return run;
  }
- return {WIDTH,HEIGHT,GROUND,CHECKPOINTS,create,step};
+ return {WIDTH,HEIGHT,GROUND,CHECKPOINTS,PITS,pitAt,create,step};
 })();
