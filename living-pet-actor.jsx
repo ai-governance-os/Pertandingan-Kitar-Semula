@@ -21,6 +21,7 @@ function LivingPetActor({speciesId,stage,className='',alt='',style={},loading='l
    if(now-last>=1000/(finished?(thumbnail?8:walking?(className.includes('game-beast')?24:12):18):30)){
     last=now;const t=finished?null:Math.min(1,(now-start)/duration);
     const p=PetLivingRig.pose(speciesId,stage,now/1000,t,media.matches,walking);
+    if(walking&&gameMotionRef.current==='idle'){p.step=0;p.wave=0;p.wing=.08;}
     if(walking&&gameMotionRef.current==='jump'){p.step=-1.25;p.wave=.85;p.wing=1.25;p.head=-.12;}
     if(walking&&gameMotionRef.current==='duck'){p.step=-.55;p.wave=-.35;p.head=.18;}
     if(!finished||!media.matches||p.blink>0||painted||walking){

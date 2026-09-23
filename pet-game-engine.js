@@ -1,54 +1,80 @@
-// Forest runner rules. Coordinates use a fixed 960×540 world; CSS scales it
-// for phones without changing hitboxes. The world scrolls beneath the pet.
+// The pet moves through the level under player control; the camera follows.
 window.PetGameEngine=(()=>{
  const WIDTH=960,HEIGHT=540,GROUND=440,CHECKPOINTS=[800,1600,2400,3200];
- const RECYCLABLES=[{label:'纸张',icon:'📄'},{label:'铝罐',icon:'🥫'},{label:'纸箱',icon:'📦'},{label:'塑料瓶',icon:'🧴'}];
- const HAZARDS=[{label:'有毒液体',icon:'☣️',kind:'ground'},{label:'脏纸巾',icon:'🗑️',kind:'ground'},{label:'废气团',icon:'💨',kind:'overhead'}];
+ const RECYCLABLES=['纸张','铝罐','纸箱','塑料瓶'];
+ const HAZARDS=[{label:'有毒液体',kind:'ground'},{label:'脏纸巾',kind:'ground'},{label:'废气团',kind:'overhead'}];
  function random(run){run.seed=(Math.imul(run.seed,1664525)+1013904223)>>>0;return run.seed/4294967296;}
  function create(seed=Date.now()){
-  return {seed:seed>>>0,x:100,feet:GROUND,vy:0,onGround:true,duck:false,speed:215,distance:0,
-   recycled:0,destroyed:0,checkpoints:0,status:'playing',reason:'',objects:[],nextObjectX:350,
-   elapsed:0,powerExpires:0,fireCooldown:0,flash:0};
+  return {seed:seed>>>0,x:130,cameraX:0,facing:1,feet:GROUND,vy:0,onGround:true,duck:false,moving:false,speed:285,distance:0,
+   recycled:0,destroyed:0,checkpoints:0,status:'playing',reason:'',objects:[],nextObjectX:460,lastHazardX:-1000,
+   elapsed:0,powerExpires:0,fireCooldown:0,flash:0,blastX:0,blastY:0,sparkles:[],pickupFlash:0,stepTrail:0};
+ }
+ function burst(run,x,y,color,count=16){
+  for(let i=0;i<count;i++){
+   const a=random(run)*Math.PI*2,force=55+random(run)*190,life=.35+random(run)*.45;
+   run.sparkles.push({x,y,vx:Math.cos(a)*force,vy:Math.sin(a)*force-50,life,maxLife:life,size:2+random(run)*5,color});
+  }
+  if(run.sparkles.length>90)run.sparkles.splice(0,run.sparkles.length-90);
  }
  function populate(run){
-  while(run.nextObjectX<run.x+1200){
-   const roll=random(run),kind=run.nextObjectX===350||roll<.095?'power':roll<.53?'recycle':roll<.79?'ground':'overhead';
-   const choices=kind==='power'?[{label:'净化灵焰',icon:'✧'}]:kind==='recycle'?RECYCLABLES:HAZARDS.filter(item=>item.kind===kind);
-   const item=choices[Math.floor(random(run)*choices.length)];
-   run.objects.push({x:run.nextObjectX,kind,label:item.label,icon:item.icon,
-    y:kind==='overhead'?354:kind==='recycle'&&(random(run)<.36)?340:405,passed:false});
-   run.nextObjectX+=245+Math.floor(random(run)*110);
+  while(run.nextObjectX<run.x+1250){
+   const roll=random(run),kind=run.nextObjectX===460||roll<.13?'power':roll<.72?'recycle':run.nextObjectX-run.lastHazardX<850?'recycle':random(run)<.63?'ground':'overhead';
+   const choices=kind==='power'?['净化灵焰']:kind==='recycle'?RECYCLABLES:HAZARDS.filter(item=>item.kind===kind);
+   const pick=choices[Math.floor(random(run)*choices.length)];
+   const item=typeof pick==='string'?{label:pick}:pick;
+   if(kind==='ground'||kind==='overhead')run.lastHazardX=run.nextObjectX;
+   run.objects.push({x:run.nextObjectX,kind,label:item.label,
+    y:kind==='overhead'?352:kind==='recycle'&&random(run)<.3?332:405,passed:false});
+   run.nextObjectX+=440+Math.floor(random(run)*230);
   }
  }
- function step(run,{jump=false,duck=false,fire=false}={},elapsed=1/60){
+ function step(run,{left=false,right=false,jump=false,duck=false,fire=false}={},elapsed=1/60){
   if(run.status!=='playing')return run;
   const dt=Math.max(0,Math.min(.05,elapsed));
   run.elapsed+=dt;run.fireCooldown=Math.max(0,run.fireCooldown-dt);run.flash=Math.max(0,run.flash-dt);
-  run.speed=Math.min(575,215+run.distance*.07);
-  run.x+=run.speed*dt;run.distance=Math.floor(run.x-100);
-  if(jump&&run.onGround){run.vy=-620;run.onGround=false;}
+  run.pickupFlash=Math.max(0,run.pickupFlash-dt);
+  for(const spark of run.sparkles){spark.x+=spark.vx*dt;spark.y+=spark.vy*dt;spark.vy+=155*dt;spark.life-=dt;}
+  run.sparkles=run.sparkles.filter(spark=>spark.life>0);
+  const direction=Number(!!right)-Number(!!left);
+  run.moving=direction!==0;
+  if(direction)run.facing=direction;
+  run.speed=Math.min(335,285+run.distance*.012);
+  run.x=Math.max(100,run.x+direction*run.speed*dt*(duck&&run.onGround ? .48 : 1));
+  run.distance=Math.max(run.distance,Math.floor(run.x-100));
+  run.stepTrail=run.moving&&run.onGround?run.stepTrail+dt:0;
+  if(run.stepTrail>.18){run.stepTrail=0;burst(run,run.x-run.facing*27,GROUND-8,'#a7f0d2',3);}
+  if(jump&&run.onGround){run.vy=-690;run.onGround=false;burst(run,run.x,GROUND-18,'#d5f6ca',8);}
   run.duck=!!duck&&run.onGround;
-  if(!run.onGround){run.vy+=1500*dt;run.feet+=run.vy*dt;
-   if(run.feet>=GROUND){run.feet=GROUND;run.vy=0;run.onGround=true;}}
+  if(!run.onGround){run.vy+=1720*dt*(duck?1.55:1);run.feet+=run.vy*dt;
+   if(run.feet>=GROUND){run.feet=GROUND;run.vy=0;run.onGround=true;burst(run,run.x,GROUND-8,'#c9eccc',10);}}
+  const cameraTarget=Math.max(0,run.x-315);
+  run.cameraX+=(cameraTarget-run.cameraX)*Math.min(1,dt*5.5);
   populate(run);
   if(fire&&run.powerExpires>run.elapsed&&run.fireCooldown===0){
-   run.fireCooldown=.55;run.flash=.28;
-   const target=run.objects.find(item=>!item.passed&&['ground','overhead'].includes(item.kind)&&item.x>run.x&&item.x<run.x+310);
-   if(target){target.passed=true;run.destroyed++;}
+   run.fireCooldown=.48;run.flash=.45;
+   const targets=run.objects.filter(item=>!item.passed&&['ground','overhead'].includes(item.kind))
+    .map(item=>({item,gap:(item.x-run.x)*run.facing})).filter(({gap})=>gap>0&&gap<350).sort((a,b)=>a.gap-b.gap);
+   const target=targets[0]?.item;
+   run.blastX=target?.x??run.x+run.facing*290;run.blastY=target?.y??360;
+   burst(run,run.x+run.facing*75,run.feet-80,'#aeffe9',14);
+   if(target){target.passed=true;run.destroyed++;burst(run,target.x,target.y,'#ffe2a1',30);}
   }
-  run.objects=run.objects.filter(item=>item.x>run.x-180);
+  run.objects=run.objects.filter(item=>item.x>run.cameraX-170);
   for(const item of run.objects){
-   if(item.passed||Math.abs(item.x-run.x)>38)continue;
+   if(item.passed||Math.abs(item.x-run.x)>36)continue;
    if(item.kind==='power'){
-    item.passed=true;run.powerExpires=run.elapsed+8;
+    item.passed=true;run.powerExpires=run.elapsed+8;run.pickupFlash=.7;burst(run,item.x,item.y,'#aaffdd',25);
    }else if(item.kind==='recycle'){
-    const reach=item.y===340?Math.abs(run.feet-330)<75:run.feet>350;
-    if(reach){item.passed=true;run.recycled++;}
+    const reach=item.y===332?Math.abs(run.feet-330)<72:run.feet>350;
+    if(reach){item.passed=true;run.recycled++;run.pickupFlash=.35;burst(run,item.x,item.y,'#fce8a4',14);}
    }else if(item.kind==='ground'?run.feet>385:!run.duck&&run.feet>370){
-    run.status='over';run.reason=item.kind==='ground'?`碰到${item.label}`:`撞上${item.label}`;item.passed=true;break;
+    run.status='over';run.reason=(item.kind==='ground'?'碰到':'撞上')+item.label;
+    burst(run,run.x,run.feet-72,'#ff8c73',30);break;
    }
   }
-  while(run.checkpoints<CHECKPOINTS.length&&run.distance>=CHECKPOINTS[run.checkpoints])run.checkpoints++;
+  while(run.checkpoints<CHECKPOINTS.length&&run.distance>=CHECKPOINTS[run.checkpoints]){
+   run.checkpoints++;burst(run,CHECKPOINTS[run.checkpoints-1]+100,GROUND-120,'#d4ffd8',30);
+  }
   return run;
  }
  return {WIDTH,HEIGHT,GROUND,CHECKPOINTS,create,step};

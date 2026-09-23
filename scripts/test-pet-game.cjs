@@ -13,10 +13,27 @@ test('hazards stop a run, pickups are counted, and power destroys an approaching
  const doomed=e.create(3);doomed.objects=[{x:doomed.x+4,kind:'ground',label:'脏纸巾',y:405,passed:false}];doomed.nextObjectX=2000;e.step(doomed,{},.02);
  assert.equal(doomed.status,'over');assert.match(doomed.reason,/脏纸巾/);
 });
-test('power expires, runner accelerates, and the fourth checkpoint qualifies a run',()=>{
+test('the pet stays still until moved, walks both directions, and reaches four checkpoints by player input',()=>{
  const {engine:e}=setup(),r=e.create(1);r.nextObjectX=1e9;r.objects=[];r.powerExpires=1;
- for(let i=0;i<1400&&r.status==='playing';i++)e.step(r,{},1/60);
- assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>215);assert(r.powerExpires<r.elapsed);
+ for(let i=0;i<120;i++)e.step(r,{},1/60);
+ assert.equal(r.x,130);assert.equal(r.cameraX,0);assert.equal(r.distance,30);
+ for(let i=0;i<70;i++)e.step(r,{right:true},1/60);
+ const reached=r.x;assert(reached>400);assert(r.cameraX>0);
+ for(let i=0;i<30;i++)e.step(r,{left:true},1/60);
+ assert(r.x<reached);assert(r.distance>=Math.floor(reached-100));
+ for(let i=0;i<800&&r.checkpoints<4;i++)e.step(r,{right:true},1/60);
+ assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>285);assert(r.powerExpires<r.elapsed);
+});
+test('hazards are spaced out and the first stretch gives room to learn the controls',()=>{
+ const {engine:e}=setup(),r=e.create(45),seen=new Set();
+ for(let i=0;i<1100&&r.status==='playing';i++){
+  // Skip collisions for this layout test, while still moving the pet through the stage.
+  e.step(r,{right:true},1/60);r.objects.forEach(item=>{if(item.kind==='ground'||item.kind==='overhead')seen.add(item.x);item.passed=true;});
+ }
+ const hazards=[...seen].sort((a,b)=>a-b).map(x=>({x}));
+ assert(hazards.length>=2);
+ for(let i=1;i<hazards.length;i++)assert(hazards[i].x-hazards[i-1].x>=850);
+ assert(r.nextObjectX>r.x);
 });
 test('expired fire cannot clear danger and ducking avoids a high cloud',()=>{
  const {engine:e}=setup(),expired=e.create(4);expired.nextObjectX=2000;expired.objects=[{x:130,kind:'ground',label:'有毒液体',y:405,passed:false}];
