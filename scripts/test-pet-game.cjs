@@ -6,15 +6,21 @@ function setup(){
  for(const f of ['data.js','pet-game-engine.js','pet-game-skills.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),context);
  return {data:window.EcoData,engine:window.PetGameEngine,skills:window.PetGameSkills,saved};
 }
-test('hazards stop a run, pickups are counted, and power destroys an approaching hazard',()=>{
+test('rare power pickups accumulate until cast and each cast spends exactly one charge',()=>{
  const {engine:e}=setup(),r=e.create(123);r.objects=[{x:120,kind:'power',y:405,passed:false},{x:170,kind:'ground',label:'有毒液体',y:405,passed:false}];r.nextObjectX=2000;
- e.step(r,{},.02);assert(r.powerExpires>r.elapsed);
- r.x=130;e.step(r,{fire:true},.02);assert.equal(r.destroyed,1);assert.equal(r.status,'playing');
+ e.step(r,{},.02);assert.equal(r.powerCharges,1);
+ r.x=130;e.step(r,{fire:true},.02);assert.equal(r.destroyed,1);assert.equal(r.powerCharges,0);assert.equal(r.status,'playing');
+ e.step(r,{fire:true},.3);assert.equal(r.powerCharges,0,'holding or repeating without a charge does not cast');
+ r.objects=[{x:r.x,kind:'power',y:405,passed:false},{x:r.x+8,kind:'power',y:405,passed:false}];r.nextObjectX=1e9;
+ e.step(r,{},.02);assert.equal(r.powerCharges,2,'charges stack');
+ for(let i=0;i<720;i++)e.step(r,{},1/60);
+ assert.equal(r.powerCharges,2,'stored charges do not expire with time');
+ e.step(r,{fire:true},.02);assert.equal(r.powerCharges,1);
  const doomed=e.create(3);doomed.objects=[{x:doomed.x+4,kind:'ground',label:'脏纸巾',y:405,passed:false}];doomed.nextObjectX=2000;e.step(doomed,{},.02);
- assert.equal(doomed.status,'over');assert.match(doomed.reason,/脏纸巾/);
+ assert.equal(doomed.status,'over');assert.match(doomed.reason,/不可回收物.*脏纸巾/);assert(doomed.soundEvents.includes('game_over'));
 });
 test('the pet stays still until moved, walks both directions, and reaches four checkpoints by player input',()=>{
- const {engine:e}=setup(),r=e.create(1);r.nextObjectX=1e9;r.objects=[];r.pits=[];r.powerExpires=1;
+ const {engine:e}=setup(),r=e.create(1);r.nextObjectX=1e9;r.objects=[];r.pits=[];r.powerCharges=1;
  for(let i=0;i<120;i++)e.step(r,{},1/60);
  assert.equal(r.x,130);assert.equal(r.cameraX,0);assert.equal(r.distance,30);
  for(let i=0;i<70;i++)e.step(r,{right:true},1/60);
@@ -22,27 +28,53 @@ test('the pet stays still until moved, walks both directions, and reaches four c
  for(let i=0;i<30;i++)e.step(r,{left:true},1/60);
  assert(r.x<reached);assert(r.distance>=Math.floor(reached-100));
  for(let i=0;i<800&&r.checkpoints<4;i++)e.step(r,{right:true},1/60);
- assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>285);assert(r.powerExpires<r.elapsed);
+ assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>285);assert.equal(r.powerCharges,1);
 });
-test('later stretches contain playable low/high hazard pairs while the opening stays readable',()=>{
- const {engine:e}=setup(),r=e.create(45),seen=new Map();r.pits=[];
- for(let i=0;i<1500&&r.status==='playing'&&r.x<e.BOSS_ARENA-300;i++){
-  // Skip collisions for this layout test, while still moving the pet through the stage.
-  e.step(r,{right:true},1/60);r.objects.forEach(item=>{if(item.kind==='ground'||item.kind==='overhead')seen.set(item.x,item);item.passed=true;});
+test('100 generated routes avoid unavoidable upper/lower stacks, cliffs, and charging toxins',()=>{
+ const {engine:e}=setup();let pairs=0;
+ for(let seed=1;seed<=100;seed++){
+  const r=e.create(seed);
+  for(let x=130;x<e.BOSS_ARENA;x+=300){r.x=x;e.populate(r);}
+  const hazards=r.objects.filter(item=>['ground','overhead','charger'].includes(item.kind))
+   .map(item=>({x:item.kind==='charger'?item.minX:item.x,kind:item.kind,lane:item.lane,category:item.category,y:item.y})).sort((a,b)=>a.x-b.x);
+  assert(hazards.length>=3,'the route keeps obstacles');
+  for(let i=1;i<hazards.length;i++){
+   const gap=hazards[i].x-hazards[i-1].x;
+   assert(gap>=420,`seed ${seed}: dangers ${gap} apart leave no response time`);
+   if(gap<560)pairs++;
+  }
+  for(const item of hazards){
+   assert(e.PITS.every(pit=>item.x<pit.start||item.x>pit.end),`seed ${seed}: hazard inside a cliff`);
+   if(item.kind!=='charger')assert(['toxic','waste'].includes(item.category));
+  }
+  assert.equal(r.objects.filter(item=>item.kind==='power').length,e.POWER_SITES.length,'only planned power sites exist');
+  assert(r.objects.filter(item=>item.kind==='recycle').length>=e.RECYCLABLE_SITES.length,'all clear recycling examples remain available');
  }
- const hazards=[...seen.values()].sort((a,b)=>a.x-b.x);
- assert(hazards.length>=1);
- assert(hazards.some(h=>h.kind==='ground')&&hazards.some(h=>h.kind==='overhead'));
- assert(hazards.some(h=>h.kind==='overhead'&&h.y===314),'higher poison cloud exists');
- assert(hazards.filter(h=>h.kind==='overhead').every(h=>[314,350].includes(h.y)),'clouds occupy either high lane');
- let pairs=0;
- for(let i=1;i<hazards.length;i++){
-  const gap=hazards[i].x-hazards[i-1].x;
-  assert(gap>=335,'obstacles leave reaction time');
-  if(gap<850){pairs++;assert.notEqual(hazards[i].kind,hazards[i-1].kind,'paired hazards alternate height');}
+ assert(pairs>0,'readable consecutive obstacles still occur');
+});
+test('the late low charger and three distinct hazards have a playable jump-duck-jump route',()=>{
+ const {engine:e}=setup(),r=e.create(96);r.pits=[];r.nextObjectX=1e9;r.x=8900;
+ r.objects=[...r.objects.filter(item=>item.kind==='charger'&&item.lane==='low'),...r.objects.filter(item=>['ground','overhead'].includes(item.kind))];
+ let first=false,second=false,third=false;
+ for(let i=0;i<850&&r.x<11150&&r.status==='playing';i++){
+  const jump=!first&&r.x>=9020?(first=true,true):!second&&r.x>=9730?(second=true,true):!third&&r.x>=10770?(third=true,true):false;
+  e.step(r,{right:true,jump,duck:r.x>=10280&&r.x<=10470},1/60);
  }
- assert(pairs>=1,'at least one sequential pair appears');
- assert(r.nextObjectX>r.x);
+ assert.equal(r.status,'playing',r.reason);assert(r.x>11150,'all four dangers can be crossed');
+ assert(first&&second&&third);
+});
+test('each high obstacle before a cliff can be ducked and followed by a running jump',()=>{
+ const {engine:e}=setup();
+ for(const x of [1950,6000,8220]){
+  const hazard=e.SCRIPTED_HAZARDS.find(item=>item.x===x),pit=e.PITS.find(item=>item.start>x);
+  const r=e.create(x);r.x=x-430;r.pits=[pit];r.objects=[{...hazard,passed:false}];r.nextObjectX=1e9;
+  let jumped=false;
+  for(let i=0;i<340&&r.status==='playing'&&r.x<pit.end+70;i++){
+   const jump=!jumped&&r.x>=pit.start-39?(jumped=true,true):false;
+   e.step(r,{right:true,duck:r.x>=x-70&&r.x<=x+70,jump},1/60);
+  }
+  assert.equal(r.status,'playing',`hazard ${x}: ${r.reason}`);assert(r.x>pit.end,`hazard ${x} leaves enough runup for the next cliff`);
+ }
 });
 test('one jump tap carries the pet forward until landing without holding the move button',()=>{
  const {engine:e}=setup(),r=e.create(8);r.nextObjectX=1e9;
@@ -53,6 +85,16 @@ test('one jump tap carries the pet forward until landing without holding the mov
  const landed=r.x;
  for(let i=0;i<35;i++)e.step(r,{},1/60);
  assert.equal(r.x,landed);
+});
+test('a second jump tap midair gives one strong extra lift without unlimited jumping',()=>{
+ const {engine:e}=setup(),normal=e.create(81),superRun=e.create(81);
+ for(const r of [normal,superRun]){r.pits=[];r.objects=[];r.nextObjectX=1e9;e.step(r,{jump:true},1/60);}
+ for(let i=0;i<12;i++){e.step(normal,{},1/60);e.step(superRun,{},1/60);}
+ e.step(superRun,{jump:true},1/60);assert.equal(superRun.jumpCount,2);assert(superRun.soundEvents.includes('super_jump'));
+ e.step(superRun,{jump:true},1/60);assert.equal(superRun.jumpCount,2,'third press cannot create another boost');
+ for(let i=0;i<35;i++){e.step(normal,{},1/60);e.step(superRun,{},1/60);}
+ assert(superRun.feet<normal.feet-80,'second tap materially increases jump height');
+ assert(superRun.x>normal.x,'longer flight also extends the leap, so landing needs judgment');
 });
 test('a cliff needs a running start and item placement keeps the takeoff clear',()=>{
  const {engine:e}=setup(),slow=e.create(10);slow.nextObjectX=1e9;slow.x=1130;
@@ -67,7 +109,7 @@ test('a cliff needs a running start and item placement keeps the takeoff clear',
  assert.equal(fast.status,'playing');assert(fast.x>1435);assert.equal(fast.onGround,true);
  const layout=e.create(12);e.step(layout,{},1/60);
  assert.equal(e.PITS.length,9);
- for(const pit of e.PITS)assert(layout.objects.every(item=>item.x<pit.start-400||item.x>pit.end+110));
+ for(const pit of e.PITS)assert(layout.objects.filter(item=>['ground','overhead','charger'].includes(item.kind)).every(item=>item.x<pit.start||item.x>pit.end));
  for(const [index,pit] of e.PITS.entries()){
   const runner=e.create(100+index);runner.objects=[];runner.nextObjectX=1e9;runner.x=pit.start-340;
   for(let i=0;i<48;i++)e.step(runner,{right:true},1/60);
@@ -91,8 +133,8 @@ test('the farther boss leaps, throws sequences, shields itself, and can eventual
  const hit=e.create(25);hit.pits=[];hit.objects=[];hit.nextObjectX=1e9;hit.x=e.BOSS_ARENA;hit.boss.attackIn=0;
  e.step(hit,{},1/60);for(let i=0;i<75&&hit.status==='playing';i++)e.step(hit,{},1/60);
  assert.equal(hit.status,'over');assert.match(hit.reason,/首领/);
- const spell=e.create(26);spell.pits=[];spell.objects=[];spell.nextObjectX=1e9;spell.x=e.BOSS_ARENA;spell.powerExpires=20;spell.boss.attackIn=99;
- e.step(spell,{fire:true},1/60);assert.equal(spell.boss.hp,e.BOSS_HP,'shield blocks premature attack');
+ const spell=e.create(26);spell.pits=[];spell.objects=[];spell.nextObjectX=1e9;spell.x=e.BOSS_ARENA;spell.powerCharges=e.BOSS_HP+1;spell.boss.attackIn=99;
+ e.step(spell,{fire:true},1/60);assert.equal(spell.boss.hp,e.BOSS_HP,'shield blocks premature attack');assert.equal(spell.powerCharges,e.BOSS_HP,'blocked spell still spends a charge');
  for(let n=0;n<e.BOSS_HP;n++){spell.boss.vulnerableFor=.5;spell.fireCooldown=0;e.step(spell,{fire:true},1/60);}
  assert.equal(spell.status,'won');assert.equal(spell.boss.hp,0);
 });
@@ -110,9 +152,9 @@ test('all nineteen current beasts have distinct named and rendered special moves
   assert(operations>10,id+' produced no painted effect');
  }
 });
-test('expired fire cannot clear danger and ducking avoids a high cloud',()=>{
+test('fire without a charge cannot clear danger and ducking avoids a high cloud',()=>{
  const {engine:e}=setup(),expired=e.create(4);expired.nextObjectX=2000;expired.objects=[{x:130,kind:'ground',label:'有毒液体',y:405,passed:false}];
- expired.powerExpires=0;e.step(expired,{fire:true},.02);assert.equal(expired.destroyed,0);
+ expired.powerCharges=0;e.step(expired,{fire:true},.02);assert.equal(expired.destroyed,0);
  const ducked=e.create(5);ducked.nextObjectX=2000;ducked.objects=[{x:105,kind:'overhead',label:'废气团',y:354,passed:false}];
  e.step(ducked,{duck:true},.02);assert.equal(ducked.status,'playing');
  const standing=e.create(6);standing.nextObjectX=2000;standing.objects=[{x:105,kind:'overhead',label:'废气团',y:354,passed:false}];
@@ -162,4 +204,26 @@ test('the green crown uses farthest distance this month and survives reload',()=
  assert.equal(d.petReport(state).find(row=>row.id===ids[1]).gameWinner,true,'park shows the winner crown');
  assert.equal(d.petReport(state).find(row=>row.id===ids[0]).gameWinner,false);
  assert.equal(d.gameProgress(d.load(),ids[1]).bestDistance,2500);
+});
+test('music starts at an audible level and pickup/death cues play even as music stops',()=>{
+ let started=0;const gains=[];
+ const param=()=>({value:0,setValueAtTime(value){this.value=value;},exponentialRampToValueAtTime(value){this.value=value;},setTargetAtTime(value){this.value=value;}});
+ const node=()=>({connect(){return this;},start(){started++;},stop(){},frequency:param(),gain:param()});
+ class AudioContext{
+  constructor(){this.currentTime=0;this.sampleRate=44100;this.state='running';this.destination=node();}
+  createGain(){const gain=node();gains.push(gain);return gain;}
+  createOscillator(){return node();}
+  createBuffer(_channels,length){return {getChannelData:()=>new Float32Array(length)};}
+  createBufferSource(){return node();}
+ }
+ const window={AudioContext},context=vm.createContext({window,setInterval,clearInterval,Math,Float32Array});
+ vm.runInContext(fs.readFileSync(path.join(root,'pet-game-audio.js'),'utf8'),context);
+ const audio=window.PetGameAudio;
+ assert.equal(audio.start('forest'),true);assert(audio.state().notes>0);
+ assert(gains[0].gain.value>=.9&&gains[2].gain.value>=.9,'music mix is no longer near-silent');
+ const before=started;audio.play('recycle');audio.play('power');audio.play('hit');audio.play('game_over');audio.stop();
+ assert(started>before+8,'pickup and failure each schedule distinct audible cues');
+ assert.equal(audio.state().cues,4);
+ audio.toggle();const muted=started;audio.play('recycle');assert.equal(started,muted);
+ audio.toggle();audio.play('recycle');assert(started>muted);
 });
