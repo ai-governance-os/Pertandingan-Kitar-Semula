@@ -39,7 +39,7 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
     const rows = EcoData.studentStarReport(state, { includeArchived: true });
     const affected = rows.filter(row => row.balance !== 0);
     const cards = affected.reduce((sum, row) => sum + row.balance, 0);
-    if (!window.confirm(`确定结算并清零全部学生目前可兑换的奖卡？\n涉及 ${affected.length} 位学生，余额合计 ${cards} 张。\n结算后旧余额不能兑换；发卡、换奖历史及神兽成长保留。老师月度发卡额度不变。`)) return;
+    if (!window.confirm(`确定结算本轮可兑换余额？\n涉及 ${affected.length} 位学生，目前可兑换余额合计 ${cards} 张，结算后这些余额归零。\n历史发卡与换奖记录不会删除；神兽累计成长不会清零。老师月度发卡额度不变。`)) return;
     setState(current => EcoData.resetStudentCards(current, teacherId));
     setCardResetNotice(`已结算：${affected.length} 位学生的可兑换余额已清零。新发奖卡从 0 开始累计。`);
   }
@@ -250,8 +250,8 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
 
         {isAdmin && <div className="admin-section">
           <h2>🎁 学生奖卡结算</h2>
-          <p className="section-sub">学生可兑换奖卡跨月保留，换奖日由 ADMIN 决定。结算时清零所有学生目前可兑换余额；发卡和换奖历史、神兽成长、老师发卡额度保持原样。</p>
-          <button className="chunky-btn danger-btn" onClick={resetStudentCards}>结算并清零全部学生奖卡</button>
+          <p className="section-sub">学生可兑换奖卡跨月保留，换奖日由 ADMIN 决定。结算只清零上次结算以来的可兑换余额；历史发卡与换奖记录、神兽累计成长、老师发卡额度保持原样。</p>
+          <button className="chunky-btn danger-btn" onClick={resetStudentCards}>结算本轮可兑换余额</button>
           <p role="status">{cardResetNotice}</p>
           <details><summary>学生奖卡结算记录</summary>
             {(state.studentCardResets || []).slice(0, 30).map(r => <p key={r.id} style={{overflowWrap:"anywhere"}}>
