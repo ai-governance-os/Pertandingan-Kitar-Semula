@@ -195,7 +195,7 @@ function AIScanViewInner({ state, setState, teacherId = "unknown" }) {
           </div>
           {student && (
             <div className="ai-student-balance">
-              {student.name} 本月现有 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
+              {student.name} 可兑换 <b>{EcoData.studentStarBalance(state, student.id)}</b> ⭐
             </div>
           )}
         </div>

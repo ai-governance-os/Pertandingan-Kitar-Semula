@@ -71,7 +71,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
             <strong>🏆 学生星星排行 · Star Leaderboard</strong>
           </div>
           <div className="reward-month-note">
-            📅 {EcoData.currentRewardMonthLabel()}本月余额 · This month's balance — 每月 1 号自动清零 · Auto-resets on the 1st of every month
+            🎁 可兑换奖卡跨月保留，由 ADMIN 在换奖后结算清零 · Cards carry over until admin settlement
           </div>
 
           <div className="team-tabs">
@@ -105,7 +105,7 @@ function RewardCornerView({ state, setState, authed = true, requireAuth = (fn) =
                   <span className="leader-name">{row.name}</span>
                   <small className="leader-alltime">历史累计 {row.allTimeBalance} ⭐</small>
                 </span>
-                <span className="leader-balance" title="本月余额 · This month's balance">
+                <span className="leader-balance" title="可兑换奖卡 · Redeemable cards">
                   <b>{row.balance}</b> ⭐
                 </span>
                 {authed && (
@@ -266,7 +266,7 @@ function StarAwardModal({ state, student, direction, onCancel, onSave }) {
         <button type="button" className="login-modal-close" onClick={onCancel} aria-label="Close">×</button>
         <h2 className="star-modal-title">
           {isDeduction ? "− 扣星" : "+ 加星"} · {student.name}
-          <small className="student-team-line"><TeamBadge src={student.teamBadgeSrc} name={student.teamName} size={24} /> {student.teamName} · 本月现有 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
+          <small className="student-team-line"><TeamBadge src={student.teamBadgeSrc} name={student.teamName} size={24} /> {student.teamName} · 可兑换 {EcoData.studentStarBalance(state, student.id)} ⭐</small>
         </h2>
 
         {!isDeduction && <div className="yakult-award-tag"><button type="button" aria-pressed={yakult} onClick={() => setYakult(!yakult)}><span className="yakult-wordmark">Yakult</span>{yakult ? '已选择 Yakult 奖励 ✓' : '标记为 Yakult 奖励'}</button><small role="status">{isYakultAward ? `这笔 ${Math.max(0, Number(stars) || 0)} 张将计入本月 Yakult 排名，请将其它原因的奖励分开记录。` : '也可在原因填写 Yakult，系统会自动识别。'}</small></div>}
@@ -342,7 +342,7 @@ function RedeemModal({ state, student, onCancel, onRedeem }) {
         <button type="button" className="login-modal-close" onClick={onCancel} aria-label="Close">×</button>
         <h2 className="star-modal-title">
           🎁 {student.name} 兑换
-          <small>本月现有 {balance} ⭐</small>
+          <small>可兑换 {balance} ⭐</small>
         </h2>
 
         <div className="reward-tier-list redeem-tier-list">

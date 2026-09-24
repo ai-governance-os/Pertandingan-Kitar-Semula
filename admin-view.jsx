@@ -10,6 +10,7 @@ function AdminView(props) {
 function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown", teacherIds = [] }) {
   const [quotaDrafts, setQuotaDrafts] = useStateA({});
   const [quotaNotice, setQuotaNotice] = useStateA("");
+  const [cardResetNotice, setCardResetNotice] = useStateA("");
   const [quotaNow, setQuotaNow] = useStateA(Date.now);
   React.useEffect(() => {
     const refresh = () => setQuotaNow(Date.now());
@@ -32,6 +33,15 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
     if (!window.confirm(`确定重置 ${target} 的本月已用额度？\n将恢复至各账号已保存的完整月度额度，允许本月额外发卡。\n学生奖卡、神兽成长与历史记录不变；下月仍于 1 日自动重置。`)) return;
     setState(current => EcoData.resetTeacherMonthlyQuota(current, ids, teacherId));
     setQuotaNotice(`已重置 ${target} 的可用额度。学生奖卡与历史记录保持不变。`);
+  }
+  function resetStudentCards() {
+    if (!isAdmin) return;
+    const rows = EcoData.studentStarReport(state, { includeArchived: true });
+    const affected = rows.filter(row => row.balance !== 0);
+    const cards = affected.reduce((sum, row) => sum + row.balance, 0);
+    if (!window.confirm(`确定结算并清零全部学生目前可兑换的奖卡？\n涉及 ${affected.length} 位学生，余额合计 ${cards} 张。\n结算后旧余额不能兑换；发卡、换奖历史及神兽成长保留。老师月度发卡额度不变。`)) return;
+    setState(current => EcoData.resetStudentCards(current, teacherId));
+    setCardResetNotice(`已结算：${affected.length} 位学生的可兑换余额已清零。新发奖卡从 0 开始累计。`);
   }
   const [confirmReset, setConfirmReset] = useStateA(false);
   const [newStudentName, setNewStudentName] = useStateA("");
@@ -235,6 +245,19 @@ function AdminViewInner({ state, setState, isAdmin = false, teacherId = "unknown
               {new Date(r.ts).toLocaleString("zh-CN", {timeZone:"Asia/Kuala_Lumpur"})} · {r.adminId} 重置 {r.teacherId} · 当月累计发出 {r.totalIssued} 张
             </p>)}
             {!(state.teacherQuotaResets || []).length && <p>暂无手动重置记录</p>}
+          </details>
+        </div>}
+
+        {isAdmin && <div className="admin-section">
+          <h2>🎁 学生奖卡结算</h2>
+          <p className="section-sub">学生可兑换奖卡跨月保留，换奖日由 ADMIN 决定。结算时清零所有学生目前可兑换余额；发卡和换奖历史、神兽成长、老师发卡额度保持原样。</p>
+          <button className="chunky-btn danger-btn" onClick={resetStudentCards}>结算并清零全部学生奖卡</button>
+          <p role="status">{cardResetNotice}</p>
+          <details><summary>学生奖卡结算记录</summary>
+            {(state.studentCardResets || []).slice(0, 30).map(r => <p key={r.id} style={{overflowWrap:"anywhere"}}>
+              {new Date(r.ts).toLocaleString("zh-CN", {timeZone:"Asia/Kuala_Lumpur"})} · {r.adminId} · {r.studentCount} 位学生 · 清零 {r.cardsCleared} 张
+            </p>)}
+            {!(state.studentCardResets || []).length && <p>暂无结算记录</p>}
           </details>
         </div>}
 

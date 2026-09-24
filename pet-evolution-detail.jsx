@@ -123,7 +123,7 @@ function EvolutionDetailModal({state,setState,row,authed,isAdmin=false,requireAu
       </section>
       <details className="evolution-earn"><summary>今天可以怎样赚奖励卡？</summary>
         <div>{examples.map(type=><span key={type.id}>{type.zh}<b>参考 +{type.defaultStars}</b></span>)}</div>
-        <p>做好环保、学习或助人行动，请老师确认。实际发卡数以老师记录为准；试播不会改变奖励卡。神兽从 2026 年 9 月开始累计成长；之后月初清零和兑换奖品不会让它退化，扣卡则会影响成长值。</p>
+        <p>做好环保、学习或助人行动，请老师确认。实际发卡数以老师记录为准；试播不会改变奖励卡。神兽从 2026 年 9 月开始累计成长；管理员结算奖卡和兑换奖品不会让它退化，扣卡则会影响成长值。</p>
       </details>
       <YakultPetHonour row={row} state={state}/>
       {authed&&<button type="button" className="evolution-rename" onClick={rename}>给神兽取名字</button>}

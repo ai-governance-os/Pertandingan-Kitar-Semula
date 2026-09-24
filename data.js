@@ -224,6 +224,7 @@ function defaultState() {
     gameRuns: [], // Runner attempts; ten runs past the fourth checkpoint grant one formal card.
     teacherQuotaDebits: [], // Positive awards removed from the visible ledger still consume quota.
     teacherQuotaResets: [], // Admin resets change allowance, never student balances.
+    studentCardResets: [], // Admin closes a prize period; the award/redemption history remains intact.
     rewardCategories: clone(DEFAULT_REWARD_CATEGORIES),
     rewardItems: clone(DEFAULT_REWARD_ITEMS),
     rewardRedemptions: [],
@@ -293,6 +294,7 @@ function normalizeState(input) {
   state.starLedger = reconcileGameAwards(state).starLedger;
   state.teacherQuotaDebits = Array.isArray(input.teacherQuotaDebits) ? input.teacherQuotaDebits : [];
   state.teacherQuotaResets = Array.isArray(input.teacherQuotaResets) ? input.teacherQuotaResets : [];
+  state.studentCardResets = Array.isArray(input.studentCardResets) ? input.studentCardResets : [];
   state.rewardCategories = mergeRewardCategories(input.rewardCategories);
   state.rewardItems = normalizeRewardItems(input.rewardItems, state.rewardCategories);
   state.rewardRedemptions = Array.isArray(input.rewardRedemptions) ? input.rewardRedemptions : [];
@@ -778,7 +780,7 @@ function addStarEvent(state, event) {
     return state;
   }
   if (event.id && [...(state.starLedger || []), ...(state.teacherQuotaDebits || [])].some(e => e.id === event.id)) return state;
-  const now = Date.now();
+  const now = Math.max(Date.now(), latestStudentCardResetTs(state) + 1);
   const quota = teacherMonthlyQuota(state, event.teacherId, now);
   if (stars > quota.remaining) {
     alert(`本月发卡额度不足：已用 ${quota.used} / ${quota.limit} 张，剩余 ${quota.remaining} 张。每月 1 日重置；扣卡不返还额度。\nMonthly quota exceeded. Remaining: ${quota.remaining} cards.`);
@@ -858,7 +860,8 @@ function recordGameRun(state, { studentId, runId, teacherId, distance, recycled,
     distance: Math.max(0, Math.min(100000, Math.floor(Number(distance) || 0))),
     recycled: Math.max(0, Math.min(10000, Math.floor(Number(recycled) || 0))),
     checkpoints: Math.max(0, Math.min(4, Math.floor(Number(checkpoints) || 0))),
-    score: Math.max(0,Math.floor(Number(score) || 0)),bossDefeated:!!bossDefeated,ts: Date.now() };
+    score: Math.max(0,Math.floor(Number(score) || 0)),bossDefeated:!!bossDefeated,
+    ts: Math.max(Date.now(), latestStudentCardResetTs(state) + 1) };
   const next = reconcileGameAwards({ ...state, gameRuns: [...(state.gameRuns || []), win] });
   save(next);
   return next;
@@ -895,11 +898,7 @@ function removeStarEvent(state, eventId) {
 }
 
 // Timestamp for the 1st of the month (00:00 local time) containing `ts`.
-// Used to auto-reset the visible star balance every month with zero
-// infrastructure: no cron job, no "did we already reset" flag, no button.
-// The moment the calendar rolls into a new month, every balance computed
-// from this cutoff naturally excludes last month's stars — it just works,
-// even if nobody opens the app until the 3rd or the 10th.
+// Calendar month boundaries are still used for teacher quotas and monthly rankings.
 function monthStartTs(ts = Date.now()) {
   const d = new Date(ts);
   return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0).getTime();
@@ -910,25 +909,44 @@ function currentRewardMonthLabel(ts = Date.now()) {
   return `${d.getFullYear()}年${d.getMonth() + 1}月`;
 }
 
-// Monthly balance — this is THE balance shown everywhere in the UI
-// (leaderboard, redemption eligibility, AI scan panel). Resets automatically
-// on the 1st of every month; stars earned or spent before the cutoff simply
-// stop counting. Full history is never deleted — see studentAllTimeStarBalance
-// and the raw starLedger / rewardRedemptions for the permanent record.
-function studentStarBalance(state, studentId, asOfTs = Date.now()) {
-  const cutoff = monthStartTs(asOfTs);
+// Cards earned from September 2026 carry forward until an admin closes the
+// current prize period. The ledger and redemption history remain permanent.
+const STUDENT_CARD_START_TS = Date.parse('2026-09-01T00:00:00+08:00');
+function cardEventTs(event) {
+  const numeric = Number(event.ts);
+  return Number.isFinite(numeric) ? numeric : Date.parse(event.ts) || 0;
+}
+
+function latestStudentCardResetTs(state, asOfTs = Infinity) {
+  return Math.max(0, ...(state.studentCardResets || []).map(r => Number(r.ts) || 0).filter(ts => ts <= asOfTs));
+}
+
+function studentStarBalance(state, studentId, asOfTs = Infinity) {
+  const resetTs = latestStudentCardResetTs(state, asOfTs);
+  const cutoff = Math.max(STUDENT_CARD_START_TS, resetTs);
+  const withinPeriod = event => cardEventTs(event) >= cutoff && (!resetTs || cardEventTs(event) > resetTs);
   const earned = (state.starLedger || [])
-    .filter(e => e.studentId === studentId && (e.ts || 0) >= cutoff)
+    .filter(e => e.studentId === studentId && withinPeriod(e))
     .reduce((sum, e) => sum + (Number(e.stars) || 0), 0);
   const spent = (state.rewardRedemptions || [])
-    .filter(r => r.studentId === studentId && (r.ts || 0) >= cutoff)
+    .filter(r => r.studentId === studentId && withinPeriod(r))
     .reduce((sum, r) => sum + (Number(r.starsSpent) || 0), 0);
   return earned - spent;
 }
 
-// All-time balance, ignoring the monthly reset — for admin reporting / CSV
-// export / "since joining" stats. Never shown as the primary redeemable
-// balance because that resets monthly by design.
+function resetStudentCards(state, adminId) {
+  if (!adminId || adminId === 'unknown') return state;
+  const now = Math.max(Date.now(), latestStudentCardResetTs(state) + 1);
+  const rows = studentStarReport(state, { includeArchived: true });
+  const reset = { id: makeId('student_card_reset'), ts: now, adminId,
+    studentCount: rows.filter(row => row.balance !== 0).length,
+    cardsCleared: rows.reduce((sum, row) => sum + row.balance, 0) };
+  const next = { ...state, studentCardResets: [reset, ...(state.studentCardResets || [])] };
+  save(next);
+  return next;
+}
+
+// Lifetime net total is retained for reporting even after an admin settlement.
 function studentAllTimeStarBalance(state, studentId) {
   const earned = (state.starLedger || [])
     .filter(e => e.studentId === studentId)
@@ -1033,8 +1051,8 @@ const PET_SPECIES = [
 ];
 
 // Growth begins with the September 2026 school month. Earlier cards stay in
-// financial history but do not enlarge pets. Future monthly wallet resets do
-// not reset this growth record; redemptions do not undo it either.
+// financial history but do not enlarge pets. Admin card settlements do not
+// reset this growth record; redemptions do not undo it either.
 const PET_GROWTH_START_TS = Date.parse('2026-09-01T00:00:00+08:00');
 const PET_STAGES = [
   { minExp: 0,   zh: "蛋",   en: "Egg" },
@@ -1150,7 +1168,7 @@ function petState(state, studentId, now = Date.now()) {
 
   // Award and deduction entries since the new growth start count across month boundaries. Prize
   // redemptions are deliberately excluded; only a card deduction can regress
-  // the pet. The monthly star wallet keeps its separate reset behavior.
+  // the pet. The redeemable card balance has its own admin settlement history.
   const exp = Math.max(0, all.reduce((sum, e) => sum + (Number(e.stars) || 0), 0));
   const lifetimeExp = exp;
   const monthlyExp = Math.max(0, all.filter(e => (e.ts || 0) >= monthStartTs(now))
@@ -1319,7 +1337,7 @@ function redeemReward(state, redemption) {
   const clean = {
     ...redemption,
     id: redemption.id || makeId("redeem"),
-    ts: redemption.ts || Date.now(),
+    ts: Math.max(Number(redemption.ts) || Date.now(), latestStudentCardResetTs(state) + 1),
     rewardNameZh: item.nameZh,
     rewardNameEn: item.nameEn,
     rewardCategoryId: category?.id || item.categoryId || "",
@@ -1507,7 +1525,7 @@ Object.assign(window, {
     // AI scan helpers
     addAiScan, updateAiScanDecision,
     // Star ledger helpers
-    addStarEvent, removeStarEvent, studentStarBalance, studentAllTimeStarBalance,
+    addStarEvent, removeStarEvent, studentStarBalance, studentAllTimeStarBalance, resetStudentCards,
     teacherMonthlyQuota, teacherQuotaMonth, setTeacherMonthlyLimit, resetTeacherMonthlyQuota, TEACHER_MONTHLY_QUOTA,
     studentStarReport, teamStarStats, monthStartTs, currentRewardMonthLabel,
     // Reward corner helpers

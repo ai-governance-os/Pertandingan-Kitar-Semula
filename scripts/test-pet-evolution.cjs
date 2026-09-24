@@ -37,7 +37,7 @@ for(const [stars,index] of [[0,0],[19,0],[20,1],[49,1],[50,2],[99,2],[100,3],[14
 const september=new Date(2026,8,30,12).getTime(),october=new Date(2026,9,1,12).getTime();
 const august=new Date(2026,7,30,12).getTime();
 const yearState={...migrated,starLedger:[{studentId:guande,stars:900,ts:august},{studentId:guande,stars:400,ts:september}],rewardRedemptions:[{studentId:guande,starsSpent:30,ts:september}]};
-assert.equal(updated.data.studentStarBalance(yearState,guande,october),0,'monthly wallet resets');
+assert.equal(updated.data.studentStarBalance(yearState,guande,october),370,'student cards carry across months');
 assert.equal(updated.data.petState(yearState,guande,october).stageIndex,6,'growth begins in September and survives October reset');
 assert.equal(updated.data.petState(yearState,guande,october).exp,400,'pre-September awards do not enlarge pets');
 assert.equal(updated.data.petState({...yearState,starLedger:[{studentId:guande,stars:20,ts:'2026-09-02T00:00:00+08:00'}]},guande,october).exp,20,'ISO timestamps from imported records count');

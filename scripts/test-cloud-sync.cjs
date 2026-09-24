@@ -115,6 +115,15 @@ test('offline edits survive reload and merge with another teacher, including del
   assert.equal(saved.settings.limit, 200); assert.deepEqual(saved.pets.a, { nickname: 'New name', species: 'phoenix' });
   assert.equal(g.memory.has(g.sync.OUTBOX_KEY), false);
 });
+test('admin card settlement survives a concurrent teacher award', () => {
+  const f = fixture();
+  const original = { ...base(), studentCardResets: [] };
+  const local = { ...copy(original), studentCardResets: [{ id: 'close-1', ts: 100, adminId: 'ADMIN' }] };
+  const remote = { ...copy(original), starLedger: [{ id: 'new-award', studentId: 's1', stars: 1, ts: 101 }, ...original.starLedger] };
+  const merged = copy(f.sync.mergeChanges(original, local, remote));
+  assert.equal(merged.studentCardResets[0].id, 'close-1');
+  assert(merged.starLedger.some(event => event.id === 'new-award'));
+});
 test('failed uploads retain the queue; a WebSocket join cannot mask the failure', async () => {
   const f = fixture(); await f.start();
   const local = f.EcoData.load(); local.settings.title = 'Changed'; f.EcoData.save(local);
