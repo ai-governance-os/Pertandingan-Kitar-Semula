@@ -8,10 +8,12 @@ const GAME_HAZARD_IMAGES=Object.fromEntries([
 const GAME_BOSS_IMAGE=new Image();GAME_BOSS_IMAGE.src='assets/pet-park/game-miasma-boss-v1.webp';
 
 function gameItemLabel(ctx,x,y,text,color){
- ctx.save();ctx.font='900 18px Nunito,sans-serif';ctx.textAlign='center';
- const width=Math.ceil(ctx.measureText(text).width)+25;
- ctx.fillStyle='rgba(5,18,23,.92)';ctx.fillRect(x-width/2,y-21,width,29);
- ctx.strokeStyle=color;ctx.lineWidth=2;ctx.strokeRect(x-width/2,y-21,width,29);
+ const scale=Math.min(1.65,Math.max(1,PetGameEngine.WIDTH/(ctx.canvas?.clientWidth||PetGameEngine.WIDTH)*.65));
+ const fontSize=18*scale,boxHeight=29*scale;
+ ctx.save();ctx.font=`900 ${fontSize}px Nunito,sans-serif`;ctx.textAlign='center';
+ const width=Math.ceil(ctx.measureText(text).width)+25*scale;
+ ctx.fillStyle='rgba(5,18,23,.94)';ctx.fillRect(x-width/2,y-21*scale,width,boxHeight);
+ ctx.strokeStyle=color;ctx.lineWidth=2*scale;ctx.strokeRect(x-width/2,y-21*scale,width,boxHeight);
  ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=8;ctx.fillText(text,x,y);
  ctx.restore();
 }
@@ -248,6 +250,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>{skill.name}</small><b>{hud.power>0?`${hud.power} 次`:'未获得'}</b></div></div>
     {!runRef.current?.official&&<div className="game-practice-note" role="status">试玩模式 · 本局不记录排行榜和奖卡；老师登入后再开始正式闯关。</div>}
     <div className="game-meta"><strong>本局 {hud.score} 分</strong><span>{hud.boss?.active?'首领战 · 躲过 '+hud.boss.dodged+' / '+PetGameEngine.BOSS_DODGES+' 次灵爆':'终点 '+Math.max(0,PetGameEngine.LEVEL_END-100-hud.distance)+' 米'}</span><label>背景音乐 <select value={music} onChange={e=>{setMusic(e.target.value);window.PetGameAudio?.setTrack(runRef.current?.boss.active?'boss':e.target.value);}}>{PetGameAudio.TRACK_IDS.map(id=><option key={id} value={id}>{PetGameAudio.TRACKS[id].label}</option>)}</select></label><button type="button" className="game-sound" aria-label={muted?'开启游戏音效':'静音游戏音效'} onClick={()=>setMuted(window.PetGameAudio?.toggle()||false)}>{muted?'🔇':'🔊'}</button></div>
+    <div className="game-live-legend" aria-label="游戏物品分类"><span className="recyclable"><b>♻ 可回收</b><small>干净物 · 收集</small></span><span className="waste"><b>✕ 不可回收</b><small>脏纸巾 · 跳过</small></span><span className="toxic"><b>☠ 有毒危险</b><small>毒液／废气 · 躲开</small></span></div>
     <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label="灵溪古道闯关场景"/>
      {status==='playing'&&<div className={hud.cliff<350?'game-runup near-cliff':'game-runup'} aria-label={'助跑蓄力 '+Math.round(hud.runup*100)+'%'}><span>{hud.cliff<350?'山崖 '+Math.max(0,Math.round(hud.cliff))+' 米 · '+(hud.runup>.75?'点飞跃':'先助跑'):hud.runup>.88?'蓄力完成 · 点飞跃':'助跑蓄力'}</span><i><b style={{width:Math.round(hud.runup*100)+'%'}}/></i></div>}
      {selected&&<div className="game-actor" ref={actorRef} data-motion={motion}>
