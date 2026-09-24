@@ -55,6 +55,17 @@ const EVOLUTION_PROFILES = {
 const PET_FORM_NAMES = ['蛋','破壳','幼兽','守护兽','战将兽','传奇','灵域','星耀','圣兽','神话'];
 function evolutionProfile(id) { return EVOLUTION_PROFILES[id] || EVOLUTION_PROFILES.qilin; }
 function evolutionAsset(id, stage) { return 'assets/pet-park/evolution/' + id + '/' + Math.max(0, Math.min(5, stage)) + '.webp'; }
+// A few source paintings face left, and some species change direction between
+// painted forms. The game uses this per-image baseline before mirroring for travel.
+const GAME_LEFT_FACING_ART = {
+  blossomhorse:[3,4,5], coralpanda:[2,3,4,5], misttapir:[3,4,5],
+  moonrabbit:[3,4], orchidlemur:[2], roseflamingo:[5],
+  sandsquirrel:[2], silvercarp:[2,4], snowferret:[2]
+};
+function evolutionGameArtFacing(id,stage){
+  const imageStage=Math.max(0,Math.min(5,stage));
+  return GAME_LEFT_FACING_ART[id]?.includes(imageStage)?-1:1;
+}
 // Each creature has its own trajectory, then its six acts vary the choreography,
 // articulation, props, rhythm and finish. Positions are local to the actor.
 const EVOLUTION_PATHS = {
@@ -239,4 +250,4 @@ function parkPerformancePose(id,stage,t,width,height,origin,size,reduced=false){
   const tilt=phase==='accelerate'?direction*(fly?-.105:.055):phase==='turn'?direction*(fly?.13:.08):phase==='return'?-direction*.06:0;
   return {...p,scale,tilt,phase};
 }
-window.PetEvolution = { profiles:EVOLUTION_PROFILES, names:PET_FORM_NAMES, profile:evolutionProfile, asset:evolutionAsset, pose:evolutionPose, parkPose:parkPerformancePose };
+window.PetEvolution = { profiles:EVOLUTION_PROFILES, names:PET_FORM_NAMES, profile:evolutionProfile, asset:evolutionAsset, artFacing:evolutionGameArtFacing, pose:evolutionPose, parkPose:parkPerformancePose };

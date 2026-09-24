@@ -193,7 +193,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
    if(actorRef.current){
     actorRef.current.style.left=((run.x-run.cameraX)/PetGameEngine.WIDTH*100)+'%';
     actorRef.current.style.top=((run.feet+18)/PetGameEngine.HEIGHT*100)+'%';
-    actorRef.current.style.setProperty('--game-facing',run.facing);
+    actorRef.current.style.setProperty('--game-facing',run.facing*(run.artFacing||1));
     actorRef.current.dataset.motion=nextMotion;
    }
    if(now-lastUi>100||run.status!=='playing'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:run.powerCharges,runup:run.runup,cliff:(run.pits.find(pit=>pit.start>run.x)?.start??Infinity)-run.x,score:run.score,boss:{...run.boss},reason:run.reason});}
@@ -217,6 +217,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
   const row=EcoData.petReport(EcoData.load()).find(entry=>entry.id===id);
   runRef.current.skillSpeciesId=row?.pet.species.id;
   runRef.current.skillColor=PetGameSkills.forSpecies(runRef.current.skillSpeciesId).primary;
+  runRef.current.artFacing=PetEvolution.artFacing(runRef.current.skillSpeciesId,Math.max(2,row?.pet.stageIndex||2));
   if(row)window.PetOwnerVoice?.speak(row);
  }
  function hold(control,down){controls.current[control]=down;}
@@ -253,7 +254,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
     <div className="game-live-legend" aria-label="游戏物品分类"><span className="recyclable"><b>♻ 可回收</b><small>干净物 · 收集</small></span><span className="waste"><b>✕ 不可回收</b><small>脏纸巾 · 跳过</small></span><span className="toxic"><b>☠ 有毒危险</b><small>毒液／废气 · 躲开</small></span></div>
     <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label="灵溪古道闯关场景"/>
      {status==='playing'&&<div className={hud.cliff<350?'game-runup near-cliff':'game-runup'} aria-label={'助跑蓄力 '+Math.round(hud.runup*100)+'%'}><span>{hud.cliff<350?'山崖 '+Math.max(0,Math.round(hud.cliff))+' 米 · '+(hud.runup>.75?'点飞跃':'先助跑'):hud.runup>.88?'蓄力完成 · 点飞跃':'助跑蓄力'}</span><i><b style={{width:Math.round(hud.runup*100)+'%'}}/></i></div>}
-     {selected&&<div className="game-actor" ref={actorRef} data-motion={motion}>
+     {selected&&<div className="game-actor" ref={actorRef} data-motion={motion} style={{'--game-facing':PetEvolution.artFacing(selected.pet.species.id,gameStage)}}>
       {crowned&&<GameCrown small/>}<LivingPetActor speciesId={selected.pet.species.id} stage={gameStage} className="game-beast" walking={status==='playing'} gameMotion={motion} loading="eager"/>
      </div>}
      {(status==='over'||status==='won')&&<div className="game-over"><div className="game-result"><span className="game-eyebrow">远征记录</span><h2>{status==='won'?'第一境通关 · 净化腐霾魇兽':hud.checkpoints===4?'四座灵门已达成':'这一程，走到了这里'}</h2><p>{hud.reason} · 最远 {hud.distance} 米 · 收集 {hud.recycled} 件 · 本局 {hud.score} 分</p>

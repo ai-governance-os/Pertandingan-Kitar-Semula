@@ -27,7 +27,9 @@ test('the pet stays still until moved, walks both directions, and reaches four c
  const reached=r.x;assert(reached>400);assert(r.cameraX>0);
  for(let i=0;i<30;i++)e.step(r,{left:true},1/60);
  assert(r.x<reached);assert(r.distance>=Math.floor(reached-100));
+ assert.equal(r.facing,-1,'walking left changes the travel heading');
  for(let i=0;i<800&&r.checkpoints<4;i++)e.step(r,{right:true},1/60);
+ assert.equal(r.facing,1,'walking right restores the travel heading');
  assert.equal(r.checkpoints,4);assert(r.distance>=3200);assert(r.speed>285);assert.equal(r.powerCharges,1);
 });
 test('100 generated routes avoid unavoidable upper/lower stacks, cliffs, and charging toxins',()=>{

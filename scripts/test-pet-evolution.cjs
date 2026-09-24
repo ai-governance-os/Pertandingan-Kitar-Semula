@@ -47,6 +47,16 @@ assert.equal(updated.data.petState(yearState,guande,october+30*24*3600*1000).dis
 vm.runInContext(fs.readFileSync(path.join(root,'pet-evolution.js'),'utf8'),updated.context);
 vm.runInContext(fs.readFileSync(path.join(root,'pet-ascension-data.js'),'utf8'),updated.context);
 const evo=updated.context.window.PetEvolution;
+for(const [id,stage,expected] of [
+  ['snowferret',2,-1],['snowferret',3,1],
+  ['misttapir',2,1],['misttapir',3,-1],
+  ['silvercarp',2,-1],['silvercarp',3,1],['silvercarp',4,-1],['silvercarp',5,1],
+  ['blossomhorse',2,1],['blossomhorse',5,-1],
+  ['roseflamingo',4,1],['roseflamingo',5,-1]
+])assert.equal(evo.artFacing(id,stage),expected,`${id} form ${stage} art orientation`);
+for(const species of updated.data.PET_SPECIES)for(let stage=2;stage<10;stage++){
+  assert([1,-1].includes(evo.artFacing(species.id,stage)),`${species.id} form ${stage} has a travel orientation`);
+}
 for(const species of updated.data.PET_SPECIES){
   const profile=evo.profiles[species.id];assert(profile,species.id);
   assert.equal(new Set(profile.features).size,10,species.id+' forms');
