@@ -15,6 +15,35 @@ test('second realm changes from canal running to vertical sea swimming and pump 
  assert(run.feet>high+80,'the existing down control dives');
  run.x=e.SEA_END-3;e.step(run,{right:true},1/60);assert.equal(run.zone,'pump');assert.equal(run.onGround,true);
 });
+test('a tap launches forward through canal and pump until landing, while sea still swims freely',()=>{
+ const {engine:e}=setup();
+ for(const start of [130,4380]){
+  const run=e.create(start);run.objects=[];run.x=start;
+  e.step(run,{jump:true},1/60);
+  assert.equal(run.onGround,false);
+  const takeoff=run.x;
+  for(let i=0;i<18;i++)e.step(run,{},1/60);
+  assert(run.x>takeoff+65,`jump from ${start} keeps moving forward after the button is released`);
+  assert.equal(run.facing,1);
+  for(let i=0;i<90&& !run.onGround;i++)e.step(run,{},1/60);
+  assert.equal(run.onGround,true);
+  const landed=run.x;
+  for(let i=0;i<18;i++)e.step(run,{},1/60);
+  assert.equal(run.x,landed,'forward momentum ends on landing');
+ }
+ const sea=e.create(5);sea.objects=[];sea.x=e.CANAL_END+150;sea.zone='sea';sea.onGround=false;
+ e.step(sea,{right:true,up:true},1/60);const coast=sea.x;
+ for(let i=0;i<18;i++)e.step(sea,{},1/60);
+ assert(sea.x<coast+40,'underwater movement does not inherit the land jump');
+ const steer=e.create(6);steer.objects=[];steer.x=900;
+ e.step(steer,{left:true},1/60);e.step(steer,{jump:true},1/60);
+ const leftTakeoff=steer.x;
+ for(let i=0;i<12;i++)e.step(steer,{},1/60);
+ assert(steer.x<leftTakeoff-40,'left-facing pets leap left when the jump button is tapped alone');
+ const beforeTurn=steer.x;e.step(steer,{right:true,jump:true},1/60);
+ assert(steer.x>beforeTurn,'steering reverses the leap in midair');
+ assert.equal(steer.jumpCount,2,'the second tap still gives a high jump');
+});
 test('canal jets are telegraphed, contact consumes hearts once, and jumping avoids them',()=>{
  const {engine:e}=setup(),run=e.create(2);run.objects=[];run.x=e.JETS[0].x;run.elapsed=0;
  assert.equal(e.jetActive(e.JETS[0],0),true);

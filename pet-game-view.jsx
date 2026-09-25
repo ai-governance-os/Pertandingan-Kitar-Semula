@@ -246,7 +246,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
      <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开启正式远征':'开始试玩'} <span>→</span></button>
     </section>
     <aside className="game-info"><span className="game-section-label">远征规则</span><h2>{tide?'水流会改变你的节奏':'跑得越远，灵光越盛'}</h2>
-     {tide?<p>水道里左右移动，↑ 跳过喷口；海底按住 ↑ 向上游、按住 ↓ 下潜，借水流绕开油污团。泵站恢复跑跳，观察火链的旋转方向。拾取灵核后按 ✦ 使用神兽特技。</p>
+     {tide?<p>水道和泵站点一下 ↑ 就会向前跃，空中再点可高跃；海底按住 ↑ 向上游、按住 ↓ 下潜，借水流绕开油污团。观察火链的旋转方向；拾取灵核后按 ✦ 使用神兽特技。</p>
       :<p>按 ← → 或 A D 行走。点一次 ↑ 跳跃，空中再点一次可超级跳；跳得太远也可能撞上危险物。山崖前先助跑。按 ↓ 低身躲高处毒雾。灵核会累计，按 F 使用一次特技便扣一次。</p>}
      {tide?<div className="game-education-legend" aria-label="第二境物品与危险"><span className="recyclable">♻ 可回收 <b>干净纸张、铝罐、塑料瓶</b></span><span className="toxic">☠ 污染危险 <b>海底油污团 · 避开</b></span><span className="waste">⚠ 机关危险 <b>喷口、火链、火浪</b></span></div>
       :<div className="game-education-legend" aria-label="环保物品分类"><span className="recyclable">♻ 可回收 <b>干净纸张、铝罐、纸箱、塑料瓶</b></span><span className="waste">✕ 不可回收 <b>脏纸巾</b></span><span className="toxic">☠ 有毒危险 <b>有毒液体、废气团</b></span></div>}
@@ -278,7 +278,7 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
       {runRef.current?.official?(tide?status==='won':hud.checkpoints===4)&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>{tide&&!tideUnlocked?'先完成第一境第四灵门，即可记录第二境正式成绩。':'试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。'}</small>}
      </div></div>}
     </div>
-    <div className="game-controls"><p>{tide?(hud.zone==='sea'?'← → 横游　·　按住 ↑ 上游　·　按住 ↓ 下潜　·　✦ 清除油污':hud.boss?.active?'火链轮转后护盾会短暂消失；把握时机用特技净化首领。':'← → 移动　·　↑ 跳跃　·　↓ 低身　·　✦ 使用特技'):(hud.boss?.active?'首领连续投弹：看落点闪避！它落地时护盾短暂消失，趁机用特技攻击。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　↑ 跳跃／空中再点超级跳　·　↓ 低身　·　✦ 特技逐次消耗')}</p><div>
+    <div className="game-controls"><p>{tide?(hud.zone==='sea'?'← → 横游　·　按住 ↑ 上游　·　按住 ↓ 下潜　·　✦ 清除油污':hud.boss?.active?'火链轮转后护盾会短暂消失；把握时机用特技净化首领。':'← → 移动　·　点 ↑ 向前跃／空中再点高跃　·　↓ 低身　·　✦ 特技'):(hud.boss?.active?'首领连续投弹：看落点闪避！它落地时护盾短暂消失，趁机用特技攻击。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　↑ 跳跃／空中再点超级跳　·　↓ 低身　·　✦ 特技逐次消耗')}</p><div>
      <button type="button" aria-label="向左走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('left',true);}} onPointerUp={()=>hold('left',false)} onPointerCancel={()=>hold('left',false)}><b>←</b><small>后退</small></button>
      <button type="button" aria-label="向右走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('right',true);}} onPointerUp={()=>hold('right',false)} onPointerCancel={()=>hold('right',false)}><b>→</b><small>前进</small></button>
      <button type="button" aria-label={tide&&hud.zone==='sea'?'向上游':'跳跃，空中再按超级跳'} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('jump',true);}} onPointerUp={()=>hold('jump',false)} onPointerCancel={()=>hold('jump',false)} onClick={e=>{if(e.detail===0)hold('jump',true);}}><b>↑</b><small>{tide&&hud.zone==='sea'?'上游':'再按高跃'}</small></button>

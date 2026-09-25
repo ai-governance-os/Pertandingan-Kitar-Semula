@@ -20,7 +20,7 @@ window.PetGameTideEngine=(()=>{
  const chainTip=(chain,t)=>({x:chain.x+Math.cos(t*chain.speed)*chain.length,y:chain.y+Math.sin(t*chain.speed)*chain.length});
  function pointSegmentDistance(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,p=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(px-(ax+p*dx),py-(ay+p*dy));}
  function create(seed=Date.now()){
-  return {seed:seed>>>0,x:130,cameraX:0,feet:GROUND,vy:0,onGround:true,jumpCount:0,lastJumpAt:-1,
+  return {seed:seed>>>0,x:130,cameraX:0,feet:GROUND,vy:0,onGround:true,jumpCount:0,lastJumpAt:-1,leapDirection:0,leapSpeed:265,
    facing:1,moving:false,duck:false,zone:'canal',speed:265,runup:0,distance:30,elapsed:0,
    status:'playing',reason:'',score:0,recycled:0,destroyed:0,checkpoints:0,hearts:3,invulnerable:0,
    powerCharges:0,fireCooldown:0,flash:0,blastX:0,blastY:0,pickupFlash:0,pickupKind:'',pickupX:0,pickupY:0,
@@ -38,16 +38,25 @@ window.PetGameTideEngine=(()=>{
   run.elapsed+=dt;run.invulnerable=Math.max(0,run.invulnerable-dt);run.fireCooldown=Math.max(0,run.fireCooldown-dt);
   run.flash=Math.max(0,run.flash-dt);run.pickupFlash=Math.max(0,run.pickupFlash-dt);run.impactFlash=Math.max(0,run.impactFlash-dt);
   const direction=Number(!!right)-Number(!!left);if(direction)run.facing=direction;
-  run.zone=zoneAt(run.x);run.moving=!!direction||run.zone==='sea'&&(up||duck);run.duck=!!duck&&run.zone!=='sea'&&run.onGround;
+  run.zone=zoneAt(run.x);run.duck=!!duck&&run.zone!=='sea'&&run.onGround;
   run.speed=run.zone==='sea'?220:run.zone==='boss'?260:265;
+  if(run.zone!=='sea'){
+   if(run.onGround)run.runup=direction===1?Math.min(1,run.runup+dt*.88):Math.max(0,run.runup-dt*.5);
+   if(jump&&run.onGround){run.leapDirection=direction||run.facing;run.leapSpeed=run.speed+run.runup*100;run.runup=0;}
+   else if(jump&&!run.onGround&&run.jumpCount===1&&run.elapsed-run.lastJumpAt<.48)run.leapSpeed+=25;
+   if(direction&&!run.onGround)run.leapDirection=direction;
+  }
+  const moveDirection=direction||(!run.onGround&&run.zone!=='sea'?run.leapDirection:0);
+  run.moving=!!moveDirection||run.zone==='sea'&&(up||duck);
   const current=currentAt(run.x),drift=run.zone==='sea'?current:current*.62;
-  run.x=Math.max(100,Math.min(LEVEL_END-130,run.x+(direction*run.speed+(direction||run.zone==='sea'?drift:0))*dt*(run.duck?.53:1)));
+  const moveSpeed=run.onGround||run.zone==='sea'?run.speed:Math.max(run.speed,run.leapSpeed);
+  run.x=Math.max(100,Math.min(LEVEL_END-130,run.x+(moveDirection*moveSpeed+(moveDirection||run.zone==='sea'?drift:0))*dt*(run.duck?.53:1)));
   if(run.boss.active)run.x=Math.max(BOSS_ARENA,Math.min(BOSS_X-245,run.x));
   run.distance=Math.max(run.distance,Math.floor(run.x-100));
   run.zone=zoneAt(run.x);
   if(oldZone!==run.zone){run.soundEvents.push(run.zone==='sea'?'splash':oldZone==='sea'?'surface':'checkpoint');
-   if(run.zone==='sea'){run.feet=Math.min(415,run.feet);run.vy=0;run.onGround=false;run.jumpCount=0;}
-   else if(oldZone==='sea'){run.feet=GROUND;run.vy=0;run.onGround=true;run.jumpCount=0;}}
+   if(run.zone==='sea'){run.feet=Math.min(415,run.feet);run.vy=0;run.onGround=false;run.jumpCount=0;run.leapDirection=0;run.runup=0;}
+   else if(oldZone==='sea'){run.feet=GROUND;run.vy=0;run.onGround=true;run.jumpCount=0;run.leapDirection=0;}}
   if(run.zone==='sea'){
    // Holding the existing jump/down buttons becomes swim up/dive.
    const lift=up||jump?-520:0,descent=duck?510:0;
@@ -57,7 +66,7 @@ window.PetGameTideEngine=(()=>{
    if(jump&&run.onGround){run.vy=-650;run.onGround=false;run.jumpCount=1;run.lastJumpAt=run.elapsed;run.soundEvents.push('jump');}
    else if(jump&&!run.onGround&&run.jumpCount===1&&run.elapsed-run.lastJumpAt<.48){run.vy=-610;run.jumpCount=2;run.soundEvents.push('super_jump');}
    if(!run.onGround){run.vy+=1650*dt*(duck?1.35:1);run.feet+=run.vy*dt;
-    if(run.feet>=GROUND){run.feet=GROUND;run.vy=0;run.onGround=true;run.jumpCount=0;}}
+    if(run.feet>=GROUND){run.feet=GROUND;run.vy=0;run.onGround=true;run.jumpCount=0;run.leapDirection=0;}}
   }
   run.cameraX+=(Math.max(0,run.x-300)-run.cameraX)*Math.min(1,dt*6);
   for(const [index,mark] of CHECKPOINTS.entries())if(run.distance>=mark&&run.checkpoints<index+1){run.checkpoints=index+1;run.soundEvents.push('checkpoint');}
