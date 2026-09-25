@@ -60,7 +60,7 @@ function evolutionAsset(id, stage) { return 'assets/pet-park/evolution/' + id + 
 const GAME_LEFT_FACING_ART = {
   blossomhorse:[3,4,5], coralpanda:[2,3,4,5], misttapir:[3,4,5],
   moonrabbit:[3,4], orchidlemur:[2], roseflamingo:[5],
-  sandsquirrel:[2], silvercarp:[2,4], snowferret:[2]
+  sandsquirrel:[2], silvercarp:[2,4], snowferret:[2], ninetail:[2]
 };
 function evolutionGameArtFacing(id,stage){
   const imageStage=Math.max(0,Math.min(5,stage));

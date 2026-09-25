@@ -6,6 +6,12 @@ function setup(){
  for(const f of ['data.js','pet-game-engine.js','pet-game-skills.js'])vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),context);
  return {data:window.EcoData,engine:window.PetGameEngine,skills:window.PetGameSkills,saved};
 }
+test('Jing Er’s nine-tail fox faces the direction it travels',()=>{
+ const window={};
+ vm.runInNewContext(fs.readFileSync(path.join(root,'pet-evolution.js'),'utf8'),{window});
+ assert.equal(window.PetEvolution.artFacing('ninetail',2),-1,'the painted baby form faces left before game mirroring');
+ assert.equal(window.PetEvolution.artFacing('ninetail',3),1,'the next form already faces right');
+});
 test('rare power pickups accumulate until cast and each cast spends exactly one charge',()=>{
  const {engine:e}=setup(),r=e.create(123);r.objects=[{x:120,kind:'power',y:405,passed:false},{x:170,kind:'ground',label:'有毒液体',y:405,passed:false}];r.nextObjectX=2000;
  e.step(r,{},.02);assert.equal(r.powerCharges,1);
