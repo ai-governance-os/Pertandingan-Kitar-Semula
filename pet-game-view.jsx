@@ -151,16 +151,18 @@ function paintGame(canvas,run,bg,speciesId){
 
 function PetGameView({state,setState,authed,requireAuth,teacherId}){
  const {useState,useEffect,useRef}=React;
- const [selectedId,setSelectedId]=useState(''),[runKey,setRunKey]=useState(''),[status,setStatus]=useState('select');
- const [hud,setHud]=useState({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,score:0,boss:null,reason:''});
+ const [selectedId,setSelectedId]=useState(''),[levelId,setLevelId]=useState(EcoData.GAME_LEVEL_ID),[runKey,setRunKey]=useState(''),[status,setStatus]=useState('select');
+ const [hud,setHud]=useState({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,score:0,boss:null,reason:'',hearts:3,zone:'canal'});
  const [muted,setMuted]=useState(false);
  const [music,setMusic]=useState('forest');
  const [motion,setMotion]=useState('run');
- const canvasRef=useRef(null),actorRef=useRef(null),sessionRef=useRef(null),runRef=useRef(null),controls=useRef({left:false,right:false,jump:false,duck:false,fire:false}),committed=useRef(false),checkpointRecorded=useRef(false);
+ const canvasRef=useRef(null),actorRef=useRef(null),sessionRef=useRef(null),runRef=useRef(null),controls=useRef({left:false,right:false,jump:false,up:false,duck:false,fire:false}),committed=useRef(false),checkpointRecorded=useRef(false);
  const background=useRef(null);
+ const tide=levelId===EcoData.GAME_TIDE_LEVEL_ID;
  const report=EcoData.petReport(state),selected=report.find(row=>row.id===selectedId);
  const skill=PetGameSkills.forSpecies(selected?.pet.species.id);
- const board=EcoData.gameLeaderboard(state),progress=selected?EcoData.gameProgress(state,selected.id):null;
+ const board=EcoData.gameLeaderboard(state,Date.now(),levelId),progress=selected?EcoData.gameProgress(state,selected.id):null;
+ const tideUnlocked=!tide||!!(selected&&EcoData.gameProgress(state,selected.id,EcoData.GAME_LEVEL_ID).wins);
  const crowned=selected&&board.winners.includes(selected.id);
  useEffect(()=>{document.body.classList.add('game-active');return()=>{document.body.classList.remove('game-active');window.PetGameAudio?.stop();};},[]);
  useEffect(()=>{const image=new Image();image.src='assets/pet-park/game-forest-bg-v1.webp';background.current=image;},[]);
@@ -169,12 +171,15 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
    if(['Space','ArrowUp','KeyW','ArrowDown','KeyS','KeyF','ArrowLeft','KeyA','ArrowRight','KeyD'].includes(e.code))e.preventDefault();
    if(['ArrowLeft','KeyA'].includes(e.code))controls.current.left=e.type==='keydown';
    if(['ArrowRight','KeyD'].includes(e.code))controls.current.right=e.type==='keydown';
-   if(['Space','ArrowUp','KeyW'].includes(e.code)&&e.type==='keydown'&&!e.repeat)controls.current.jump=true;
+   if(['Space','ArrowUp','KeyW'].includes(e.code)){
+    if(e.type==='keydown'&&!e.repeat)controls.current.jump=true;
+    controls.current.up=e.type==='keydown';
+   }
    if(['ArrowDown','KeyS'].includes(e.code))controls.current.duck=e.type==='keydown';
    if(e.code==='KeyF'&&e.type==='keydown'&&!e.repeat)controls.current.fire=true;
   };
   window.addEventListener('keydown',keys);window.addEventListener('keyup',keys);
-  const blur=()=>{controls.current={left:false,right:false,jump:false,duck:false,fire:false};};window.addEventListener('blur',blur);
+  const blur=()=>{controls.current={left:false,right:false,jump:false,up:false,duck:false,fire:false};};window.addEventListener('blur',blur);
   return()=>{window.removeEventListener('keydown',keys);window.removeEventListener('keyup',keys);window.removeEventListener('blur',blur);};
  },[]);
  useEffect(()=>{
@@ -182,25 +187,27 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
   let frame=0,last=0,lastUi=0,previousMotion='run';
   const loop=now=>{
    if(!last)last=now;const run=runRef.current,dt=Math.min(.05,(now-last)/1000);last=now;
-   PetGameEngine.step(run,controls.current,dt);controls.current.jump=false;controls.current.fire=false;
+   const engine=run.levelId===EcoData.GAME_TIDE_LEVEL_ID?PetGameTideEngine:PetGameEngine;
+   engine.step(run,controls.current,dt);controls.current.jump=false;controls.current.fire=false;
    for(const event of run.soundEvents.splice(0))window.PetGameAudio?.play(event,run.skillSpeciesId);
-   if(run.checkpoints===4&&!checkpointRecorded.current){checkpointRecorded.current=true;
-    if(run.official){const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:4,score:run.score}));}
+   if(run.levelId===EcoData.GAME_LEVEL_ID&&run.checkpoints===4&&!checkpointRecorded.current){checkpointRecorded.current=true;
+    if(run.official){const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,levelId:run.levelId,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:4,score:run.score}));}
    }
-   paintGame(canvasRef.current,run,background.current||{},run.skillSpeciesId);
+   if(run.levelId===EcoData.GAME_TIDE_LEVEL_ID)PetGameTidePaint.paint(canvasRef.current,run,run.skillSpeciesId);
+   else paintGame(canvasRef.current,run,background.current||{},run.skillSpeciesId);
    const nextMotion=!run.onGround?'jump':run.duck?'duck':run.moving?'run':'idle';
    if(nextMotion!==previousMotion){previousMotion=nextMotion;setMotion(nextMotion);}
    if(actorRef.current){
-    actorRef.current.style.left=((run.x-run.cameraX)/PetGameEngine.WIDTH*100)+'%';
-    actorRef.current.style.top=((run.feet+18)/PetGameEngine.HEIGHT*100)+'%';
+    actorRef.current.style.left=((run.x-run.cameraX)/engine.WIDTH*100)+'%';
+    actorRef.current.style.top=((run.feet+18)/engine.HEIGHT*100)+'%';
     actorRef.current.style.setProperty('--game-facing',run.facing*(run.artFacing||1));
     actorRef.current.dataset.motion=nextMotion;
    }
-   if(now-lastUi>100||run.status!=='playing'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:run.powerCharges,runup:run.runup,cliff:(run.pits.find(pit=>pit.start>run.x)?.start??Infinity)-run.x,score:run.score,boss:{...run.boss},reason:run.reason});}
+   if(now-lastUi>100||run.status!=='playing'){lastUi=now;setHud({distance:run.distance,recycled:run.recycled,destroyed:run.destroyed,checkpoints:run.checkpoints,speed:run.speed,power:run.powerCharges,runup:run.runup,cliff:(run.pits.find(pit=>pit.start>run.x)?.start??Infinity)-run.x,score:run.score,boss:{...run.boss},reason:run.reason,hearts:run.hearts??3,zone:run.zone||'forest'});}
    if(run.status!=='playing'){
     window.PetGameAudio?.stop();
     if(run.official&&!committed.current){committed.current=true;
-     const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:run.checkpoints,score:run.score,bossDefeated:run.status==='won'}));
+     const current=EcoData.load();setState(EcoData.recordGameRun(current,{studentId:selectedId,runId:runKey,levelId:run.levelId,teacherId,distance:run.distance,recycled:run.recycled,checkpoints:run.checkpoints,score:run.score,bossDefeated:run.status==='won'}));
     }
     setTimeout(()=>{if(runRef.current===run)setStatus(run.status);},420);return;
    }
@@ -211,66 +218,75 @@ function PetGameView({state,setState,authed,requireAuth,teacherId}){
  },[status,runKey,selectedId,teacherId]);
  function start(id=selectedId){
   if(!id)return;
-  window.PetOwnerVoice?.stop();window.PetGameAudio?.start(music);controls.current={left:false,right:false,jump:false,duck:false,fire:false};committed.current=false;checkpointRecorded.current=false;
-  const key=`forest_${id}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-  setSelectedId(id);setRunKey(key);runRef.current=PetGameEngine.create();runRef.current.official=!!authed&&teacherId!=='unknown';setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,score:0,boss:null,reason:''});setMotion('idle');setStatus('playing');
+  window.PetOwnerVoice?.stop();window.PetGameAudio?.start(tide?'tide':music);controls.current={left:false,right:false,jump:false,up:false,duck:false,fire:false};committed.current=false;checkpointRecorded.current=false;
+  const key=`${tide?'tide':'forest'}_${id}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  setSelectedId(id);setRunKey(key);runRef.current=(tide?PetGameTideEngine:PetGameEngine).create();runRef.current.levelId=levelId;runRef.current.official=!!authed&&teacherId!=='unknown'&&tideUnlocked;setHud({distance:0,recycled:0,destroyed:0,checkpoints:0,speed:0,power:0,runup:0,cliff:Infinity,score:0,boss:null,reason:'',hearts:3,zone:tide?'canal':'forest'});setMotion('idle');setStatus('playing');
   const row=EcoData.petReport(EcoData.load()).find(entry=>entry.id===id);
   runRef.current.skillSpeciesId=row?.pet.species.id;
   runRef.current.skillColor=PetGameSkills.forSpecies(runRef.current.skillSpeciesId).primary;
   runRef.current.artFacing=PetEvolution.artFacing(runRef.current.skillSpeciesId,Math.max(2,row?.pet.stageIndex||2));
   if(row)window.PetOwnerVoice?.speak(row);
  }
- function hold(control,down){controls.current[control]=down;}
+ function hold(control,down){if(control==='jump'){if(down)controls.current.jump=true;controls.current.up=down;}else controls.current[control]=down;}
  React.useEffect(()=>{if(status==='playing')sessionRef.current?.scrollIntoView({block:'start',behavior:'auto'});},[status,runKey]);
  const gameStage=selected?Math.max(2,selected.pet.stageIndex):2;
  return <main className={status==='select'?'game-view selecting':'game-view'}>
   <div className="game-shell">
-   <header className="game-head"><div><span className="game-eyebrow">ECO GUARDIANS · SPIRIT QUEST</span><h1>绿境 · 神兽远征</h1><p>亲自引领神兽穿越灵溪古道，收集可回收物，净化危险障碍。</p></div><span className="game-head-mark">第一境 · 灵溪古道</span></header>
+   <header className="game-head"><div><span className="game-eyebrow">ECO GUARDIANS · SPIRIT QUEST</span><h1>绿境 · 神兽远征</h1><p>{tide?'穿越地下水道与海底遗迹，闯进泵站挑战旋转火链。':'亲自引领神兽穿越灵溪古道，收集可回收物，净化危险障碍。'}</p></div><span className="game-head-mark">{tide?'第二境 · 潮汐暗渠':'第一境 · 灵溪古道'}</span></header>
+   {status==='select'&&<div className="game-level-choice" role="group" aria-label="选择闯关关卡">
+    <button type="button" className={!tide?'selected':''} aria-pressed={!tide} onClick={()=>{setLevelId(EcoData.GAME_LEVEL_ID);setMusic('forest');}}><small>第一境</small><strong>灵溪古道</strong><span>奔跑 · 飞跃 · 毒雾首领</span></button>
+    <button type="button" className={tide?'selected tide':'tide'} aria-pressed={tide} onClick={()=>{setLevelId(EcoData.GAME_TIDE_LEVEL_ID);setMusic('tide');}}><small>第二境 · 全新玩法</small><strong>潮汐暗渠</strong><span>水道 · 海底 · 火链首领</span></button>
+   </div>}
    {status==='select'&&<div className="game-select">
     <section className="game-pick"><span className="game-section-label">选择你的守护神兽</span>
      <div className="game-chooser">{report.map(row=><button type="button" key={row.id} className={selectedId===row.id?'chosen':''} onClick={()=>setSelectedId(row.id)} aria-pressed={selectedId===row.id}>
       <img src={PetEvolution.asset(row.pet.species.id,Math.max(2,row.pet.stageIndex))} alt=""/><span><b>{row.name}</b><small>{row.pet.species.zh}</small></span></button>)}</div>
      {selected&&<div className="game-skill-preview"><span>专属特技</span><strong style={{color:skill.primary}}>{skill.name}</strong><small>拾取稀少灵核可累计次数；使用一次扣一次</small></div>}
-     <p className="game-pick-note">{authed?'老师已登入 · 闯关成绩和奖卡会正式记录':'可直接试玩；若要记录成绩和奖卡，请先点右上角「老师登入」。'}</p>
+     <p className="game-pick-note">{tide&&!tideUnlocked?'第二境可先试玩；第一境抵达第四灵门后，才开启第二境正式成绩。':authed?'老师已登入 · 闯关成绩和奖卡会正式记录':'可直接试玩；若要记录成绩和奖卡，请先点右上角「老师登入」。'}</p>
      <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开启正式远征':'开始试玩'} <span>→</span></button>
     </section>
-    <aside className="game-info"><span className="game-section-label">远征规则</span><h2>跑得越远，灵光越盛</h2>
-     <p>按 ← → 或 A D 行走。点一次 ↑ 跳跃，空中再点一次可超级跳；跳得太远也可能撞上危险物。山崖前先助跑。按 ↓ 低身躲高处毒雾。灵核会累计，按 F 使用一次特技便扣一次。</p>
-     <div className="game-education-legend" aria-label="环保物品分类"><span className="recyclable">♻ 可回收 <b>干净纸张、铝罐、纸箱、塑料瓶</b></span><span className="waste">✕ 不可回收 <b>脏纸巾</b></span><span className="toxic">☠ 有毒危险 <b>有毒液体、废气团</b></span></div>
-     <div className="game-checkpoints">{PetGameEngine.CHECKPOINTS.map((at,i)=><span key={at}><b>0{i+1}</b><small>{at} 米</small></span>)}</div>
-     <p>本关有九处山崖；红色危险物要避开，绿色可回收物可收集。低处冲锋毒物跳过，高处毒雾趴下。路线会给连续障碍留下反应空间。约 11300 米进入首领战；躲过 10 次灵爆，或在它落地露出破绽时用特技攻击，即可通关。第 4 个检查点仍算一次成功；累计 10 次成功，自动获得 1 张正式奖卡。</p>
+    <aside className="game-info"><span className="game-section-label">远征规则</span><h2>{tide?'水流会改变你的节奏':'跑得越远，灵光越盛'}</h2>
+     {tide?<p>水道里左右移动，↑ 跳过喷口；海底按住 ↑ 向上游、按住 ↓ 下潜，借水流绕开油污团。泵站恢复跑跳，观察火链的旋转方向。拾取灵核后按 ✦ 使用神兽特技。</p>
+      :<p>按 ← → 或 A D 行走。点一次 ↑ 跳跃，空中再点一次可超级跳；跳得太远也可能撞上危险物。山崖前先助跑。按 ↓ 低身躲高处毒雾。灵核会累计，按 F 使用一次特技便扣一次。</p>}
+     {tide?<div className="game-education-legend" aria-label="第二境物品与危险"><span className="recyclable">♻ 可回收 <b>干净纸张、铝罐、塑料瓶</b></span><span className="toxic">☠ 污染危险 <b>海底油污团 · 避开</b></span><span className="waste">⚠ 机关危险 <b>喷口、火链、火浪</b></span></div>
+      :<div className="game-education-legend" aria-label="环保物品分类"><span className="recyclable">♻ 可回收 <b>干净纸张、铝罐、纸箱、塑料瓶</b></span><span className="waste">✕ 不可回收 <b>脏纸巾</b></span><span className="toxic">☠ 有毒危险 <b>有毒液体、废气团</b></span></div>}
+     <div className="game-checkpoints">{(tide?PetGameTideEngine:PetGameEngine).CHECKPOINTS.map((at,i)=><span key={at}><b>0{i+1}</b><small>{at} 米</small></span>)}</div>
+     {tide?<p>本关分水道、海底、泵站三段，有三颗守护心。喷口和火链有预警；被击中会短暂获得保护，不会立刻重来。首领火链每轮结束会露出破绽，可用特技攻击；躲过九轮也能通关。只有击败首领才算本境成功。两境合计每 10 次正式成功仍是 1 张奖卡。</p>
+      :<p>本关有九处山崖；红色危险物要避开，绿色可回收物可收集。低处冲锋毒物跳过，高处毒雾趴下。路线会给连续障碍留下反应空间。约 11300 米进入首领战；躲过 10 次灵爆，或在它落地露出破绽时用特技攻击，即可通关。第 4 个检查点仍算一次成功；累计 10 次成功，自动获得 1 张正式奖卡。</p>}
      {progress&&<div className="game-progress">{selected.name} · 已成功 {progress.wins} 次　·　下张奖卡 {progress.progress}/10　·　累计 {progress.totalScore} 分</div>}
-     <div className="game-honor"><GameCrown/><div><b>绿境闯关王</b><small>本月最远距离的守护者佩戴翡翠冠冕</small></div></div>
+     <div className="game-honor"><GameCrown/><div><b>{tide?'潮汐闯关王':'绿境闯关王'}</b><small>{tide?'本月第二境最远距离的守护者登上潮汐榜':'本月最远距离的守护者佩戴翡翠冠冕'}</small></div></div>
     </aside>
    </div>}
    {status==='select'&&<div className="game-mobile-start">
-    <div><small>{(authed?'正式闯关':'试玩')+' · '+(selected?skill.name:'先选神兽')}</small><strong>{selected?.name||'先选择一位学生的神兽'}</strong></div>
+    <div><small>{(authed?'正式闯关':'试玩')+' · '+(tide?'第二境':'第一境')+' · '+(selected?skill.name:'先选神兽')}</small><strong>{selected?.name||'先选择一位学生的神兽'}</strong></div>
     <button className="game-primary" type="button" disabled={!selectedId} onClick={()=>start()}>{authed?'开始闯关':'开始试玩'} <span>→</span></button>
    </div>}
    {status!=='select'&&<div className="game-session" ref={sessionRef}>
-    <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>检查点</small><b>{hud.checkpoints} / 4</b></div><div><small>{skill.name}</small><b>{hud.power>0?`${hud.power} 次`:'未获得'}</b></div></div>
-    {!runRef.current?.official&&<div className="game-practice-note" role="status">试玩模式 · 本局不记录排行榜和奖卡；老师登入后再开始正式闯关。</div>}
-    <div className="game-meta"><strong>本局 {hud.score} 分</strong><span>{hud.boss?.active?'首领战 · 躲过 '+hud.boss.dodged+' / '+PetGameEngine.BOSS_DODGES+' 次灵爆':'终点 '+Math.max(0,PetGameEngine.LEVEL_END-100-hud.distance)+' 米'}</span><label>背景音乐 <select value={music} onChange={e=>{setMusic(e.target.value);window.PetGameAudio?.setTrack(runRef.current?.boss.active?'boss':e.target.value);}}>{PetGameAudio.TRACK_IDS.map(id=><option key={id} value={id}>{PetGameAudio.TRACKS[id].label}</option>)}</select></label><button type="button" className="game-sound" aria-label={muted?'开启游戏音效':'静音游戏音效'} onClick={()=>setMuted(window.PetGameAudio?.toggle()||false)}>{muted?'🔇':'🔊'}</button></div>
-    <div className="game-live-legend" aria-label="游戏物品分类"><span className="recyclable"><b>♻ 可回收</b><small>干净物 · 收集</small></span><span className="waste"><b>✕ 不可回收</b><small>脏纸巾 · 跳过</small></span><span className="toxic"><b>☠ 有毒危险</b><small>毒液／废气 · 躲开</small></span></div>
-    <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label="灵溪古道闯关场景"/>
-     {status==='playing'&&<div className={hud.cliff<350?'game-runup near-cliff':'game-runup'} aria-label={'助跑蓄力 '+Math.round(hud.runup*100)+'%'}><span>{hud.cliff<350?'山崖 '+Math.max(0,Math.round(hud.cliff))+' 米 · '+(hud.runup>.75?'点飞跃':'先助跑'):hud.runup>.88?'蓄力完成 · 点飞跃':'助跑蓄力'}</span><i><b style={{width:Math.round(hud.runup*100)+'%'}}/></i></div>}
+    <div className="game-hud"><div><small>守护者</small><b>{selected?.name} · {selected?.pet.species.zh}</b></div><div><small>远征距离</small><b>{hud.distance} <em>米</em></b></div><div><small>回收物</small><b>{hud.recycled}</b></div><div><small>{tide?'守护心':'检查点'}</small><b>{tide?'♥'.repeat(hud.hearts||0)+'♡'.repeat(3-(hud.hearts||0)):hud.checkpoints+' / 4'}</b></div><div><small>{skill.name}</small><b>{hud.power>0?`${hud.power} 次`:'未获得'}</b></div></div>
+    {!runRef.current?.official&&<div className="game-practice-note" role="status">试玩模式 · 本局不记录排行榜和奖卡；{tide&&!tideUnlocked?'第一境达第四灵门后可挑战正式第二境。':'老师登入后再开始正式闯关。'}</div>}
+    <div className="game-meta"><strong>本局 {hud.score} 分</strong><span>{hud.boss?.active?(tide?'潮炉首领 · 火链 '+hud.boss.dodged+' / '+PetGameTideEngine.BOSS_DODGES+' 轮':'首领战 · 躲过 '+hud.boss.dodged+' / '+PetGameEngine.BOSS_DODGES+' 次灵爆'):'终点 '+Math.max(0,(tide?PetGameTideEngine:PetGameEngine).LEVEL_END-100-hud.distance)+' 米'}</span><label>背景音乐 <select value={music} onChange={e=>{setMusic(e.target.value);window.PetGameAudio?.setTrack(runRef.current?.boss.active?'boss':e.target.value);}}>{PetGameAudio.TRACK_IDS.map(id=><option key={id} value={id}>{PetGameAudio.TRACKS[id].label}</option>)}</select></label><button type="button" className="game-sound" aria-label={muted?'开启游戏音效':'静音游戏音效'} onClick={()=>setMuted(window.PetGameAudio?.toggle()||false)}>{muted?'🔇':'🔊'}</button></div>
+    {tide?<div className="game-live-legend" aria-label="第二境物品与危险"><span className="recyclable"><b>♻ 可回收</b><small>干净物 · 收集</small></span><span className="toxic"><b>☠ 油污团</b><small>海底 · 躲开</small></span><span className="waste"><b>⚠ 机关</b><small>喷口／火链 · 避开</small></span></div>
+      :<div className="game-live-legend" aria-label="游戏物品分类"><span className="recyclable"><b>♻ 可回收</b><small>干净物 · 收集</small></span><span className="waste"><b>✕ 不可回收</b><small>脏纸巾 · 跳过</small></span><span className="toxic"><b>☠ 有毒危险</b><small>毒液／废气 · 躲开</small></span></div>}
+    <div className="game-viewport"><canvas ref={canvasRef} width={PetGameEngine.WIDTH} height={PetGameEngine.HEIGHT} aria-label={tide?'潮汐暗渠闯关场景':'灵溪古道闯关场景'}/>
+     {status==='playing'&&!tide&&<div className={hud.cliff<350?'game-runup near-cliff':'game-runup'} aria-label={'助跑蓄力 '+Math.round(hud.runup*100)+'%'}><span>{hud.cliff<350?'山崖 '+Math.max(0,Math.round(hud.cliff))+' 米 · '+(hud.runup>.75?'点飞跃':'先助跑'):hud.runup>.88?'蓄力完成 · 点飞跃':'助跑蓄力'}</span><i><b style={{width:Math.round(hud.runup*100)+'%'}}/></i></div>}
+     {status==='playing'&&tide&&<div className="game-tide-tip">{hud.zone==='sea'?'海底遗迹 · 按住 ↑ 上游／↓ 下潜':hud.zone==='boss'?'火链旋转后有破绽 · 用 ✦ 攻击':hud.zone==='pump'?'泵站 · 看准火链空隙':'地下水道 · 小心喷口与水流'}</div>}
      {selected&&<div className="game-actor" ref={actorRef} data-motion={motion} style={{'--game-facing':PetEvolution.artFacing(selected.pet.species.id,gameStage)}}>
       {crowned&&<GameCrown small/>}<LivingPetActor speciesId={selected.pet.species.id} stage={gameStage} className="game-beast" walking={status==='playing'} gameMotion={motion} loading="eager"/>
      </div>}
-     {(status==='over'||status==='won')&&<div className="game-over"><div className="game-result"><span className="game-eyebrow">远征记录</span><h2>{status==='won'?'第一境通关 · 净化腐霾魇兽':hud.checkpoints===4?'四座灵门已达成':'这一程，走到了这里'}</h2><p>{hud.reason} · 最远 {hud.distance} 米 · 收集 {hud.recycled} 件 · 本局 {hud.score} 分</p>
+     {(status==='over'||status==='won')&&<div className="game-over"><div className="game-result"><span className="game-eyebrow">远征记录</span><h2>{status==='won'?(tide?'第二境通关 · 净化潮炉守护兽':'第一境通关 · 净化腐霾魇兽'):hud.checkpoints===4&&!tide?'四座灵门已达成':'这一程，走到了这里'}</h2><p>{hud.reason} · 最远 {hud.distance} 米 · 收集 {hud.recycled} 件 · 本局 {hud.score} 分</p>
       <div className="game-result-actions"><button className="game-primary" onClick={()=>start()}>再闯一次</button><button onClick={()=>{window.PetOwnerVoice?.stop();window.PetGameAudio?.stop();setStatus('select');}}>更换神兽</button></div>
-      {runRef.current?.official?hud.checkpoints===4&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。</small>}
+      {runRef.current?.official?(tide?status==='won':hud.checkpoints===4)&&<small>本局成功已计入奖卡进度：{progress?.progress || 0} / 10</small>:<small>{tide&&!tideUnlocked?'先完成第一境第四灵门，即可记录第二境正式成绩。':'试玩成绩不计入排行榜和奖卡；老师登入后可正式闯关。'}</small>}
      </div></div>}
     </div>
-    <div className="game-controls"><p>{hud.boss?.active?'首领连续投弹：看落点闪避！它落地时护盾短暂消失，趁机用特技攻击。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　↑ 跳跃／空中再点超级跳　·　↓ 低身　·　✦ 特技逐次消耗'}</p><div>
+    <div className="game-controls"><p>{tide?(hud.zone==='sea'?'← → 横游　·　按住 ↑ 上游　·　按住 ↓ 下潜　·　✦ 清除油污':hud.boss?.active?'火链轮转后护盾会短暂消失；把握时机用特技净化首领。':'← → 移动　·　↑ 跳跃　·　↓ 低身　·　✦ 使用特技'):(hud.boss?.active?'首领连续投弹：看落点闪避！它落地时护盾短暂消失，趁机用特技攻击。':hud.checkpoints===4?'已到第四灵门，继续前进挑战终点首领！':'← → 行走　·　↑ 跳跃／空中再点超级跳　·　↓ 低身　·　✦ 特技逐次消耗')}</p><div>
      <button type="button" aria-label="向左走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('left',true);}} onPointerUp={()=>hold('left',false)} onPointerCancel={()=>hold('left',false)}><b>←</b><small>后退</small></button>
      <button type="button" aria-label="向右走" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('right',true);}} onPointerUp={()=>hold('right',false)} onPointerCancel={()=>hold('right',false)}><b>→</b><small>前进</small></button>
-     <button type="button" aria-label="跳跃，空中再按超级跳" onPointerDown={e=>{e.preventDefault();hold('jump',true);}} onClick={e=>{if(e.detail===0)hold('jump',true);}}><b>↑</b><small>再按高跃</small></button>
-     <button type="button" aria-label="低身" onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('duck',true);}} onPointerUp={()=>hold('duck',false)} onPointerCancel={()=>hold('duck',false)}><b>↓</b><small>低身</small></button>
+     <button type="button" aria-label={tide&&hud.zone==='sea'?'向上游':'跳跃，空中再按超级跳'} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('jump',true);}} onPointerUp={()=>hold('jump',false)} onPointerCancel={()=>hold('jump',false)} onClick={e=>{if(e.detail===0)hold('jump',true);}}><b>↑</b><small>{tide&&hud.zone==='sea'?'上游':'再按高跃'}</small></button>
+     <button type="button" aria-label={tide&&hud.zone==='sea'?'下潜':'低身'} onPointerDown={e=>{e.preventDefault();e.currentTarget.setPointerCapture(e.pointerId);hold('duck',true);}} onPointerUp={()=>hold('duck',false)} onPointerCancel={()=>hold('duck',false)}><b>↓</b><small>{tide&&hud.zone==='sea'?'下潜':'低身'}</small></button>
      <button type="button" aria-label={skill.name+'，剩余'+hud.power+'次'} title={skill.name} disabled={hud.power<=0} onPointerDown={e=>{e.preventDefault();hold('fire',true);}} onClick={e=>{if(e.detail===0)hold('fire',true);}}><b>✦</b><small>{skill.short} {hud.power}</small></button>
     </div></div>
    </div>}
-   <section className="game-leaderboard"><div className="game-board-head"><GameCrown small/><div><h2>绿境闯关王</h2><p>{board.month} · 按最远距离排名</p></div></div>
+   <section className="game-leaderboard"><div className="game-board-head"><GameCrown small/><div><h2>{tide?'潮汐闯关王':'绿境闯关王'}</h2><p>{board.month} · {tide?'第二境':'第一境'}最远距离排名</p></div></div>
     <div className="game-board-list">{board.rows.filter(row=>row.runs>0).slice(0,5).map((row,i)=><div key={row.id}><span>{i+1}</span><b>{row.name}{board.winners.includes(row.id)?' · 👑':''}</b><small>{row.runs} 局 · {row.totalScore} 分</small><strong>{row.bestDistance} 米</strong></div>)}{!board.rows.some(row=>row.runs>0)&&<p>首位闯关王，等你来挑战。</p>}</div>
    </section>
   </div>

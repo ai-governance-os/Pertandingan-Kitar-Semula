@@ -1,6 +1,6 @@
 // Three looping original scores plus a boss score and synthesized action cues.
 window.PetGameAudio=(()=>{
- const TRACKS={forest:{label:'灵溪微风',bpm:108,notes:[76,79,83,79,74,79,81,79],bass:[52,55,50,55]},stars:{label:'星林流光',bpm:94,notes:[81,88,85,88,79,85,83,88],bass:[57,53,55,52]},spring:{label:'灵泉回响',bpm:116,notes:[72,76,79,84,79,76,74,79],bass:[48,53,55,53]},boss:{label:'首领战鼓',bpm:136,notes:[74,77,81,77,72,77,80,77],bass:[38,41,36,43]}},TRACK_IDS=['forest','stars','spring'];
+ const TRACKS={forest:{label:'灵溪微风',bpm:108,notes:[76,79,83,79,74,79,81,79],bass:[52,55,50,55]},stars:{label:'星林流光',bpm:94,notes:[81,88,85,88,79,85,83,88],bass:[57,53,55,52]},spring:{label:'灵泉回响',bpm:116,notes:[72,76,79,84,79,76,74,79],bass:[48,53,55,53]},tide:{label:'潮汐暗渠',bpm:104,notes:[74,77,81,84,81,77,76,79],bass:[50,53,46,53]},deep:{label:'海底遗迹',bpm:82,notes:[69,74,77,81,77,74,72,76],bass:[45,50,43,48]},boss:{label:'首领战鼓',bpm:136,notes:[74,77,81,77,72,77,80,77],bass:[38,41,36,43]}},TRACK_IDS=['forest','stars','spring','tide','deep'];
  let audio,master,effects,music,timer=null,track='forest',beat=0,nextBeat=0,mute=false,cues=0,notes=0;
  function unlock(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return false;
   if(!audio){audio=new C();master=audio.createGain();master.gain.value=.92;master.connect(audio.destination);
@@ -55,6 +55,8 @@ window.PetGameAudio=(()=>{
   if(event==='boss_leap'){tone(150,at,.38,'sawtooth',.06,420);}
   if(event==='boss_land'){noise(at,.26,.11);tone(130,at,.34,'sine',.08,55);}
   if(event==='toxin_charge'){tone(360,at,.35,'sawtooth',.045,150);noise(at+.07,.25,.035);}
+  if(event==='splash'){setTrack('deep');noise(at,.3,.11);tone(330,at,.4,'sine',.06,155);}
+  if(event==='surface'){setTrack('tide');noise(at,.2,.07);tone(240,at,.26,'triangle',.06,470);}
  }
  function toggle(){mute=!mute;if(audio){master.gain.setTargetAtTime(mute?.0001:.92,audio.currentTime,.04);if(!mute){music.gain.setTargetAtTime(.92,audio.currentTime,.05);schedule();}}return mute;}
  return {unlock,start,setTrack,stop,play,toggle,TRACKS,TRACK_IDS,get muted(){return mute;},state:()=>({audio:audio?.state||'unavailable',track,playing:!!timer,muted:mute,cues,notes})};

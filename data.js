@@ -802,11 +802,17 @@ function addStarEvent(state, event) {
 }
 
 const GAME_LEVEL_ID = "forest-1";
+const GAME_TIDE_LEVEL_ID = "tide-2";
 const GAME_WINS_PER_CARD = 10;
+function gameRunSucceeded(run) {
+  return run.levelId === GAME_LEVEL_ID ? run.checkpoints >= 4
+    : run.levelId === GAME_TIDE_LEVEL_ID && !!run.bossDefeated;
+}
 
-function gameProgress(state, studentId) {
-  const runs = (state.gameRuns || []).filter(run => run.studentId === studentId && run.levelId === GAME_LEVEL_ID);
-  const wins = runs.filter(run => run.checkpoints >= 4).length;
+function gameProgress(state, studentId, levelId = null) {
+  const runs = (state.gameRuns || []).filter(run => run.studentId === studentId &&
+    (run.levelId === GAME_LEVEL_ID || run.levelId === GAME_TIDE_LEVEL_ID) && (!levelId || run.levelId === levelId));
+  const wins = runs.filter(gameRunSucceeded).length;
   return { runs: runs.length, wins, progress: wins % GAME_WINS_PER_CARD, cards: Math.floor(wins / GAME_WINS_PER_CARD),
     bestDistance: Math.max(0, ...runs.map(run => Number(run.distance) || 0)),
     totalScore: runs.reduce((sum,run)=>sum+(Number(run.score)||Math.floor((Number(run.distance)||0)/10)+(Number(run.recycled)||0)*10),0),
@@ -818,7 +824,7 @@ function gameProgress(state, studentId) {
 function reconcileGameAwards(state) {
   const wins = new Map(), known = new Set((state.starLedger || []).map(event => event.id));
   for (const win of state.gameRuns || []) {
-    if (!win?.id || win.levelId !== GAME_LEVEL_ID || !win.studentId || win.checkpoints < 4) continue;
+    if (!win?.id || !win.studentId || !gameRunSucceeded(win)) continue;
     if (!wins.has(win.studentId)) wins.set(win.studentId, new Map());
     wins.get(win.studentId).set(win.id, win);
   }
@@ -841,12 +847,12 @@ function reconcileGameAwards(state) {
   return awards.length ? { ...state, starLedger: [...awards, ...(state.starLedger || [])] } : state;
 }
 
-function recordGameRun(state, { studentId, runId, teacherId, distance, recycled, checkpoints, score, bossDefeated }) {
+function recordGameRun(state, { studentId, runId, teacherId, levelId = GAME_LEVEL_ID, distance, recycled, checkpoints, score, bossDefeated }) {
   const memberTeam = (state.teams || []).find(team => team.members?.some(member => member.id === studentId && member.active !== false));
-  if (!memberTeam || !teacherId || teacherId === "unknown" || !runId) return state;
+  if (!memberTeam || !teacherId || teacherId === "unknown" || !runId || ![GAME_LEVEL_ID,GAME_TIDE_LEVEL_ID].includes(levelId)) return state;
   const previous = (state.gameRuns || []).find(run => run.id === runId);
   if (previous) {
-    if (previous.studentId !== studentId || previous.levelId !== GAME_LEVEL_ID) return state;
+    if (previous.studentId !== studentId || previous.levelId !== levelId) return state;
     const updated = { ...previous,
       distance: Math.max(previous.distance || 0,Math.floor(Number(distance) || 0)),
       recycled: Math.max(previous.recycled || 0,Math.floor(Number(recycled) || 0)),
@@ -856,7 +862,7 @@ function recordGameRun(state, { studentId, runId, teacherId, distance, recycled,
     const next=reconcileGameAwards({...state,gameRuns:state.gameRuns.map(run=>run.id===runId?updated:run)});
     save(next);return next;
   }
-  const win = { id: runId, studentId, levelId: GAME_LEVEL_ID, teacherId,
+  const win = { id: runId, studentId, levelId, teacherId,
     distance: Math.max(0, Math.min(100000, Math.floor(Number(distance) || 0))),
     recycled: Math.max(0, Math.min(10000, Math.floor(Number(recycled) || 0))),
     checkpoints: Math.max(0, Math.min(4, Math.floor(Number(checkpoints) || 0))),
@@ -867,10 +873,10 @@ function recordGameRun(state, { studentId, runId, teacherId, distance, recycled,
   return next;
 }
 
-function gameLeaderboard(state, now = Date.now()) {
+function gameLeaderboard(state, now = Date.now(), levelId = GAME_LEVEL_ID) {
   const month = teacherQuotaMonth(now), counts = new Map();
   for (const win of state.gameRuns || []) {
-    if (win.levelId !== GAME_LEVEL_ID || teacherQuotaMonth(Number(win.ts) || 0) !== month) continue;
+    if (win.levelId !== levelId || teacherQuotaMonth(Number(win.ts) || 0) !== month) continue;
     const current = counts.get(win.studentId) || { runs: 0, bestDistance: 0, recycled: 0, totalScore: 0 };
     counts.set(win.studentId, { runs: current.runs + 1,
       bestDistance: Math.max(current.bestDistance, Number(win.distance) || 0), recycled: current.recycled + (Number(win.recycled) || 0),
@@ -1520,7 +1526,7 @@ Object.assign(window, {
     // Pets
     petState, petReport, petSpeciesFor, petSpeciesMap, setPetSpecies, setPetNickname, setPetVoiceGender, setPetVoice,
     PET_SPECIES, PET_STAGES, PET_STARVING_DAYS,
-    gameProgress, gameLeaderboard, recordGameRun, reconcileGameAwards, GAME_WINS_PER_CARD,
+    gameProgress, gameLeaderboard, recordGameRun, reconcileGameAwards, GAME_WINS_PER_CARD, GAME_LEVEL_ID, GAME_TIDE_LEVEL_ID,
     exportCSV,
     // AI scan helpers
     addAiScan, updateAiScanDecision,

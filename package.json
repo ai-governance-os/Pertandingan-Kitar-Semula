@@ -8,7 +8,7 @@
     "dev": "node build.cjs --watch",
     "test:sync": "node --test scripts/test-cloud-sync.cjs",
     "test:voices": "node --test scripts/test-pet-character-voice.cjs",
-    "test:game": "node --test scripts/test-pet-game.cjs",
+    "test:game": "node --test scripts/test-pet-game.cjs scripts/test-pet-game-tide.cjs",
     "pdf": "node build-pdf.cjs"
   },
   "devDependencies": {

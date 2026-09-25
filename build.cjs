@@ -36,7 +36,9 @@ const SOURCES = [
   'pet-evolution.js',
   'pet-ascension-data.js',
   'pet-game-engine.js',
+  'pet-game-tide-engine.js',
    'pet-game-skills.js',
+   'pet-game-tide-paint.js',
    'pet-game-audio.js',
   // React components (JSX)
   'tweaks-panel.jsx',
